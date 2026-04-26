@@ -1,10 +1,14 @@
 tmp
 cache
 node_modules/
+vendor/
 build/
 dist/
+.notes/
 
-vendor/
+# Services outside this repo
+astro/site/
+deploy-orchestrator/
 
 # Static site builds to be served via caddy 
 # Gets populated by separate workflow
