@@ -18,6 +18,8 @@ Umbrella root (`~/abcnorio.org`):
 - `abcnorio-astro/` (Astro frontend repo)
 - `abcnorio-orchestrator/` (deploy orchestrator repo)
 - `abcnorio-func/` (WordPress plugin source repo)
+- `.notes/` (root-level operational notes)
+- `.vscode/` (root-level workspace/editor settings)
 
 Inside meta repo (`~/abcnorio.org/abcnorio-meta`):
 - `wp/dev/` (Bedrock dev environment)

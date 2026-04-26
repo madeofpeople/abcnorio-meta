@@ -9,10 +9,6 @@ dist/
 .vscode/
 .github/
 
-# Services outside this repo
-astro/site/
-deploy-orchestrator/
-
 # Static site builds to be served via caddy 
 # Gets populated by separate workflow
 web/static/*
