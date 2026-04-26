@@ -1,6 +1,6 @@
 services:
   proxy:
-    image: caddy:2.11-alpine
+    image: caddy:2.11.2-alpine
     container_name: proxy
     restart: always
     ports:
@@ -11,8 +11,38 @@ services:
       - proxy_data:/data
       - proxy_config:/config
     networks:
-      - net_web
-      - net_internal
+      - abcnorio_net_web
+      - abcnorio_net_internal
+  astro:
+    build: 
+      context: /home/madeofpeople/abcnorio.org/astro/
+      dockerfile: Dockerfile
+    container_name: astro
+    user: node
+    restart: always
+    environment:
+        DEV_CMS: ${DEV_CMS}
+        STAGING_CMS: ${STAGING_CMS}
+        MODE: ${DEV_MODE:-development}
+        DEV_BUILD_PATH: ${DEV_BUILD_PATH}
+        STAGING_BUILD_PATH: ${STAGING_BUILD_PATH}
+        PRODUCTION_BUILD_PATH: ${PRODUCTION_BUILD_PATH}
+        MENU_ENDPOINT: ${MENU_ENDPOINT}
+        REST_ENDPOINT: ${REST_ENDPOINT}
+        BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
+        DEV_SEARCH_API: ${DEV_SEARCH_API}
+        STAGING_SEARCH_API: ${STAGING_SEARCH_API}
+        DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
+        STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
+        PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
+        ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+    ports: 
+      - 3033:3033
+    volumes:
+      - /home/madeofpeople/abcnorio.org/astro/site/:/app/
+      - /home/madeofpeople/abcnorio.org/web/static/:/home/madeofpeople/abcnorio.org/web/static/
+    networks:
+      - abcnorio_net_web
   web:
     image: caddy:2.11-alpine
     container_name: web
@@ -23,16 +53,14 @@ services:
       - web_data:/data
       - web_config:/config
     networks:
-      - net_web
-  frank:
+      - abcnorio_net_web
+  cms_staging:
     build: 
-      context: /home/madeofpeople/abcnorio.org/wp/staging/
-      dockerfile: ${STAGING_HOST_ROOT}/Dockerfile
+      context: ${STAGING_HOST_ROOT}
+      dockerfile: Dockerfile
       args:
-        HOST_ROOT: ${STAGING_HOST_ROOT}
-        APP_ROOT: ${STAGING_APP_ROOT}
         USER: ${STAGING_USER}
-    container_name: frank
+    container_name: wp_staging
     ports:
       - 8100:80
     environment:
@@ -42,9 +70,19 @@ services:
       DB_USER: ${STAGING_DB_USER:-exampleuser}
       DB_PASSWORD: ${STAGING_DB_PASSWORD:-examplepass}
       WP_ENV: staging
-      WP_HOME: 'http://abcwp.itztlacoliuhqui.org'
-      WP_SITEURL: 'http://abcwp.itztlacoliuhqui.org/wp'
+      WP_HOME: ${STAGING_CMS}
+      WP_SITEURL: ${STAGING_CMS}/wp
+      COMPOSER_HOME: /tmp/composer
+      COMPOSER_CACHE_DIR: /tmp/composer/cache
       DEBUG: ${STAGING_WP_DEBUG:-true}
+      HEADLESS_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
+      PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
+      ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://astro:3034}
+      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      ASTRO_BUILD_ARCHIVE_DIR: /astro/build-archives
+      ASTRO_PRODUCTION_BUILD_DIR: /astro/prod
       WORDPRESS_TABLE_PREFIX: ${STAGING_DB_TABLE_PREFIX:-wp_}
       AUTH_KEY: '${STAGING_AUTH_KEY}'
       SECURE_AUTH_KEY: '${STAGING_SECURE_AUTH_KEY}'
@@ -55,27 +93,122 @@ services:
       LOGGED_IN_SALT: '${STAGING_LOGGED_IN_SALT}'
       NONCE_SALT: '${STAGING_NONCE_SALT}'
       TTL: ${TTL:-80000}
-      CADDY_ROOT: ${STAGING_WEB_ROOT}
+      CADDY_ROOT: ${STAGING_CADDY_ROOT}
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
-          php_ini upload_max_filesize 100M  # Set PHP configuration
+          php_ini upload_max_filesize 100M
           php_ini post_max_size 100M
+          php_ini log_errors On
+          php_ini error_log /tmp/logs/wordpress/php-error.log
+          # OPcache tuning — validate_timestamps 0 disables file-change detection;
+          # restart the container to pick up PHP file changes.
+          php_ini opcache.memory_consumption 128
+          php_ini opcache.max_accelerated_files 10000
+          php_ini opcache.validate_timestamps 0
+          php_ini opcache.interned_strings_buffer 16
         }
     restart: always
     volumes:
       - ${STAGING_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
-      - ${STAGING_HOST_ROOT}${STAGING_APP_BIND}:${STAGING_APP_ROOT}
-    tty: true
+      - ${STAGING_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
+      - ${STAGING_HOST_ROOT}bedrock:/app
+      - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
+      - /home/madeofpeople/abcnorio.org/astro/site/build-archives:/astro/build-archives
+      - /home/madeofpeople/abcnorio.org/web/static/prod:/astro/prod
     networks:
-      - net_web
-      - net_internal
+      - abcnorio_net_web
+      - abcnorio_net_internal
+  cms_dev:
+    build: 
+      context: ${DEV_HOST_ROOT}
+      dockerfile: Dockerfile
+      args:
+        USER: ${DEV_USER}
+    container_name: wp_dev
+    ports:
+      - 8101:80
+    environment:
+      SERVER_NAME: ${DEV_SERVER_NAME:-:80}
+      DB_HOST: ${DEV_DB_HOST:-mariadb}
+      DB_NAME: ${DEV_DB_NAME:-exampledb}
+      DB_USER: ${DEV_DB_USER:-exampleuser}
+      DB_PASSWORD: ${DEV_DB_PASSWORD:-examplepass}
+      WP_ENV: development
+      WP_HOME: ${DEV_CMS}
+      WP_SITEURL: ${DEV_CMS}/wp
+      COMPOSER_HOME: /tmp/composer
+      COMPOSER_CACHE_DIR: /tmp/composer/cache
+      DEBUG: ${DEV_WP_DEBUG:-true}
+      HEADLESS_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
+      PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
+      ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://astro:3034}
+      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      ASTRO_BUILD_ARCHIVE_DIR: /astro/build-archives
+      ASTRO_PRODUCTION_BUILD_DIR: /astro/prod
+      WORDPRESS_TABLE_PREFIX: ${DEV_DB_TABLE_PREFIX:-wp_}
+      AUTH_KEY: '${DEV_AUTH_KEY}'
+      SECURE_AUTH_KEY: '${DEV_SECURE_AUTH_KEY}'
+      LOGGED_IN_KEY: '${DEV_LOGGED_IN_KEY}'
+      NONCE_KEY: '${DEV_NONCE_KEY}'
+      AUTH_SALT: '${DEV_AUTH_SALT}'
+      SECURE_AUTH_SALT: '${DEV_SECURE_AUTH_SALT}'
+      LOGGED_IN_SALT: '${DEV_LOGGED_IN_SALT}'
+      NONCE_SALT: '${DEV_NONCE_SALT}'
+      TTL: ${TTL:-80000}
+      CADDY_ROOT: ${DEV_CADDY_ROOT}
+      CADDY_GLOBAL_OPTIONS: |
+        auto_https off
+        frankenphp {
+          php_ini upload_max_filesize 100M
+          php_ini post_max_size 100M
+          php_ini log_errors On
+          php_ini error_log /tmp/logs/wordpress/php-error.log
+          # OPcache tuning — validate_timestamps 1 + revalidate_freq 0 checks every request;
+          # file changes are picked up immediately without container restart.
+          php_ini opcache.memory_consumption 128
+          php_ini opcache.max_accelerated_files 10000
+          php_ini opcache.validate_timestamps 1
+          php_ini opcache.revalidate_freq 0
+          php_ini opcache.interned_strings_buffer 16
+        }
+    restart: always
+    volumes:
+      - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
+      - ${DEV_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
+      - ${DEV_HOST_ROOT}bedrock:/app
+      - ${DEV_HOST_ROOT}abcnorio-func:/app/web/app/plugins/custom-func
+      - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
+      - /home/madeofpeople/abcnorio.org/astro/site/build-archives:/astro/build-archives
+      - /home/madeofpeople/abcnorio.org/web/static/prod:/astro/prod
+    networks:
+      - abcnorio_net_web
+      - abcnorio_net_internal
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+    restart: always
+    command: >
+      redis-server
+      --maxmemory 64mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    networks:
+      - abcnorio_net_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   mariadb:
     image: mariadb:latest
     container_name: mariadb
     restart: always
     ports:
-      - ${WP_LOCAL_DB_PORT:-3309}:3306
+      - ${LOCAL_DB_PORT:-3309}:3306
     environment:
       # MARIADB_DATABASE, MARIADB_USER, and MARIADB_PASSWORD are required.
       # So on first run, mariadb creates the proper users / passwords etc.
@@ -83,33 +216,27 @@ services:
       MARIADB_DATABASE: ${STAGING_DB_NAME}
       MARIADB_USER: ${STAGING_DB_USER}
       MARIADB_PASSWORD: ${STAGING_DB_PASSWORD}
+      STAGING_DB_NAME: ${STAGING_DB_NAME}
+      STAGING_DB_USER: ${STAGING_DB_USER}
+      STAGING_DB_PASSWORD: ${STAGING_DB_PASSWORD}
+      DEV_DB_NAME: ${DEV_DB_NAME}
+      DEV_DB_USER: ${DEV_DB_USER}
+      DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
     volumes:
-      - abcwp_dbv:/var/lib/mysql
+      - abcwp_mardiadb_vol:/var/lib/mysql
+      - ${STAGING_HOST_ROOT}mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      - /home/madeofpeople/abcnorio.org/wp/sql/001-dev-staging-dbs.sh:/docker-entrypoint-initdb.d/001-dev-staging-dbs.sh:ro
     networks:
-      - net_internal
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: pma
-    restart: always
-    ports:
-      - ${LOCAL_PHPMYADMIN_PORT:-8096}:80
-    environment:
-      PMA_HOST: mariadb
-      MARIADB_ROOT_PASSWORD: ${STAGING_DB_ROOT_PASSWORD:-examplepass}
-    depends_on:
-      - mariadb
-    networks:
-      - net_web
-      - net_internal
+      - abcnorio_net_internal
 volumes:
-  abcwp_dbv: {}
+  abcwp_mardiadb_vol: {}
   proxy_data: {}
   proxy_config: {}
   web_data: {}
   web_config: {}
 networks:
-  net_internal:
-    name: net_internal
-  net_web:
-    name: net_web
+  abcnorio_net_internal:
+    name: abcnorio_net_internal
+  abcnorio_net_web:
+    name: abcnorio_net_web
     driver: bridge

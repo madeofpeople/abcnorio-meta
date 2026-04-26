@@ -1,0 +1,21 @@
+[mysqld]
+# Buffer pool — primary InnoDB performance lever.
+# Set to ~70% of available RAM dedicated to MariaDB.
+innodb_buffer_pool_size = 256M
+
+# Larger log file reduces checkpoint frequency and improves write throughput.
+innodb_log_file_size = 64M
+
+# Flush log to disk once per second rather than per commit.
+# Safe for staging/dev; risks up to 1s of transactions on crash (acceptable here).
+innodb_flush_log_at_trx_commit = 2
+
+# Interned strings buffer — reduces memory allocation for repeated query strings.
+innodb_ft_min_token_size = 2
+
+# Disable query cache — removed in MariaDB 11+, and a contention source in older versions.
+query_cache_type = 0
+query_cache_size = 0
+
+# Increase open files limit for sites with many tables.
+table_open_cache = 400

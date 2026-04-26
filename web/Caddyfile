@@ -4,14 +4,34 @@
 	}
 }
 
-http://abcnorio.itztlacoliuhqui.org {
-	tls thiago@madeofpeople.org
-	root /srv/prod/
-	file_server
-    templates
-	encode zstd gzip
+:80 {
+	@prod host abcnorio.itztlacoliuhqui.org
+	@dev host dev.itztlacoliuhqui.org
+	@staging host staging.itztlacoliuhqui.org
+
+	handle @prod {
+		root /srv/prod/client/
+		file_server
+		templates
+		encode zstd gzip
+	}
+
+	handle @dev {
+		root /srv/dev/client/
+		file_server
+		templates
+		encode zstd gzip
+	}
+
+	handle @staging {
+		root /srv/staging/client/
+		file_server
+		templates
+		encode zstd gzip
+	}
+
 	handle_errors {
-    	rewrite * /404.html
-    	file_server
-  	}
+		rewrite * /404.html
+		file_server
+	}
 }

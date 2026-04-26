@@ -1,3 +1,9 @@
+{
+    servers {
+        protocols h1 h2
+    }
+}
+
 localhost {
     respond "Hello, World. I don't believe this but it works"
     log
@@ -5,15 +11,50 @@ localhost {
 
 # Static Site - web
 abcnorio.itztlacoliuhqui.org {
+    @health path /_healthz
+    respond @health "ok:abcnorio" 200
+
     reverse_proxy web:80
 }
 
-# Wordpress - wp
+# Wordpress - staging
 abcwp.itztlacoliuhqui.org {
-    reverse_proxy frank:80
+    @blocked_ips {
+        remote_ip 140.213.5.0/24 # this ip tried to hack our service!
+    }
+    respond @blocked_ips 403
+
+    @health path /_healthz
+    respond @health "ok:abcwp" 200
+
+    reverse_proxy wp_staging:80
 }
 
-# PHP MyAdmin - pma
-pma.itztlacoliuhqui.org {
-    reverse_proxy pma
+# Wordpress - dev
+abcwpdev.itztlacoliuhqui.org {
+    @blocked_ips {
+        remote_ip 140.213.5.0/24 # this ip tried to hack our service!
+    }
+    respond @blocked_ips 403
+
+    @health path /_healthz
+    respond @health "ok:abcwpdev" 200
+
+    reverse_proxy wp_dev:80
+}
+
+# Static Site - dev
+dev.itztlacoliuhqui.org {
+    @health path /_healthz
+    respond @health "ok:dev" 200
+
+    reverse_proxy astro:3033
+}
+
+# Static Site - staging
+staging.itztlacoliuhqui.org {
+    @health path /_healthz
+    respond @health "ok:staging" 200
+
+    reverse_proxy web:80
 }

@@ -4,10 +4,14 @@ node_modules/
 build/
 dist/
 
+vendor/
+
 # Static site builds to be served via caddy 
 # Gets populated by separate workflow
 web/static/*
+.astro
 
+#
 # sources directory, holds 
 sources/
 
@@ -15,8 +19,10 @@ sources/
 .env
 
 # Wordpress
-# Anything in here should be in a separate repo and installed using composer with git or wpackagist.
-wp/staging/app/
+wp/**/backups/
+wp/**/bedrock/
+wp/**/logs/
+
 #mac crap
 .DS_Store
 
