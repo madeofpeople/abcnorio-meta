@@ -39,7 +39,6 @@ services:
       DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
       STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
-      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
     ports: 
@@ -60,6 +59,41 @@ services:
       - web_config:/config
     networks:
       - abcnorio_net_web
+  deploy-orchestrator:
+    build:
+      context: ${ASTRO_HOST_ROOT:-/home/madeofpeople/abcnorio.org/astro/}
+      dockerfile: Dockerfile
+      args:
+        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+    container_name: deploy-orchestrator
+    user: node
+    group_add:
+      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
+    restart: always
+    env_file:
+      - ./astro/site/runtime.env
+      - ./astro/site/.env
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      BUILD_QUEUE_NAME: ${BUILD_QUEUE_NAME:-astro-build}
+      BUILD_DEBOUNCE_SECONDS: ${BUILD_DEBOUNCE_SECONDS:-120}
+      WP_SAVE_TRIGGER_QUEUE_ENABLED: ${WP_SAVE_TRIGGER_QUEUE_ENABLED:-0}
+      ORCHESTRATOR_PORT: ${ORCHESTRATOR_PORT:-4011}
+      ASTRO_SITE_ROOT: /astro-site
+      MODE: ${DEV_MODE:-development}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+    command: >
+      bash -lc "umask 0002 && cd /orchestrator && npm install && node index.mjs"
+    volumes:
+      - /home/madeofpeople/abcnorio.org/deploy-orchestrator:/orchestrator/
+      - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/astro/site/}:/astro-site/
+      - ${STATIC_SERVER_SITE_DIR}:/shared/static/
+    depends_on:
+      - redis
+    networks:
+      - abcnorio_net_internal
   cms_staging:
     build: 
       context: ${STAGING_HOST_ROOT}
@@ -77,8 +111,9 @@ services:
       - ./wp/runtime.env
       - ./wp/staging.env
     environment:
-      ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://astro:3034}
-      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://deploy-orchestrator:4011}
+      WP_SAVE_TRIGGER_QUEUE_ENABLED: ${WP_SAVE_TRIGGER_QUEUE_ENABLED:-0}
+      WP_SAVE_TRIGGER_TARGET: ${WP_SAVE_TRIGGER_TARGET:-}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
       CADDY_GLOBAL_OPTIONS: |
@@ -123,8 +158,9 @@ services:
       - ./wp/runtime.env
       - ./wp/dev.env
     environment:
-      ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://astro:3034}
-      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://deploy-orchestrator:4011}
+      WP_SAVE_TRIGGER_QUEUE_ENABLED: ${WP_SAVE_TRIGGER_QUEUE_ENABLED:-0}
+      WP_SAVE_TRIGGER_TARGET: ${WP_SAVE_TRIGGER_TARGET:-}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
       CADDY_GLOBAL_OPTIONS: |
@@ -147,7 +183,6 @@ services:
       - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${DEV_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
       - ${DEV_HOST_ROOT}bedrock:/app
-      - ${DEV_HOST_ROOT}abcnorio-func:/app/web/app/plugins/custom-func
       - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR:-/home/madeofpeople/abcnorio.org/astro/site/build-archives}:/astro/build-archives
       - ${STATIC_SERVER_SITE_DIR}:/shared/static
@@ -161,7 +196,7 @@ services:
     command: >
       redis-server
       --maxmemory 64mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory-policy noeviction
       --save ""
       --appendonly no
     networks:
