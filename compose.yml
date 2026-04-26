@@ -15,32 +15,38 @@ services:
       - abcnorio_net_internal
   astro:
     build: 
-      context: /home/madeofpeople/abcnorio.org/astro/
+      context: ${ASTRO_HOST_ROOT:-/home/madeofpeople/abcnorio.org/astro/}
       dockerfile: Dockerfile
+      args:
+        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
     container_name: astro
     user: node
+    group_add:
+      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
     restart: always
+    env_file:
+      - ./astro/site/runtime.env
     environment:
-        DEV_CMS: ${DEV_CMS}
-        STAGING_CMS: ${STAGING_CMS}
-        MODE: ${DEV_MODE:-development}
-        DEV_BUILD_PATH: ${DEV_BUILD_PATH}
-        STAGING_BUILD_PATH: ${STAGING_BUILD_PATH}
-        PRODUCTION_BUILD_PATH: ${PRODUCTION_BUILD_PATH}
-        MENU_ENDPOINT: ${MENU_ENDPOINT}
-        REST_ENDPOINT: ${REST_ENDPOINT}
-        BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
-        DEV_SEARCH_API: ${DEV_SEARCH_API}
-        STAGING_SEARCH_API: ${STAGING_SEARCH_API}
-        DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
-        STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
-        PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
-        ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      DEV_CMS: ${DEV_CMS}
+      STAGING_CMS: ${STAGING_CMS}
+      MODE: ${DEV_MODE:-development}
+      MENU_ENDPOINT: ${MENU_ENDPOINT}
+      REST_ENDPOINT: ${REST_ENDPOINT}
+      BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
+      DEV_SEARCH_API: ${DEV_SEARCH_API}
+      STAGING_SEARCH_API: ${STAGING_SEARCH_API}
+      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
+      PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
+      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
     ports: 
       - 3033:3033
     volumes:
-      - /home/madeofpeople/abcnorio.org/astro/site/:/app/
-      - /home/madeofpeople/abcnorio.org/web/static/:/home/madeofpeople/abcnorio.org/web/static/
+      - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/astro/site/}:/app/
+      - ${STATIC_SERVER_SITE_DIR}:/shared/static/
     networks:
       - abcnorio_net_web
   web:
@@ -60,40 +66,21 @@ services:
       dockerfile: Dockerfile
       args:
         USER: ${STAGING_USER}
+        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
     container_name: wp_staging
+    group_add:
+      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
     ports:
       - 8100:80
+    env_file:
+      - ./wp/runtime.env
+      - ./wp/staging.env
     environment:
-      SERVER_NAME: ${STAGING_SERVER_NAME:-:80}
-      DB_HOST: ${STAGING_DB_HOST:-mariadb}
-      DB_NAME: ${STAGING_DB_NAME:-exampledb}
-      DB_USER: ${STAGING_DB_USER:-exampleuser}
-      DB_PASSWORD: ${STAGING_DB_PASSWORD:-examplepass}
-      WP_ENV: staging
-      WP_HOME: ${STAGING_CMS}
-      WP_SITEURL: ${STAGING_CMS}/wp
-      COMPOSER_HOME: /tmp/composer
-      COMPOSER_CACHE_DIR: /tmp/composer/cache
-      DEBUG: ${STAGING_WP_DEBUG:-true}
-      HEADLESS_FRONTEND_URL: ${DEV_FRONTEND_URL}
-      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
-      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
-      PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
       ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://astro:3034}
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
-      ASTRO_BUILD_ARCHIVE_DIR: /astro/build-archives
-      ASTRO_PRODUCTION_BUILD_DIR: /astro/prod
-      WORDPRESS_TABLE_PREFIX: ${STAGING_DB_TABLE_PREFIX:-wp_}
-      AUTH_KEY: '${STAGING_AUTH_KEY}'
-      SECURE_AUTH_KEY: '${STAGING_SECURE_AUTH_KEY}'
-      LOGGED_IN_KEY: '${STAGING_LOGGED_IN_KEY}'
-      NONCE_KEY: '${STAGING_NONCE_KEY}'
-      AUTH_SALT: '${STAGING_AUTH_SALT}'
-      SECURE_AUTH_SALT: '${STAGING_SECURE_AUTH_SALT}'
-      LOGGED_IN_SALT: '${STAGING_LOGGED_IN_SALT}'
-      NONCE_SALT: '${STAGING_NONCE_SALT}'
-      TTL: ${TTL:-80000}
-      CADDY_ROOT: ${STAGING_CADDY_ROOT}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -114,8 +101,8 @@ services:
       - ${STAGING_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
       - ${STAGING_HOST_ROOT}bedrock:/app
       - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
-      - /home/madeofpeople/abcnorio.org/astro/site/build-archives:/astro/build-archives
-      - /home/madeofpeople/abcnorio.org/web/static/prod:/astro/prod
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR:-/home/madeofpeople/abcnorio.org/astro/site/build-archives}:/astro/build-archives
+      - ${STATIC_SERVER_SITE_DIR}:/shared/static
     networks:
       - abcnorio_net_web
       - abcnorio_net_internal
@@ -125,40 +112,21 @@ services:
       dockerfile: Dockerfile
       args:
         USER: ${DEV_USER}
+        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
     container_name: wp_dev
+    group_add:
+      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
     ports:
       - 8101:80
+    env_file:
+      - ./wp/runtime.env
+      - ./wp/dev.env
     environment:
-      SERVER_NAME: ${DEV_SERVER_NAME:-:80}
-      DB_HOST: ${DEV_DB_HOST:-mariadb}
-      DB_NAME: ${DEV_DB_NAME:-exampledb}
-      DB_USER: ${DEV_DB_USER:-exampleuser}
-      DB_PASSWORD: ${DEV_DB_PASSWORD:-examplepass}
-      WP_ENV: development
-      WP_HOME: ${DEV_CMS}
-      WP_SITEURL: ${DEV_CMS}/wp
-      COMPOSER_HOME: /tmp/composer
-      COMPOSER_CACHE_DIR: /tmp/composer/cache
-      DEBUG: ${DEV_WP_DEBUG:-true}
-      HEADLESS_FRONTEND_URL: ${DEV_FRONTEND_URL}
-      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
-      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
-      PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
       ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://astro:3034}
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
-      ASTRO_BUILD_ARCHIVE_DIR: /astro/build-archives
-      ASTRO_PRODUCTION_BUILD_DIR: /astro/prod
-      WORDPRESS_TABLE_PREFIX: ${DEV_DB_TABLE_PREFIX:-wp_}
-      AUTH_KEY: '${DEV_AUTH_KEY}'
-      SECURE_AUTH_KEY: '${DEV_SECURE_AUTH_KEY}'
-      LOGGED_IN_KEY: '${DEV_LOGGED_IN_KEY}'
-      NONCE_KEY: '${DEV_NONCE_KEY}'
-      AUTH_SALT: '${DEV_AUTH_SALT}'
-      SECURE_AUTH_SALT: '${DEV_SECURE_AUTH_SALT}'
-      LOGGED_IN_SALT: '${DEV_LOGGED_IN_SALT}'
-      NONCE_SALT: '${DEV_NONCE_SALT}'
-      TTL: ${TTL:-80000}
-      CADDY_ROOT: ${DEV_CADDY_ROOT}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -181,8 +149,8 @@ services:
       - ${DEV_HOST_ROOT}bedrock:/app
       - ${DEV_HOST_ROOT}abcnorio-func:/app/web/app/plugins/custom-func
       - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
-      - /home/madeofpeople/abcnorio.org/astro/site/build-archives:/astro/build-archives
-      - /home/madeofpeople/abcnorio.org/web/static/prod:/astro/prod
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR:-/home/madeofpeople/abcnorio.org/astro/site/build-archives}:/astro/build-archives
+      - ${STATIC_SERVER_SITE_DIR}:/shared/static
     networks:
       - abcnorio_net_web
       - abcnorio_net_internal
@@ -225,7 +193,7 @@ services:
     volumes:
       - abcwp_mardiadb_vol:/var/lib/mysql
       - ${STAGING_HOST_ROOT}mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro
-      - /home/madeofpeople/abcnorio.org/wp/sql/001-dev-staging-dbs.sh:/docker-entrypoint-initdb.d/001-dev-staging-dbs.sh:ro
+      - ${WP_SQL_INIT_SCRIPT:-/home/madeofpeople/abcnorio.org/wp/sql/001-dev-staging-dbs.sh}:/docker-entrypoint-initdb.d/001-dev-staging-dbs.sh:ro
     networks:
       - abcnorio_net_internal
 volumes:
