@@ -2,10 +2,12 @@ tmp
 cache
 node_modules/
 vendor/
+backups/
 build/
 dist/
 .notes/
 .vscode/
+.github/
 
 # Services outside this repo
 astro/site/
