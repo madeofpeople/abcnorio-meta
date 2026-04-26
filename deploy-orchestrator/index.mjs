@@ -49,6 +49,7 @@ async function enqueueTarget(target, source = 'manual') {
   const existing = await queue.getJob(jobId);
 
   if (state.status === 'running' && state.target === target) {
+    console.log(`[enqueue] ${target} already running, queuing followup`);
     await redis.set(followupKey(target), '1');
     markRequested(target);
     return { accepted: true, followup: true };
@@ -56,25 +57,28 @@ async function enqueueTarget(target, source = 'manual') {
 
   if (existing) {
     const existingState = await existing.getState();
+    console.log(`[enqueue] ${target} job exists in state: ${existingState}`);
     if (existingState === 'active') {
       await redis.set(followupKey(target), '1');
       markRequested(target);
       return { accepted: true, followup: true };
     }
 
-    if (['waiting', 'delayed', 'prioritized'].includes(existingState)) {
+    if (['waiting', 'delayed', 'prioritized', 'failed', 'completed'].includes(existingState)) {
+      console.log(`[enqueue] removing existing ${existingState} job for ${target}`);
       await existing.remove();
     }
   }
 
   const delay = source === 'save' ? DEBOUNCE_MS : 0;
-  await queue.add('deploy', { target, source }, {
+  const job = await queue.add('deploy', { target, source }, {
     jobId,
     delay,
     removeOnComplete: true,
     removeOnFail: 50,
   });
 
+  console.log(`[enqueue] added job ${jobId} (source=${source}, delay=${delay}ms)`);
   markRequested(target);
 
   return { accepted: true, followup: false };
@@ -84,6 +88,8 @@ const worker = new Worker(
   QUEUE_NAME,
   async (job) => {
     const { target } = job.data;
+
+    console.log(`[worker] received job ${job.id} for target=${target}`);
 
     if (!COMMANDS[target]) {
       throw new Error(`invalid target: ${target}`);
@@ -101,9 +107,11 @@ const worker = new Worker(
       message: null,
     };
     markStarted(target);
+    console.log(`[worker] ${target} marked as running, executing ${scriptPath}`);
 
     const archiveBefore = new Set(listArchivesForTarget(target));
     const exitCode = await runCommand('bash', [scriptPath]);
+    console.log(`[worker] ${target} script exited with code ${exitCode}`);
 
     if (exitCode !== 0) {
       state = {
@@ -114,6 +122,7 @@ const worker = new Worker(
         exitCode,
         message: `script failed with exit ${exitCode}`,
       };
+      console.log(`[worker] ${target} script failed: ${state.message}`);
       throw new Error(state.message);
     }
 
@@ -127,6 +136,7 @@ const worker = new Worker(
       throw new Error(`no backup archive discovered for target=${target}`);
     }
 
+    console.log(`[worker] ${target} found archive: ${path.basename(archivePath)}`);
     cleanupOldArchives(target, MAX_BACKUPS);
     updateStatus('backup', target, { archivePath });
     updateStatus('deploy', target, { deployBuildPath: resolvedDeployPath });
@@ -140,10 +150,12 @@ const worker = new Worker(
       message: null,
     };
     markDone(target);
+    console.log(`[worker] ${target} deployment completed successfully`);
 
     const fk = followupKey(target);
     const needsFollowup = (await redis.get(fk)) === '1';
     if (needsFollowup) {
+      console.log(`[worker] queueing followup job for ${target}`);
       await redis.del(fk);
       await queue.add('deploy', { target, source: 'followup' }, {
         jobId: `deploy_${target}`,
@@ -161,6 +173,7 @@ const worker = new Worker(
 
 worker.on('failed', async (job, error) => {
   const target = job?.data?.target || state.target;
+  console.log(`[worker:failed] job ${job?.id} target=${target}: ${error?.message}`);
   const fk = target ? followupKey(target) : '';
   if (fk) {
     await redis.del(fk);
@@ -180,6 +193,16 @@ worker.on('failed', async (job, error) => {
     markFailed(target, error?.message || 'job failed');
   }
 });
+
+worker.on('completed', (job) => {
+  console.log(`[worker:completed] job ${job.id} target=${job.data.target}`);
+});
+
+worker.on('error', (error) => {
+  console.log(`[worker:error] ${error.message}`);
+});
+
+console.log('[worker] initialized and ready');
 
 const server = http.createServer(async (req, res) => {
   const respond = (code, data) => {
