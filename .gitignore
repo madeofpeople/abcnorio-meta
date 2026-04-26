@@ -5,6 +5,7 @@ vendor/
 build/
 dist/
 .notes/
+.vscode/
 
 # Services outside this repo
 astro/site/
