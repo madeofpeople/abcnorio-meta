@@ -87,6 +87,16 @@ Required/used env vars:
 - Optional: `ASTRO_SITE_ROOT`
 - Optional: `ASTRO_DEPLOYMENT_STATUS_FILE`
 
+## Architecture
+
+Module structure (`deploy-orchestrator/`):
+- `index.mjs` (~130 lines): core orchestration, HTTP routes, worker startup
+- `status.mjs` (~165 lines): status file operations, env state tracking
+- `files.mjs` (~60 lines): archive discovery, command execution, path validation
+- `http.mjs` (~30 lines): request auth, body parsing utilities
+- `package.json`: dependencies (bullmq, ioredis)
+- `Dockerfile`: Node.js LTS environment
+
 ## Operations
 
 Health checks:
@@ -101,18 +111,19 @@ Failure checks:
 
 ## Working Plan (Living)
 
-Status key:
-- `[x]` done
-- `[ ]` pending
-
 - [x] Move orchestrator runtime into top-level `deploy-orchestrator/`
-- [ ] Rewire compose service command and volume mounts to new folder
-- [ ] Remove legacy `astro/site/deploy-orchestrator/` runtime file
-- [ ] Recreate `deploy-orchestrator` container
-- [ ] Verify status file auto-creation on startup
-- [ ] Verify `POST /trigger` and `GET /status` end-to-end from container network
-- [ ] Verify WP deployment page unblocked
+- [x] Rewire compose service command and volume mounts to new folder
+- [x] Remove legacy `astro/site/deploy-orchestrator/` runtime file
+- [x] Recreate `deploy-orchestrator` container
+- [x] Verify status file auto-creation on startup
+- [x] Verify `POST /trigger` and `GET /status` end-to-end from container network
+- [x] Verify WP deployment page unblocked
+- [x] Fix BullMQ jobId format constraint (colon → hyphen)
+- [x] Modularize index.mjs → status/files/http utilities
+- [ ] Implement shell scripts for deploy targets (dev/staging/production)
+- [ ] Wire queue job processor to execute actual deployments
 
 ## Change Log
 
 - 2026-04-26: Initial spec created as living orchestration contract and migration tracker.
+- 2026-04-26: Modularized runtime into status/files/http utilities. Verified orchestrator responsive.
