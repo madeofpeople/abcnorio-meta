@@ -51,6 +51,28 @@ export function runCommand(command, args) {
   });
 }
 
+export function cleanupOldArchives(target, maxKeep) {
+  const names = listArchivesForTarget(target);
+  if (names.length <= maxKeep) {
+    return;
+  }
+
+  const sortedByMtime = names
+    .map((name) => {
+      const fullPath = path.join(ARCHIVE_DIR, name);
+      return { name, fullPath, mtime: fs.statSync(fullPath).mtimeMs };
+    })
+    .sort((a, b) => b.mtime - a.mtime);
+
+  for (let i = maxKeep; i < sortedByMtime.length; i += 1) {
+    try {
+      fs.unlinkSync(sortedByMtime[i].fullPath);
+    } catch (err) {
+      console.warn(`failed to delete old archive ${sortedByMtime[i].name}:`, err.message);
+    }
+  }
+}
+
 export function assertDeployPath(target, deployBuildPath) {
   const resolved = String(deployBuildPath || '').trim();
   if (!resolved) {

@@ -87,16 +87,6 @@ Required/used env vars:
 - Optional: `ASTRO_SITE_ROOT`
 - Optional: `ASTRO_DEPLOYMENT_STATUS_FILE`
 
-## Architecture
-
-Module structure (`deploy-orchestrator/`):
-- `index.mjs` (~130 lines): core orchestration, HTTP routes, worker startup
-- `status.mjs` (~165 lines): status file operations, env state tracking
-- `files.mjs` (~60 lines): archive discovery, command execution, path validation
-- `http.mjs` (~30 lines): request auth, body parsing utilities
-- `package.json`: dependencies (bullmq, ioredis)
-- `Dockerfile`: Node.js LTS environment
-
 ## Operations
 
 Health checks:
@@ -118,12 +108,26 @@ Failure checks:
 - [x] Verify status file auto-creation on startup
 - [x] Verify `POST /trigger` and `GET /status` end-to-end from container network
 - [x] Verify WP deployment page unblocked
-- [x] Fix BullMQ jobId format constraint (colon → hyphen)
+- [x] Fix BullMQ jobId format constraint (colon → underscore)
 - [x] Modularize index.mjs → status/files/http utilities
-- [ ] Implement shell scripts for deploy targets (dev/staging/production)
+- [x] Fix backup-build.sh hardcoded `/app/` path issue
+- [x] Fix followup job jobId format
+- [ ] **Debug worker job processing** (queue setup working, jobs accepted, but worker not executing)
 - [ ] Wire queue job processor to execute actual deployments
+
+## Known Issues
+
+- **Worker job processing**: Jobs are accepted by /trigger endpoint and stored in Redis queue, but BullMQ Worker is not executing jobs. Deploy scripts work correctly when run manually. Needs investigation of Worker initialization or job pickup logic.
+
+## Resolved Issues
+
+- ✅ Backup script was hardcoding `/app/build-archives` path → fixed to use relative `$(pwd)` 
+- ✅ Backup script was ignoring BACKUP_SOURCE_DIR env var → fixed to check env var first
+- ✅ Followup jobs were using old jobId format with colon → fixed to underscore separator
+- ✅ BullMQ rejected initial jobId with colon separator → fixed main enqueueTarget function
 
 ## Change Log
 
 - 2026-04-26: Initial spec created as living orchestration contract and migration tracker.
 - 2026-04-26: Modularized runtime into status/files/http utilities. Verified orchestrator responsive.
+- 2026-04-26: Fixed backup script path issues and followup jobId format. Deploy scripts verified working manually. Worker job processing requires debug.

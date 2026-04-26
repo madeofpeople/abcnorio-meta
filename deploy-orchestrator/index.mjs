@@ -3,7 +3,7 @@ import path from 'node:path';
 import { Queue, Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { getAuthToken, readJsonBody } from './http.mjs';
-import { listArchivesForTarget, newestArchivePath, runCommand, assertDeployPath } from './files.mjs';
+import { listArchivesForTarget, newestArchivePath, runCommand, assertDeployPath, cleanupOldArchives } from './files.mjs';
 import {
   loadStatus, saveStatus, markRequested, markStarted, markDone, markFailed, updateStatus,
 } from './status.mjs';
@@ -14,6 +14,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const QUEUE_NAME = process.env.BUILD_QUEUE_NAME || 'astro-build';
 const DEBOUNCE_SECONDS = Number(process.env.BUILD_DEBOUNCE_SECONDS || 120);
 const SAVE_TRIGGER_ENABLED = process.env.WP_SAVE_TRIGGER_QUEUE_ENABLED === '1';
+const MAX_BACKUPS = Number(process.env.MAX_BACKUPS || 12);
 
 const DEBOUNCE_MS = Math.max(0, DEBOUNCE_SECONDS) * 1000;
 const WORKDIR = process.env.ASTRO_SITE_ROOT || '/astro-site';
@@ -106,8 +107,9 @@ const worker = new Worker(
 
     if (exitCode !== 0) {
       state = {
-        ...state,
         status: 'failed',
+        target,
+        started: state.started,
         finished: Date.now(),
         exitCode,
         message: `script failed with exit ${exitCode}`,
@@ -125,17 +127,14 @@ const worker = new Worker(
       throw new Error(`no backup archive discovered for target=${target}`);
     }
 
-    updateStatus('backup', target, {
-      archivePath,
-    });
-
-    updateStatus('deploy', target, {
-      deployBuildPath: resolvedDeployPath,
-    });
+    cleanupOldArchives(target, MAX_BACKUPS);
+    updateStatus('backup', target, { archivePath });
+    updateStatus('deploy', target, { deployBuildPath: resolvedDeployPath });
 
     state = {
-      ...state,
       status: 'done',
+      target,
+      started: state.started,
       finished: Date.now(),
       exitCode: 0,
       message: null,
@@ -183,18 +182,21 @@ worker.on('failed', async (job, error) => {
 });
 
 const server = http.createServer(async (req, res) => {
+  const respond = (code, data) => {
+    res.writeHead(code, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(data));
+  };
+
   if (!SECRET || getAuthToken(req) !== SECRET) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'unauthorized' }));
-    return;
+    return respond(401, { error: 'unauthorized' });
   }
 
-  res.setHeader('Content-Type', 'application/json');
-
   if (req.method === 'GET' && req.url === '/status') {
-    res.writeHead(200);
-    res.end(JSON.stringify(state));
-    return;
+    return respond(200, state);
+  }
+
+  if (req.method === 'GET' && req.url === '/health') {
+    return respond(200, { status: 'ok' });
   }
 
   if (req.method === 'POST' && req.url === '/trigger') {
@@ -202,52 +204,33 @@ const server = http.createServer(async (req, res) => {
     try {
       body = await readJsonBody(req);
     } catch {
-      res.writeHead(400);
-      res.end(JSON.stringify({ error: 'invalid json' }));
-      return;
+      return respond(400, { error: 'invalid json' });
     }
 
     const target = String(body.target || '').trim();
     const source = String(body.source || 'manual').trim();
 
     if (!COMMANDS[target]) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ error: 'invalid target', valid: Object.keys(COMMANDS) }));
-      return;
+      return respond(400, { error: 'invalid target', valid: Object.keys(COMMANDS) });
     }
 
     if (source === 'save' && !SAVE_TRIGGER_ENABLED) {
-      res.writeHead(202);
-      res.end(JSON.stringify({ status: 'ignored', reason: 'save trigger disabled', target }));
-      return;
+      return respond(202, { status: 'ignored', reason: 'save trigger disabled', target });
     }
 
     if (source === 'save' && target === 'production') {
-      res.writeHead(403);
-      res.end(JSON.stringify({ error: 'production save-trigger is disabled' }));
-      return;
+      return respond(403, { error: 'production save-trigger is disabled' });
     }
 
     try {
       const result = await enqueueTarget(target, source);
-      res.writeHead(202);
-      res.end(JSON.stringify({ status: result.followup ? 'queued_followup' : 'queued', target, source }));
+      return respond(202, { status: result.followup ? 'queued_followup' : 'queued', target, source });
     } catch (error) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ error: 'trigger failed', message: error instanceof Error ? error.message : 'unknown error' }));
+      return respond(500, { error: 'trigger failed', message: error instanceof Error ? error.message : 'unknown error' });
     }
-
-    return;
   }
 
-  if (req.method === 'GET' && req.url === '/health') {
-    res.writeHead(200);
-    res.end(JSON.stringify({ status: 'ok' }));
-    return;
-  }
-
-  res.writeHead(404);
-  res.end(JSON.stringify({ error: 'not found' }));
+  respond(404, { error: 'not found' });
 });
 
 server.listen(PORT, '0.0.0.0', () => {
