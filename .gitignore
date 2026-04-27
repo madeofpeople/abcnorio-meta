@@ -20,6 +20,7 @@ sources/
 
 # Secrets
 .env
+*.env
 
 # Wordpress
 wp/**/backups/

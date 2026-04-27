@@ -41,8 +41,11 @@ services:
       PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      DEV_BUILD_PATH: /shared/static/dev
+      STAGING_BUILD_PATH: /shared/static/staging
+      PRODUCTION_BUILD_PATH: /shared/static/prod
     ports: 
-      - 3033:3033
+      - 127.0.0.1:3033:3033
     volumes:
       - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/}:/app/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
@@ -84,6 +87,9 @@ services:
       MODE: ${DEV_MODE:-development}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      DEV_BUILD_PATH: /shared/static/dev
+      STAGING_BUILD_PATH: /shared/static/staging
+      PRODUCTION_BUILD_PATH: /shared/static/prod
     command: >
       bash -lc "umask 0002 && cd /orchestrator && npm install && node index.mjs"
     volumes:
@@ -106,7 +112,7 @@ services:
     group_add:
       - ${ARTIFACT_SHARED_GROUP:-abcnorio}
     ports:
-      - 8100:80
+      - 127.0.0.1:8100:80
     env_file:
       - ./wp/runtime.env
       - ./wp/staging.env
@@ -116,6 +122,9 @@ services:
       WP_SAVE_TRIGGER_TARGET: ${WP_SAVE_TRIGGER_TARGET:-}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      DEV_BUILD_PATH: /shared/static/dev
+      STAGING_BUILD_PATH: /shared/static/staging
+      PRODUCTION_BUILD_PATH: /shared/static/prod
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -152,7 +161,7 @@ services:
     group_add:
       - ${ARTIFACT_SHARED_GROUP:-abcnorio}
     ports:
-      - 8101:80
+      - 127.0.0.1:8101:80
     env_file:
       - ./wp/runtime.env
       - ./wp/dev.env
@@ -162,6 +171,9 @@ services:
       WP_SAVE_TRIGGER_TARGET: ${WP_SAVE_TRIGGER_TARGET:-}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      DEV_BUILD_PATH: /shared/static/dev
+      STAGING_BUILD_PATH: /shared/static/staging
+      PRODUCTION_BUILD_PATH: /shared/static/prod
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -206,11 +218,11 @@ services:
       timeout: 5s
       retries: 5
   mariadb:
-    image: mariadb:latest
+    image: mariadb:11.4
     container_name: mariadb
     restart: always
     ports:
-      - ${LOCAL_DB_PORT:-3309}:3306
+      - 127.0.0.1:${LOCAL_DB_PORT:-3309}:3306
     environment:
       # MARIADB_DATABASE, MARIADB_USER, and MARIADB_PASSWORD are required.
       # So on first run, mariadb creates the proper users / passwords etc.
