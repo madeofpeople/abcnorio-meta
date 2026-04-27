@@ -14,7 +14,7 @@ abcnorio.itztlacoliuhqui.org {
     @health path /_healthz
     respond @health "ok:abcnorio" 200
 
-    @search path /search /search/*
+    @search path /search/api /search/api/*
     reverse_proxy @search astro:3033
 
     reverse_proxy web:80
@@ -77,7 +77,7 @@ staging.itztlacoliuhqui.org {
     @health path /_healthz
     respond @health "ok:staging" 200
 
-    @search path /search /search/*
+    @search path /search/api /search/api/*
     reverse_proxy @search astro:3033
 
     reverse_proxy web:80
