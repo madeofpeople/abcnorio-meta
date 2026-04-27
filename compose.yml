@@ -15,7 +15,7 @@ services:
       - abcnorio_net_internal
   astro:
     build: 
-      context: ${ASTRO_HOST_ROOT:-/home/madeofpeople/abcnorio.org/abcnorio-astro/}
+      context: ${ASTRO_HOST_ROOT}
       dockerfile: Dockerfile
       args:
         SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
@@ -26,7 +26,7 @@ services:
       - ${ARTIFACT_SHARED_GROUP:-abcnorio}
     restart: always
     env_file:
-      - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/}/runtime.env
+      - ${ASTRO_SITE_DIR}/runtime.env
     environment:
       DEV_CMS: ${DEV_CMS}
       STAGING_CMS: ${STAGING_CMS}
@@ -47,7 +47,7 @@ services:
     ports: 
       - 127.0.0.1:3033:3033
     volumes:
-      - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/}:/app/
+      - ${ASTRO_SITE_DIR}:/app/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
     networks:
       - abcnorio_net_internal
@@ -64,7 +64,7 @@ services:
       - abcnorio_net_web
   deploy-orchestrator:
     build:
-      context: ${ASTRO_HOST_ROOT:-/home/madeofpeople/abcnorio.org/abcnorio-astro/}
+      context: ${ASTRO_HOST_ROOT}
       dockerfile: Dockerfile
       args:
         SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
@@ -75,14 +75,9 @@ services:
       - ${ARTIFACT_SHARED_GROUP:-abcnorio}
     restart: always
     env_file:
-      - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/}/runtime.env
-      - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/}/.env
+      - ${ORCHESTRATOR_HOST_DIR}/.env
     environment:
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      BUILD_QUEUE_NAME: ${BUILD_QUEUE_NAME:-astro-build}
-      BUILD_DEBOUNCE_SECONDS: ${BUILD_DEBOUNCE_SECONDS:-120}
-      WP_SAVE_TRIGGER_QUEUE_ENABLED: ${WP_SAVE_TRIGGER_QUEUE_ENABLED:-0}
-      ORCHESTRATOR_PORT: ${ORCHESTRATOR_PORT:-4011}
+      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       ASTRO_SITE_ROOT: /astro-site
       MODE: ${DEV_MODE:-development}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
@@ -93,8 +88,8 @@ services:
     command: >
       bash -lc "umask 0002 && cd /orchestrator && npm install && node index.mjs"
     volumes:
-      - ${ORCHESTRATOR_HOST_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-orchestrator}:/orchestrator/
-      - ${ASTRO_SITE_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/}:/astro-site/
+      - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/
+      - ${ASTRO_SITE_DIR}:/astro-site/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
     depends_on:
       - redis
@@ -145,7 +140,7 @@ services:
       - ${STAGING_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
       - ${STAGING_HOST_ROOT}bedrock:/app
       - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
-      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/build-archives}:/astro/build-archives
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives
       - ${STATIC_SERVER_SITE_DIR}:/shared/static
     networks:
       - abcnorio_net_internal
@@ -194,9 +189,9 @@ services:
       - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${DEV_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
       - ${DEV_HOST_ROOT}bedrock:/app
-      - ${ABCNORIO_FUNC_HOST_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-func}:/app/packages/abcnorio-func
+      - ${ABCNORIO_FUNC_HOST_DIR}:/app/packages/abcnorio-func
       - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
-      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR:-/home/madeofpeople/abcnorio.org/abcnorio-astro/site/build-archives}:/astro/build-archives
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives
       - ${STATIC_SERVER_SITE_DIR}:/shared/static
     networks:
       - abcnorio_net_internal
