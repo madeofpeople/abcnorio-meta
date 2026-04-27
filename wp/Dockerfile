@@ -31,4 +31,4 @@ RUN curl -o /bin/wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-
     chmod +x /bin/wp-cli.phar && \
     ln -s /bin/wp-cli.phar /bin/wp
 
-CMD ["sh", "-lc", "umask 0002 && mkdir -p /app/web/app/cache/acorn/framework/views /app/web/app/cache/acorn /astro/build-archives /shared/static/dev /shared/static/staging /shared/static/prod && chown -R ${APP_USER}:${APP_USER} /app/web/app/cache/acorn && chmod -R ug+rwX /app/web/app/cache/acorn && chgrp -R ${SHARED_GID} /astro/build-archives /shared/static && find /astro/build-archives /shared/static -type d -exec chmod 2775 {} + && find /astro/build-archives /shared/static -type f -exec chmod 664 {} + && exec su -s /bin/sh -c 'umask 0002 && frankenphp run --config /etc/caddy/Caddyfile --resume=false' ${APP_USER}"]
+CMD ["sh", "-lc", "umask 0002 && mkdir -p /app/web/app/cache/acorn/framework/views /app/web/app/cache/acorn && chown -R ${APP_USER}:${APP_USER} /app/web/app/cache/acorn && chmod -R ug+rwX /app/web/app/cache/acorn && exec su -s /bin/sh -c 'umask 0002 && frankenphp run --config /etc/caddy/Caddyfile --resume=false' ${APP_USER}"]

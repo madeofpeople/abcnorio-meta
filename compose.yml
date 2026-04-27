@@ -86,7 +86,7 @@ services:
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
     command: >
-      bash -lc "umask 0002 && cd /orchestrator && npm install && node index.mjs"
+      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /astro-site/build-archives && cd /orchestrator && npm install && node index.mjs"
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/
       - ${ASTRO_SITE_DIR}:/astro-site/
@@ -98,7 +98,7 @@ services:
   cms_staging:
     build: 
       context: ${STAGING_HOST_ROOT}
-      dockerfile: Dockerfile
+      dockerfile: ../Dockerfile
       args:
         USER: ${STAGING_USER}
         SHARED_GID: ${ARTIFACT_SHARED_GID}
@@ -137,18 +137,17 @@ services:
     restart: always
     volumes:
       - ${STAGING_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
-      - ${STAGING_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
+      - ${STAGING_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress:ro
       - ${STAGING_HOST_ROOT}bedrock:/app
-      - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
-      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives
-      - ${STATIC_SERVER_SITE_DIR}:/shared/static
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
+      - ${STATIC_SERVER_SITE_DIR}:/shared/static:ro
     networks:
       - abcnorio_net_deploy
       - abcnorio_net_internal
   cms_dev:
     build: 
       context: ${DEV_HOST_ROOT}
-      dockerfile: Dockerfile
+      dockerfile: ../Dockerfile
       args:
         USER: ${DEV_USER}
         SHARED_GID: ${ARTIFACT_SHARED_GID}
@@ -191,9 +190,8 @@ services:
       - ${DEV_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress
       - ${DEV_HOST_ROOT}bedrock:/app
       - ${ABCNORIO_FUNC_HOST_DIR}:/app/packages/abcnorio-func
-      - ${DEV_HOST_ROOT}abcnorio-migrate:/abcnorio-migrate
-      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives
-      - ${STATIC_SERVER_SITE_DIR}:/shared/static
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
+      - ${STATIC_SERVER_SITE_DIR}:/shared/static:ro
     networks:
       - abcnorio_net_deploy
       - abcnorio_net_internal
