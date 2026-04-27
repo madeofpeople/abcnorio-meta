@@ -94,7 +94,7 @@ services:
     depends_on:
       - redis
     networks:
-      - abcnorio_net_internal
+      - abcnorio_net_deploy
   cms_staging:
     build: 
       context: ${STAGING_HOST_ROOT}
@@ -143,6 +143,7 @@ services:
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives
       - ${STATIC_SERVER_SITE_DIR}:/shared/static
     networks:
+      - abcnorio_net_deploy
       - abcnorio_net_internal
   cms_dev:
     build: 
@@ -194,6 +195,7 @@ services:
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives
       - ${STATIC_SERVER_SITE_DIR}:/shared/static
     networks:
+      - abcnorio_net_deploy
       - abcnorio_net_internal
   redis:
     image: redis:7.4-alpine
@@ -206,6 +208,7 @@ services:
       --save ""
       --appendonly no
     networks:
+      - abcnorio_net_deploy
       - abcnorio_net_internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -244,6 +247,8 @@ volumes:
   web_data: {}
   web_config: {}
 networks:
+  abcnorio_net_deploy:
+    name: abcnorio_net_deploy
   abcnorio_net_internal:
     name: abcnorio_net_internal
     external: true
