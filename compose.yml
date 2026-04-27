@@ -18,12 +18,12 @@ services:
       context: ${ASTRO_HOST_ROOT}
       dockerfile: Dockerfile
       args:
-        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+        SHARED_GID: ${ARTIFACT_SHARED_GID}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: astro
     user: node
     group_add:
-      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      - ${ARTIFACT_SHARED_GROUP}
     restart: always
     env_file:
       - ${ASTRO_SITE_DIR}/runtime.env
@@ -39,8 +39,8 @@ services:
       DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
       STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
@@ -67,21 +67,21 @@ services:
       context: ${ASTRO_HOST_ROOT}
       dockerfile: Dockerfile
       args:
-        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+        SHARED_GID: ${ARTIFACT_SHARED_GID}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: deploy-orchestrator
     user: node
     group_add:
-      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      - ${ARTIFACT_SHARED_GROUP}
     restart: always
     env_file:
+      - ${ASTRO_SITE_DIR}/.env
       - ${ORCHESTRATOR_HOST_DIR}/.env
     environment:
-      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       ASTRO_SITE_ROOT: /astro-site
       MODE: ${DEV_MODE:-development}
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
@@ -101,11 +101,11 @@ services:
       dockerfile: Dockerfile
       args:
         USER: ${STAGING_USER}
-        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+        SHARED_GID: ${ARTIFACT_SHARED_GID}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_staging
     group_add:
-      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      - ${ARTIFACT_SHARED_GROUP}
     ports:
       - 127.0.0.1:8100:80
     env_file:
@@ -115,8 +115,8 @@ services:
       ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://deploy-orchestrator:4011}
       WP_SAVE_TRIGGER_QUEUE_ENABLED: ${WP_SAVE_TRIGGER_QUEUE_ENABLED:-0}
       WP_SAVE_TRIGGER_TARGET: ${WP_SAVE_TRIGGER_TARGET:-}
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
@@ -150,11 +150,11 @@ services:
       dockerfile: Dockerfile
       args:
         USER: ${DEV_USER}
-        SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+        SHARED_GID: ${ARTIFACT_SHARED_GID}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_dev
     group_add:
-      - ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      - ${ARTIFACT_SHARED_GROUP}
     ports:
       - 127.0.0.1:8101:80
     env_file:
@@ -164,8 +164,8 @@ services:
       ASTRO_BUILD_TRIGGER_URL: ${ASTRO_BUILD_TRIGGER_URL:-http://deploy-orchestrator:4011}
       WP_SAVE_TRIGGER_QUEUE_ENABLED: ${WP_SAVE_TRIGGER_QUEUE_ENABLED:-0}
       WP_SAVE_TRIGGER_TARGET: ${WP_SAVE_TRIGGER_TARGET:-}
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID:-2000}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP:-abcnorio}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
