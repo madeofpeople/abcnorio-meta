@@ -3,9 +3,12 @@ services:
     image: caddy:2.11.2-alpine
     container_name: proxy
     restart: always
+    mem_limit: 128m
     ports:
       - 80:80
       - 443:443
+    environment:
+      DOCS_DOMAIN: ${DOCS_DOMAIN}
     volumes:
       - ${PROXY_CADDYFILE}:/etc/caddy/Caddyfile
       - proxy_data:/data
@@ -22,9 +25,8 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: astro
     user: node
-    group_add:
-      - ${ARTIFACT_SHARED_GROUP}
     restart: always
+    mem_limit: 600m
     environment:
       DEV_CMS: ${DEV_CMS}
       STAGING_CMS: ${STAGING_CMS}
@@ -38,17 +40,10 @@ services:
       STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
       PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
-      DEV_BUILD_PATH: /shared/static/dev
-      STAGING_BUILD_PATH: /shared/static/staging
-      PRODUCTION_BUILD_PATH: /shared/static/prod
-      PREVIEW_BUILD_PATH: /shared/static/preview
     ports: 
       - 127.0.0.1:3033:3033
     volumes:
       - ${ASTRO_SITE_DIR}:/app/
-      - ${STATIC_SERVER_SITE_DIR}:/shared/static/
     networks:
       - abcnorio_net_internal
   astro-staging:
@@ -60,9 +55,8 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: astro-staging
     user: node
-    group_add:
-      - ${ARTIFACT_SHARED_GROUP}
     restart: always
+    mem_limit: 600m
     environment:
       DEV_CMS: ${DEV_CMS}
       STAGING_CMS: ${STAGING_CMS}
@@ -76,23 +70,27 @@ services:
       STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
       PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
-      DEV_BUILD_PATH: /shared/static/dev
-      STAGING_BUILD_PATH: /shared/static/staging
-      PRODUCTION_BUILD_PATH: /shared/static/prod
-      PREVIEW_BUILD_PATH: /shared/static/preview
     ports:
       - 127.0.0.1:3034:3033
     volumes:
-      - ${ASTRO_SITE_DIR}:/app/
-      - ${STATIC_SERVER_SITE_DIR}:/shared/static/
+      - ${ASTRO_STAGING_SITE_DIR}:/app/
+    depends_on:
+      - deploy-orchestrator
     networks:
       - abcnorio_net_internal
+  docs:
+    build:
+      context: ${DOCS_HOST_ROOT}
+      dockerfile: Dockerfile
+    container_name: docs
+    mem_limit: 600m
+    volumes:
+      - ${STATIC_SERVER_SITE_DIR}docs:/app/dist
   web:
     image: caddy:2.11-alpine
     container_name: web
     restart: always
+    mem_limit: 128m
     volumes:
       - ${STATIC_SERVER_CADDYFILE}:/etc/caddy/Caddyfile
       - ${STATIC_SERVER_SITE_DIR}:/srv/
@@ -109,6 +107,7 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: deploy-orchestrator
     user: node
+    mem_limit: 256m
     group_add:
       - ${ARTIFACT_SHARED_GROUP}
     restart: always
@@ -117,6 +116,7 @@ services:
       - ${ORCHESTRATOR_HOST_DIR}/.env
     environment:
       ASTRO_SITE_ROOT: /astro-site
+      ASTRO_STAGING_SITE_ROOT: /staging-site
       MODE: ${DEV_MODE:-development}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
@@ -129,6 +129,7 @@ services:
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/
       - ${ASTRO_SITE_DIR}:/astro-site/
+      - ${ASTRO_STAGING_SITE_DIR}:/staging-site/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
     depends_on:
       - redis
@@ -143,8 +144,7 @@ services:
         SHARED_GID: ${ARTIFACT_SHARED_GID}
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_staging
-    group_add:
-      - ${ARTIFACT_SHARED_GROUP}
+    mem_limit: 512m
     ports:
       - 127.0.0.1:8100:80
     env_file:
@@ -153,13 +153,9 @@ services:
     environment:
       HEADLESS_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
+      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       WP_REDIS_PREFIX: staging
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
-      DEV_BUILD_PATH: /shared/static/dev
-      STAGING_BUILD_PATH: /shared/static/staging
-      PRODUCTION_BUILD_PATH: /shared/static/prod
-      PREVIEW_BUILD_PATH: /shared/static/preview
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -180,7 +176,6 @@ services:
       - ${STAGING_HOST_ROOT}logs/wordpress:/tmp/logs/wordpress:ro
       - ${STAGING_HOST_ROOT}bedrock:/app
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
-      - ${STATIC_SERVER_SITE_DIR}:/shared/static:ro
     networks:
       - abcnorio_net_deploy
       - abcnorio_net_internal
@@ -193,8 +188,7 @@ services:
         SHARED_GID: ${ARTIFACT_SHARED_GID}
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_dev
-    group_add:
-      - ${ARTIFACT_SHARED_GROUP}
+    mem_limit: 512m
     ports:
       - 127.0.0.1:8101:80
     env_file:
@@ -203,13 +197,9 @@ services:
     environment:
       HEADLESS_FRONTEND_URL: ${DEV_FRONTEND_URL}
       PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
+      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       WP_REDIS_PREFIX: dev
-      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
-      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
-      DEV_BUILD_PATH: /shared/static/dev
-      STAGING_BUILD_PATH: /shared/static/staging
-      PRODUCTION_BUILD_PATH: /shared/static/prod
-      PREVIEW_BUILD_PATH: /shared/static/preview
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -232,7 +222,6 @@ services:
       - ${DEV_HOST_ROOT}bedrock:/app
       - ${ABCNORIO_FUNC_HOST_DIR}:/app/packages/abcnorio-func
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
-      - ${STATIC_SERVER_SITE_DIR}:/shared/static:ro
     networks:
       - abcnorio_net_deploy
       - abcnorio_net_internal
@@ -240,6 +229,7 @@ services:
     image: redis:7.4-alpine
     container_name: redis
     restart: always
+    mem_limit: 128m
     command: >
       redis-server
       --maxmemory 64mb
@@ -258,6 +248,7 @@ services:
     image: mariadb:11.4
     container_name: mariadb
     restart: always
+    mem_limit: 512m
     ports:
       - 127.0.0.1:${LOCAL_DB_PORT:-3309}:3306
     environment:

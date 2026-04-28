@@ -38,6 +38,13 @@
 		encode zstd gzip
 	}
 
+	@docs host docs.itztlacoliuhqui.org
+	handle @docs {
+		root /srv/docs/
+		file_server
+		encode zstd gzip
+	}
+
 	handle_errors {
 		rewrite * /404.html
 		file_server

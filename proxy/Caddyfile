@@ -90,3 +90,11 @@ preview.itztlacoliuhqui.org {
 
     reverse_proxy web:80
 }
+
+# Starlight docs
+{$DOCS_DOMAIN} {
+    @health path /_healthz
+    respond @health "ok:docs" 200
+
+    reverse_proxy web:80
+}
