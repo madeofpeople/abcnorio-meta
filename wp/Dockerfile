@@ -18,6 +18,11 @@ RUN install-php-extensions \
 
 COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer
 
+COPY --from=node:22-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:22-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
 RUN existing_group="$(getent group ${SHARED_GID} | cut -d: -f1 || true)" \
     && if [ -n "${existing_group}" ] && [ "${existing_group}" != "${SHARED_GROUP}" ]; then \
         groupmod -n ${SHARED_GROUP} "${existing_group}"; \
