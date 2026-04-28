@@ -32,9 +32,9 @@ DEV_FRONTEND_URL=$(get_env DEV_FRONTEND_URL)
 
 echo "Dumping staging DB and importing to dev..."
 docker exec mariadb \
-  mysqldump -u"$STAGING_DB_USER" -p"$STAGING_DB_PASSWORD" "$STAGING_DB_NAME" \
+  mariadb-dump -u"$STAGING_DB_USER" -p"$STAGING_DB_PASSWORD" "$STAGING_DB_NAME" \
   | docker exec -i mariadb \
-    mysql -u"$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME"
+    mariadb -u"$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME"
 
 echo "Rewriting WP CMS URLs ($STAGING_CMS → $DEV_CMS)..."
 docker exec wp_dev \
