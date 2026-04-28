@@ -39,13 +39,55 @@ services:
       DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
       STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
       PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
+      PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
+      PREVIEW_BUILD_PATH: /shared/static/preview
     ports: 
       - 127.0.0.1:3033:3033
+    volumes:
+      - ${ASTRO_SITE_DIR}:/app/
+      - ${STATIC_SERVER_SITE_DIR}:/shared/static/
+    networks:
+      - abcnorio_net_internal
+  astro-staging:
+    build:
+      context: ${ASTRO_HOST_ROOT}
+      dockerfile: Dockerfile
+      args:
+        SHARED_GID: ${ARTIFACT_SHARED_GID}
+        SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
+    container_name: astro-staging
+    user: node
+    group_add:
+      - ${ARTIFACT_SHARED_GROUP}
+    restart: always
+    env_file:
+      - ${ASTRO_SITE_DIR}/runtime.env
+    environment:
+      DEV_CMS: ${DEV_CMS}
+      STAGING_CMS: ${STAGING_CMS}
+      MODE: ${STAGING_MODE:-staging}
+      MENU_ENDPOINT: ${MENU_ENDPOINT}
+      REST_ENDPOINT: ${REST_ENDPOINT}
+      BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
+      DEV_SEARCH_API: ${DEV_SEARCH_API}
+      STAGING_SEARCH_API: ${STAGING_SEARCH_API}
+      DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
+      PRODUCTION_FRONTEND_URL: ${PRODUCTION_FRONTEND_URL}
+      PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
+      ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
+      ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
+      DEV_BUILD_PATH: /shared/static/dev
+      STAGING_BUILD_PATH: /shared/static/staging
+      PRODUCTION_BUILD_PATH: /shared/static/prod
+      PREVIEW_BUILD_PATH: /shared/static/preview
+    ports:
+      - 127.0.0.1:3034:3033
     volumes:
       - ${ASTRO_SITE_DIR}:/app/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
@@ -85,8 +127,9 @@ services:
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
+      PREVIEW_BUILD_PATH: /shared/static/preview
     command: >
-      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /astro-site/build-archives && cd /orchestrator && npm install && node index.mjs"
+      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/preview /astro-site/build-archives && cd /orchestrator && npm install && node index.mjs"
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/
       - ${ASTRO_SITE_DIR}:/astro-site/
@@ -113,12 +156,14 @@ services:
       - ./wp/staging.env
     environment:
       HEADLESS_FRONTEND_URL: ${STAGING_FRONTEND_URL}
+      PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
       WP_REDIS_PREFIX: staging
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
+      PREVIEW_BUILD_PATH: /shared/static/preview
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -161,12 +206,14 @@ services:
       - ./wp/dev.env
     environment:
       HEADLESS_FRONTEND_URL: ${DEV_FRONTEND_URL}
+      PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
       WP_REDIS_PREFIX: dev
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
       DEV_BUILD_PATH: /shared/static/dev
       STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
+      PREVIEW_BUILD_PATH: /shared/static/preview
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {

@@ -8,6 +8,7 @@
 	@prod host abcnorio.itztlacoliuhqui.org
 	@dev host dev.itztlacoliuhqui.org
 	@staging host staging.itztlacoliuhqui.org
+	@preview host preview.itztlacoliuhqui.org
 
 	handle @prod {
 		root /srv/prod/client/
@@ -25,6 +26,13 @@
 
 	handle @staging {
 		root /srv/staging/client/
+		file_server
+		templates
+		encode zstd gzip
+	}
+
+	handle @preview {
+		root /srv/preview/client/
 		file_server
 		templates
 		encode zstd gzip

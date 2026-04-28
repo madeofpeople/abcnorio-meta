@@ -64,7 +64,7 @@ abcwpdev.itztlacoliuhqui.org {
     reverse_proxy wp_dev:80
 }
 
-# Static Site - dev
+# Static Site - dev (SSR via Astro dev server for instant previews)
 dev.itztlacoliuhqui.org {
     @health path /_healthz
     respond @health "ok:dev" 200
@@ -77,8 +77,16 @@ staging.itztlacoliuhqui.org {
     @health path /_healthz
     respond @health "ok:staging" 200
 
+    reverse_proxy astro-staging:3033
+}
+
+# Static Site - preview
+preview.itztlacoliuhqui.org {
+    @health path /_healthz
+    respond @health "ok:preview" 200
+
     @search path /search/api /search/api/*
-    reverse_proxy @search astro:3033
+    reverse_proxy @search astro-staging:3033
 
     reverse_proxy web:80
 }
