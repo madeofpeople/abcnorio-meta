@@ -1,51 +1,35 @@
+# Secrets
+.env
+*.env
+
+# temporary assets, package managers, build artefacts, etc
 tmp
-cache
 node_modules/
 vendor/
 backups/
 build/
 dist/
+# Static site builds to be served via caddy 
+web/static/*
+# caches, notes, and IDE files
+.editorconfig
+.npm
+cache
+.eslintcache
+.stylelintcache
 .notes/
 .vscode/
 .github/
-
-# Static site builds to be served via caddy 
-# Gets populated by separate workflow
-web/static/*
 .astro
 
-#
-# sources directory, holds 
-sources/
-
-# Secrets
-.env
-*.env
-
-# Wordpress
-wp/**/backups/
-wp/**/bedrock/
-wp/**/logs/
-
-#mac crap
-.DS_Store
-
-#logs
+# logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
 
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-#FrankenWP
-.tmp
-.air.toml
+# wp
+wp/**/backups/
+wp/**/logs/
+wp/dev/bedrock/
+wp/staging/bedrock/
+#mac crap
+.DS_Store
