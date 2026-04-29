@@ -26,6 +26,12 @@ services:
     container_name: astro
     user: node
     restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     mem_limit: 600m
     environment:
       DEV_CMS: ${DEV_CMS}
@@ -57,6 +63,12 @@ services:
     user: node
     restart: always
     mem_limit: 600m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       DEV_CMS: ${DEV_CMS}
       STAGING_CMS: ${STAGING_CMS}
@@ -91,6 +103,12 @@ services:
     container_name: web
     restart: always
     mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     volumes:
       - ${STATIC_SERVER_CADDYFILE}:/etc/caddy/Caddyfile
       - ${STATIC_SERVER_SITE_DIR}:/srv/
@@ -111,6 +129,12 @@ services:
     group_add:
       - ${ARTIFACT_SHARED_GROUP}
     restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4011/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     env_file:
       - ${ASTRO_SITE_DIR}/.env
       - ${ORCHESTRATOR_HOST_DIR}/.env
@@ -149,6 +173,12 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_staging
     mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost/wp-json/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - 127.0.0.1:8100:80
     env_file:
@@ -193,6 +223,12 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_dev
     mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost/wp-json/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - 127.0.0.1:8101:80
     env_file:
@@ -253,6 +289,12 @@ services:
     container_name: mariadb
     restart: always
     mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     ports:
       - 127.0.0.1:${LOCAL_DB_PORT:-3309}:3306
     environment:
