@@ -58,6 +58,7 @@
     "wp-plugin/advanced-custom-fields": "^6.7",
     "wp-plugin/login-as-user": "^1.6",
     "wp-plugin/redis-cache": "^2.7",
+    "wp-plugin/wp-nested-pages": "^3.2",
     "wp-theme/twentytwentyfive": "^1.0"
   },
   "require-dev": {

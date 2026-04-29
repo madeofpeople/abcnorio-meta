@@ -22,8 +22,8 @@ bootstrap_bedrock() {
     echo "[${env}] scaffolding bedrock from roots/bedrock..."
     composer create-project roots/bedrock "$bedrock_dir" --no-install --no-interaction
 
-    echo "[${env}] applying project composer.json..."
-    cp "$seed" "$bedrock_dir/composer.json"
+    echo "[${env}] linking project composer.json..."
+    ln -sf "$seed" "$bedrock_dir/composer.json"
 
     if [ "$env" = "dev" ]; then
         echo "[${env}] symlinking abcnorio-func into packages/..."
