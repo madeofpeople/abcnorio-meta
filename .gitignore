@@ -33,3 +33,6 @@ wp/dev/bedrock/
 wp/staging/bedrock/
 #mac crap
 .DS_Store
+
+#trivy
+trivy.yaml
