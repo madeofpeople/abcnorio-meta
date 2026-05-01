@@ -62,7 +62,8 @@ services:
     container_name: astro-staging
     user: node
     restart: always
-    mem_limit: 600m
+    mem_limit: 1024m
+    command: ["bash", "-c", "umask 0002 && cd /app && npm install && npm run docker-staging"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
       interval: 30s
@@ -125,12 +126,12 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: deploy-orchestrator
     user: node
-    mem_limit: 256m
+    mem_limit: 1024m
     group_add:
       - ${ARTIFACT_SHARED_GROUP}
     restart: always
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4011/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:4011/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -150,6 +151,14 @@ services:
       PREVIEW_BUILD_PATH: /shared/static/preview
       STAGING_UPLOADS_DIR: /staging-uploads
       DEV_UPLOADS_DIR: /dev-uploads
+      STAGING_DB_HOST: mariadb
+      STAGING_DB_NAME: ${STAGING_DB_NAME}
+      STAGING_DB_USER: ${STAGING_DB_USER}
+      STAGING_DB_PASSWORD: ${STAGING_DB_PASSWORD}
+      DEV_DB_HOST: mariadb
+      DEV_DB_NAME: ${DEV_DB_NAME}
+      DEV_DB_USER: ${DEV_DB_USER}
+      DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
     command: >
       bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/preview /astro-site/build-archives && cd /orchestrator && npm install && node index.mjs"
     volumes:
@@ -157,12 +166,13 @@ services:
       - ${ASTRO_SITE_DIR}:/astro-site/
       - ${ASTRO_STAGING_SITE_DIR}:/staging-site/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
-      - ${STAGING_HOST_ROOT}bedrock/web/app/uploads:/staging-uploads:ro
+      - ${STAGING_HOST_ROOT}bedrock/web/app/uploads:/staging-uploads
       - ${DEV_HOST_ROOT}bedrock/web/app/uploads:/dev-uploads
     depends_on:
-      - redis
+      mariadb:
+        condition: service_healthy
     networks:
-      - abcnorio_net_deploy
+      - abcnorio_net_orchestrator
   cms_staging:
     build: 
       context: ${STAGING_HOST_ROOT}
@@ -173,6 +183,9 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_staging
     mem_limit: 512m
+    depends_on:
+      mariadb:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost/wp-json/"]
       interval: 30s
@@ -189,7 +202,6 @@ services:
       PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
       DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
       STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
-      WP_REDIS_PREFIX: staging
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -203,6 +215,9 @@ services:
           php_ini opcache.max_accelerated_files 10000
           php_ini opcache.validate_timestamps 0
           php_ini opcache.interned_strings_buffer 16
+          php_ini opcache.jit tracing
+          php_ini opcache.jit_buffer_size 32M
+          php_ini memory_limit 256M
         }
     restart: always
     volumes:
@@ -211,7 +226,7 @@ services:
       - ${STAGING_HOST_ROOT}bedrock:/app
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
-      - abcnorio_net_deploy
+      - abcnorio_net_orchestrator
       - abcnorio_net_internal
   cms_dev:
     build: 
@@ -223,6 +238,9 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: wp_dev
     mem_limit: 512m
+    depends_on:
+      mariadb:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost/wp-json/"]
       interval: 30s
@@ -239,7 +257,6 @@ services:
       PREVIEW_FRONTEND_URL: ${PREVIEW_FRONTEND_URL}
       DEV_FRONTEND_URL: ${DEV_FRONTEND_URL}
       STAGING_FRONTEND_URL: ${STAGING_FRONTEND_URL}
-      WP_REDIS_PREFIX: dev
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -254,6 +271,9 @@ services:
           php_ini opcache.validate_timestamps 1
           php_ini opcache.revalidate_freq 0
           php_ini opcache.interned_strings_buffer 16
+          php_ini opcache.jit function
+          php_ini opcache.jit_buffer_size 32M
+          php_ini memory_limit 256M
         }
     restart: always
     volumes:
@@ -263,27 +283,8 @@ services:
       - ${ABCNORIO_FUNC_HOST_DIR}:/app/packages/abcnorio-func
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
-      - abcnorio_net_deploy
+      - abcnorio_net_orchestrator
       - abcnorio_net_internal
-  redis:
-    image: redis:7.4-alpine
-    container_name: redis
-    restart: always
-    mem_limit: 128m
-    command: >
-      redis-server
-      --maxmemory 64mb
-      --maxmemory-policy noeviction
-      --save ""
-      --appendonly no
-    networks:
-      - abcnorio_net_deploy
-      - abcnorio_net_internal
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
   mariadb:
     image: mariadb:11.4
     container_name: mariadb
@@ -316,6 +317,7 @@ services:
       - ${WP_SQL_INIT_SCRIPT:-/home/madeofpeople/abcnorio.org/wp/sql/001-dev-staging-dbs.sh}:/docker-entrypoint-initdb.d/001-dev-staging-dbs.sh:ro
     networks:
       - abcnorio_net_internal
+      - abcnorio_net_orchestrator
 volumes:
   abcwp_mardiadb_vol: {}
   proxy_data: {}
@@ -323,8 +325,8 @@ volumes:
   web_data: {}
   web_config: {}
 networks:
-  abcnorio_net_deploy:
-    name: abcnorio_net_deploy
+  abcnorio_net_orchestrator:
+    name: abcnorio_net_orchestrator
   abcnorio_net_internal:
     name: abcnorio_net_internal
     external: true
