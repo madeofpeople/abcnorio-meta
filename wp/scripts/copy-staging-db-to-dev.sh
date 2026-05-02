@@ -48,4 +48,9 @@ docker exec wp_dev \
     "${STAGING_FRONTEND_URL%/}" "${DEV_FRONTEND_URL%/}" \
     --all-tables --allow-root --quiet
 
+echo "Applying performance indexes to dev DB..."
+docker exec mariadb \
+  mariadb -u"$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" \
+  -e "CREATE INDEX IF NOT EXISTS idx_postmeta_key_value ON wp_postmeta (meta_key(191), meta_value(20));"
+
 echo "Done. Dev WordPress now has staging content."

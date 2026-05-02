@@ -145,8 +145,6 @@ services:
       MODE: ${DEV_MODE:-development}
       ARTIFACT_SHARED_GID: ${ARTIFACT_SHARED_GID}
       ARTIFACT_SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
-      DEV_BUILD_PATH: /shared/static/dev
-      STAGING_BUILD_PATH: /shared/static/staging
       PRODUCTION_BUILD_PATH: /shared/static/prod
       PREVIEW_BUILD_PATH: /shared/static/preview
       STAGING_UPLOADS_DIR: /staging-uploads
