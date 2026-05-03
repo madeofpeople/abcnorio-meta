@@ -25,6 +25,8 @@ Inside meta repo (`~/abcnorio.org/abcnorio-meta`):
 - `wp/dev/` (Bedrock dev environment)
 - `wp/staging/` (Bedrock staging environment)
 - `wp/runtime.env`, `wp/dev.env`, `wp/staging.env`
+- `scripts/` (admin shell scripts)
+- `justfile` (task runner — run `just --list` for all recipes)
 
 ## Runtime Topology
 
@@ -32,14 +34,16 @@ Core services:
 - `proxy` (public edge)
 - `web` (static Caddy)
 - `astro` (Astro app)
+- `astro-staging` (staging Astro app)
+- `docs` (Starlight docs)
 - `deploy-orchestrator` (build queue worker/API)
-- `cms_dev` / `cms_staging` (WordPress)
+- `wp_dev` / `wp_staging` (WordPress/FrankenPHP)
 - `mariadb`
-- `redis`
 
 Network policy:
 - `abcnorio_net_web` (external): only `proxy`, `web`
-- `abcnorio_net_internal` (external): app/backend services (`astro`, `deploy-orchestrator`, `cms_dev`, `cms_staging`, `mariadb`, `redis`) plus `proxy`
+- `abcnorio_net_internal` (external): app/backend services (`astro`, `astro-staging`, `deploy-orchestrator`, `wp_dev`, `wp_staging`, `mariadb`) plus `proxy`
+- `abcnorio_net_orchestrator` (internal): `deploy-orchestrator` ↔ `astro`, `astro-staging`
 
 ## Plugin Development Model
 
@@ -57,11 +61,26 @@ Network policy:
 
 ## Quick Commands
 
-Bring stack up:
-- `docker compose up -d`
+Requires [just](https://github.com/casey/just). Run `just --list` for all recipes.
 
-Rebuild/restart selected services:
-- `docker compose up -d --build deploy-orchestrator cms_dev cms_staging`
+```sh
+just up                        # bring stack up
+just down                      # bring stack down
+just rebuild <service>         # rebuild + restart a service
+just logs [service]            # tail logs
 
-Trigger orchestrated build:
-- `docker exec deploy-orchestrator sh -lc "curl -s -X POST http://localhost:4011/trigger -H 'Authorization: Bearer $ASTRO_BUILD_TRIGGER_SECRET' -H 'Content-Type: application/json' -d '{\"target\":\"staging\",\"source\":\"manual\"}'"`
+just wp-dev cache flush        # WP-CLI in dev
+just wp-staging plugin list    # WP-CLI in staging
+
+just build-staging             # trigger staging build
+just build-production          # trigger production build
+
+just db-to-staging             # sync DB+media dev → staging
+just db-to-dev                 # sync DB+media staging → dev
+just dump-db staging           # dump staging DB to backups/mariadb/
+
+just db-shell dev              # open MariaDB shell
+```
+
+For user management and composer ops: `bash scripts/wp-admin.sh <function> [args]`
+For initial bedrock setup: `bash scripts/bootstrap.sh`
