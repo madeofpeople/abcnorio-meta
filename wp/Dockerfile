@@ -7,6 +7,7 @@ ENV SHARED_GID=${SHARED_GID}
 ENV SHARED_GROUP=${SHARED_GROUP}
 
 RUN install-php-extensions \
+    apcu \
     bcmath \
     mysqli \
     gd \
