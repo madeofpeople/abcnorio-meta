@@ -15,6 +15,14 @@ up:
 down:
     docker compose down
 
+# Start dev-only services (astro + wp_dev) for active development
+dev-up:
+    docker compose up -d astro cms_dev
+
+# Stop dev-only services to reclaim ~734 MiB when not developing
+dev-down:
+    docker compose stop astro cms_dev
+
 # Rebuild and restart specific services (space-separated)
 rebuild *services:
     docker compose up -d --build {{ services }}
@@ -41,15 +49,15 @@ wp-staging *args:
 
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
-# Trigger a staging build
-build-staging:
-    bash scripts/trigger-build.sh staging full
+# Trigger a preview build (builds from staging content)
+build-preview:
+    bash scripts/trigger-build.sh preview full
 
 # Trigger a production build
 build-production:
     bash scripts/trigger-build.sh production full
 
-# Trigger a scoped build   e.g. just build-scoped staging events
+# Trigger a scoped build   e.g. just build-scoped preview events
 build-scoped target scope:
     bash scripts/trigger-build.sh {{ target }} {{ scope }}
 
@@ -94,6 +102,18 @@ composer env *args:
     docker exec cms_{{ env }} composer {{ args }} --working-dir=/app
 
 # ── Plugin ─────────────────────────────────────────────────────────────────────
+
+# Build and deploy the docs site to web/static/docs
+docs:
+    #!/usr/bin/env bash
+    set -e
+    source .env
+    mkdir -p "${STATIC_SERVER_SITE_DIR}docs"
+    image=$(docker build -q "${DOCS_HOST_ROOT}")
+    docker run --rm \
+        -v "${STATIC_SERVER_SITE_DIR}docs:/app/dist" \
+        "$image"
+    echo "Docs deployed → ${STATIC_SERVER_SITE_DIR}docs"
 
 # Build the abcnorio-func plugin JS assets
 plugin-build:
