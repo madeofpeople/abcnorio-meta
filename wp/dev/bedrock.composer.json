@@ -52,7 +52,6 @@
     "automattic/vip-block-data-api": "dev-trunk",
     "composer/installers": "^2.2",
     "oscarotero/env": "^2.1",
-    "roots/acorn": "^5.1",
     "roots/bedrock-autoloader": "^1.0",
     "roots/bedrock-disallow-indexing": "^2.0",
     "roots/wordpress": "6.9.4",
