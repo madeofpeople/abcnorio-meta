@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Trigger an Astro build via the deploy orchestrator.
 # Usage: scripts/trigger-build.sh <target> [scope]
-#   target: staging | production | preview
+#   target: production | preview
 #   scope:  full (default) | events | <page-slug>
 # Requires ASTRO_BUILD_TRIGGER_SECRET in environment or .env
 
@@ -13,7 +13,7 @@ SCOPE="${2:-full}"
 # Load secret from astro/site/.env if not already set
 if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  ENV_FILE="$SCRIPT_DIR/../../../abcnorio-astro/site/.env"
+  ENV_FILE="$SCRIPT_DIR/../../abcnorio-astro/site/.env"
   if [[ -f "$ENV_FILE" ]]; then
     ASTRO_BUILD_TRIGGER_SECRET="$(grep '^ASTRO_BUILD_TRIGGER_SECRET=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")"
   fi
@@ -22,8 +22,9 @@ fi
 : "${ASTRO_BUILD_TRIGGER_SECRET:?ASTRO_BUILD_TRIGGER_SECRET not set}"
 
 ORCHESTRATOR_PORT="${ORCHESTRATOR_PORT:-4011}"
+ORCHESTRATOR_CONTAINER="${ORCHESTRATOR_CONTAINER:-deploy-orchestrator}"
 
-curl -sf \
+docker exec "$ORCHESTRATOR_CONTAINER" curl -sf \
   -X POST "http://localhost:${ORCHESTRATOR_PORT}/trigger" \
   -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
   -H "Content-Type: application/json" \
