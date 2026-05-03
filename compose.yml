@@ -62,7 +62,7 @@ services:
     container_name: astro-staging
     user: node
     restart: always
-    mem_limit: 1024m
+    mem_limit: 750m
     command: ["bash", "-c", "umask 0002 && cd /app && npm install && npm run docker-staging"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
@@ -91,14 +91,6 @@ services:
       - deploy-orchestrator
     networks:
       - abcnorio_net_internal
-  docs:
-    build:
-      context: ${DOCS_HOST_ROOT}
-      dockerfile: Dockerfile
-    container_name: docs
-    mem_limit: 600m
-    volumes:
-      - ${STATIC_SERVER_SITE_DIR}docs:/app/dist
   web:
     image: caddy:2.11-alpine
     container_name: web
@@ -126,7 +118,7 @@ services:
         SHARED_GROUP: ${ARTIFACT_SHARED_GROUP}
     container_name: deploy-orchestrator
     user: node
-    mem_limit: 1024m
+    mem_limit: 800m
     group_add:
       - ${ARTIFACT_SHARED_GROUP}
     restart: always
@@ -221,6 +213,7 @@ services:
     volumes:
       - ${STAGING_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${STAGING_HOST_ROOT}bedrock:/app
+      - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
       - abcnorio_net_orchestrator
@@ -276,6 +269,7 @@ services:
     volumes:
       - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${DEV_HOST_ROOT}bedrock:/app
+      - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
       - ${ABCNORIO_FUNC_HOST_DIR}:/app/packages/abcnorio-func
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
@@ -285,7 +279,7 @@ services:
     image: mariadb:11.4
     container_name: mariadb
     restart: always
-    mem_limit: 512m
+    mem_limit: 384m
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
