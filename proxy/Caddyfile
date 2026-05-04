@@ -9,7 +9,7 @@ localhost {
 }
 
 # Static Site - web
-{$DOMAIN_STATIC} {
+{$DOMAIN_PRODUCTION} {
     @health path /_healthz
     respond @health "ok:abcnorio" 200
 
@@ -41,7 +41,7 @@ localhost {
     reverse_proxy wp_staging:80
 
     log {
-        format transform "{common_log}"
+        format json
         output file /var/log/caddy/wp-staging-access.log
     }
 }
@@ -68,7 +68,7 @@ localhost {
     reverse_proxy wp_dev:80
 
     log {
-        format transform "{common_log}"
+        format json
         output file /var/log/caddy/wp-dev-access.log
     }
 

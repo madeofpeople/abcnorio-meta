@@ -24,6 +24,7 @@ Inside abcnorio-meta:
 - `wp/staging/` (Bedrock based wp staging environment)
 - `wp/runtime.env`, `wp/dev.env`, `wp/staging.env`
 - `scripts/` (admin shell scripts)
+- `f2b/fail2ban/jail.local` (fail2ban config — deployed to host by `just setup-fail2ban`)
 - `justfile` (task runner — run `just --list` for all recipes)
 
 ## Runtime Topology
@@ -42,13 +43,16 @@ Internet
    └──▶ wp_staging     (WP admin/REST, staging)       │
                                                       │
 deploy-orchestrator (:4011) ◀── trigger (bearer) ────┘
-   │  └── build queue (in-memory)
+   │  └── build queue (in-memory, 1 at a time)
    │       ├── astro container: npm run build:site
    │       └── web/static/ (bind mount, served by web)
    │
 wp_dev / wp_staging
    ├── MariaDB (shared container, separate DBs)
    └── APCu object cache (in-process, per-container)
+
+Host:
+   └── fail2ban (systemd) — reads Caddy access logs from PROXY_LOG_DIR bind mount
 ```
 
 Networks:
@@ -99,6 +103,8 @@ just db-shell dev                    # open MariaDB shell
 
 just plugin-build                    # build abcnorio-func plugin JS assets
 just plugin-test                     # run PHP tests in the plugin
+
+just setup-fail2ban                  # install fail2ban on host + deploy jail.local
 ```
 
 For user management and composer ops: `bash scripts/wp-admin.sh <function> [args]`

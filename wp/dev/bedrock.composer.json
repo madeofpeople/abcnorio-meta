@@ -58,6 +58,7 @@
     "roots/wp-config": "1.0.0",
     "vlucas/phpdotenv": "^5.5",
     "wp-plugin/advanced-custom-fields": "^6.7",
+    "wp-plugin/fluent-smtp": "^2.2",
     "wp-plugin/login-as-user": "^1.6"
   },
   "require-dev": {

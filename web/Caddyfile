@@ -5,7 +5,7 @@
 }
 
 :80 {
-	@prod host {$DOMAIN_STATIC}
+	@prod host {$DOMAIN_PRODUCTION}
 	@dev host {$DOMAIN_DEV}
 	@staging host {$DOMAIN_STAGING}
 	@preview host {$DOMAIN_PREVIEW}
