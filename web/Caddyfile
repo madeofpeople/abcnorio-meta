@@ -5,10 +5,10 @@
 }
 
 :80 {
-	@prod host abcnorio.itztlacoliuhqui.org
-	@dev host dev.itztlacoliuhqui.org
-	@staging host staging.itztlacoliuhqui.org
-	@preview host preview.itztlacoliuhqui.org
+	@prod host {$DOMAIN_STATIC}
+	@dev host {$DOMAIN_DEV}
+	@staging host {$DOMAIN_STAGING}
+	@preview host {$DOMAIN_PREVIEW}
 
 	handle @prod {
 		root /srv/prod/client/
@@ -38,7 +38,7 @@
 		encode zstd gzip
 	}
 
-	@docs host docs.itztlacoliuhqui.org
+	@docs host {$DOCS_DOMAIN}
 	handle @docs {
 		root /srv/docs/
 		file_server

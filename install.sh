@@ -7,11 +7,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE="$(dirname "$SCRIPT_DIR")"
 
-# Repo URLs — update these if cloning on a new machine
-REPO_ASTRO="git@github.com:YOURORG/abcnorio-astro.git"
-REPO_FUNC="git@github.com:YOURORG/abcnorio-func.git"
-REPO_ORCHESTRATOR="git@github.com:YOURORG/abcnorio-orchestrator.git"
-REPO_DOCS="git@github.com:YOURORG/abcnorio-docs.git"
+# Repo URLs — edit repos.env before running on a new machine
+# shellcheck source=repos.env
+source "$SCRIPT_DIR/repos.env"
 
 # --- 1. Clone sibling repos ---
 echo "==> Cloning sibling repos..."
@@ -39,11 +37,13 @@ copy_sample "$SCRIPT_DIR/wp/staging.env.sample"                      "$SCRIPT_DI
 copy_sample "$WORKSPACE/abcnorio-astro/site/.env.sample"             "$WORKSPACE/abcnorio-astro/site/.env"
 copy_sample "$WORKSPACE/abcnorio-orchestrator/.env.sample"           "$WORKSPACE/abcnorio-orchestrator/.env"
 
-# --- 3. Bootstrap Bedrock ---
-echo "==> Bootstrapping Bedrock..."
-bash "$SCRIPT_DIR/scripts/bootstrap.sh"
+# -- 3. Install rootless docker
+bash "$SCRIPT_DIR/scripts/setup-rootless-docker.sh"
 
-# --- 4. Done — list everything that needs credentials ---
+# -- 4. Install fail2ban
+bash "$SCRIPT_DIR/scripts/setup-fail2ban.sh"
+
+# --- 5. Done — list everything that needs credentials ---
 echo "░▒▓██████▓▒░  ░▒▓███████▓▒░   ░▒▓██████▓▒░                          "
 echo "░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░                        "
 echo "░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░                               "
@@ -78,11 +78,8 @@ echo "  abcnorio-orchestrator/"
 echo "  └── .env                             # Orchestrator: port, manual trigger flag, max backups"
 echo ""
 echo "Then:"
-echo "  just up        # bring the full stack up (requires just: https://github.com/casey/just)"
-echo "  just --list    # see all available recipes"
+echo "  just up                              # bring the full stack up"
+echo "  just --list                          # see all available recipes"
 echo ""
-echo "  If just is not installed:"
-echo "  curl -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin"
-echo "  # add ~/.local/bin to PATH if not already there"
 echo ""
 echo "  # Visit WP_HOME/wp/wp-admin/install.php for each env, or restore a DB backup"

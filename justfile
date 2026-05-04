@@ -5,6 +5,19 @@
 
 set dotenv-load := false
 
+# ── Host setup ────────────────────────────────────────────────────────────────
+
+# Migrate from root Docker to rootless Docker.
+# Installs Docker CE if not present. Safe to re-run.
+setup-rootless-docker:
+    bash scripts/setup-rootless-docker.sh
+
+# Install and configure fail2ban on the host.
+# Deploys f2b/fail2ban/jail.local to /etc/fail2ban/jail.local.
+# Safe to re-run.
+setup-fail2ban:
+    bash scripts/setup-fail2ban.sh
+
 # ── Stack ──────────────────────────────────────────────────────────────────────
 
 # Bring the full stack up (detached)
@@ -105,15 +118,7 @@ composer env *args:
 
 # Build and deploy the docs site to web/static/docs
 docs:
-    #!/usr/bin/env bash
-    set -e
-    source .env
-    mkdir -p "${STATIC_SERVER_SITE_DIR}docs"
-    image=$(docker build -q "${DOCS_HOST_ROOT}")
-    docker run --rm \
-        -v "${STATIC_SERVER_SITE_DIR}docs:/app/dist" \
-        "$image"
-    echo "Docs deployed → ${STATIC_SERVER_SITE_DIR}docs"
+    bash scripts/deploy-docs.sh
 
 # Build the abcnorio-func plugin JS assets
 plugin-build:

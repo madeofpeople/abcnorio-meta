@@ -6,11 +6,10 @@
 
 localhost {
     respond "Hello, World. I don't believe this but it works"
-    log
 }
 
 # Static Site - web
-abcnorio.itztlacoliuhqui.org {
+{$DOMAIN_STATIC} {
     @health path /_healthz
     respond @health "ok:abcnorio" 200
 
@@ -21,7 +20,7 @@ abcnorio.itztlacoliuhqui.org {
 }
 
 # Wordpress - staging
-abcwp.itztlacoliuhqui.org {
+{$DOMAIN_WP_STAGING} {
     @blocked_ips {
         remote_ip 140.213.5.0/24 # this ip tried to hack our service!
     }
@@ -40,10 +39,15 @@ abcwp.itztlacoliuhqui.org {
     redir @wp_login_get_stg_no_query /abcnorio-login 302
 
     reverse_proxy wp_staging:80
+
+    log {
+        format transform "{common_log}"
+        output file /var/log/caddy/wp-staging-access.log
+    }
 }
 
 # Wordpress - dev
-abcwpdev.itztlacoliuhqui.org {
+{$DOMAIN_WP_DEV} {
     @blocked_ips {
         remote_ip 140.213.5.0/24 # this ip tried to hack our service!
     }
@@ -62,10 +66,16 @@ abcwpdev.itztlacoliuhqui.org {
     redir @wp_login_get_dev_no_query /abcnorio-login 302
 
     reverse_proxy wp_dev:80
+
+    log {
+        format transform "{common_log}"
+        output file /var/log/caddy/wp-dev-access.log
+    }
+
 }
 
 # Static Site - dev (SSR via Astro dev server for instant previews)
-dev.itztlacoliuhqui.org {
+{$DOMAIN_DEV} {
     @health path /_healthz
     respond @health "ok:dev" 200
 
@@ -73,7 +83,7 @@ dev.itztlacoliuhqui.org {
 }
 
 # Static Site - staging
-staging.itztlacoliuhqui.org {
+{$DOMAIN_STAGING} {
     @health path /_healthz
     respond @health "ok:staging" 200
 
@@ -81,7 +91,7 @@ staging.itztlacoliuhqui.org {
 }
 
 # Static Site - preview
-preview.itztlacoliuhqui.org {
+{$DOMAIN_PREVIEW} {
     @health path /_healthz
     respond @health "ok:preview" 200
 
