@@ -35,15 +35,34 @@ copy_sample "$SCRIPT_DIR/wp/runtime.env.sample"                      "$SCRIPT_DI
 copy_sample "$SCRIPT_DIR/wp/dev.env.sample"                          "$SCRIPT_DIR/wp/dev.env"
 copy_sample "$SCRIPT_DIR/wp/staging.env.sample"                      "$SCRIPT_DIR/wp/staging.env"
 copy_sample "$WORKSPACE/abcnorio-astro/site/.env.sample"             "$WORKSPACE/abcnorio-astro/site/.env"
+copy_sample "$WORKSPACE/abcnorio-astro/site/.env.sample"             "$WORKSPACE/abcnorio-astro/site-staging/.env"
 copy_sample "$WORKSPACE/abcnorio-orchestrator/.env.sample"           "$WORKSPACE/abcnorio-orchestrator/.env"
 
-# -- 3. Install rootless docker
+# --- 3. Bootstrap site-staging from site (ephemeral, not tracked in git) ---
+echo "==> Bootstrapping site-staging..."
+SITE="$WORKSPACE/abcnorio-astro/site"
+STAGING="$WORKSPACE/abcnorio-astro/site-staging"
+if [ ! -d "$STAGING" ]; then
+    rsync -a \
+        --exclude='.git' \
+        --exclude='node_modules' \
+        --exclude='.astro' \
+        --exclude='dist' \
+        --exclude='build-archives' \
+        --exclude='.env' \
+        "$SITE/" "$STAGING/"
+    echo "    bootstrapped: $STAGING"
+else
+    echo "    exists (skipped): $STAGING"
+fi
+
+# -- 4. Install rootless docker
 bash "$SCRIPT_DIR/scripts/setup-rootless-docker.sh"
 
-# -- 4. Install fail2ban
+# -- 5. Install fail2ban
 bash "$SCRIPT_DIR/scripts/setup-fail2ban.sh"
 
-# --- 5. Done — list everything that needs credentials ---
+# --- 6. Done — list everything that needs credentials ---
 echo "░▒▓██████▓▒░  ░▒▓███████▓▒░   ░▒▓██████▓▒░                          "
 echo "░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░                        "
 echo "░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░                               "
