@@ -6,6 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_F2B_CONF="$SCRIPT_DIR/../f2b/fail2ban/jail.local"
+REPO_F2B_FILTER_DIR="$SCRIPT_DIR/../f2b/fail2ban/filter.d"
 SYSTEM_JAIL_LOCAL="/etc/fail2ban/jail.local"
 
 # Read PROXY_LOG_DIR from .env if present, fall back to the conventional default.
@@ -55,7 +56,22 @@ else
     RELOAD=true
 fi
 
-# --- 4. Enable and start fail2ban ---
+# --- 4. Deploy custom filter definitions ---
+if [[ -d "$REPO_F2B_FILTER_DIR" ]]; then
+    for filter_file in "$REPO_F2B_FILTER_DIR"/*.conf; do
+        [[ -f "$filter_file" ]] || continue
+        dest="/etc/fail2ban/filter.d/$(basename "$filter_file")"
+        if [[ ! -f "$dest" ]] || ! diff -q "$filter_file" "$dest" &>/dev/null; then
+            echo "==> Installing filter $(basename "$filter_file")..."
+            sudo cp "$filter_file" "$dest"
+            RELOAD=true
+        else
+            echo "==> Filter $(basename "$filter_file") already up to date."
+        fi
+    done
+fi
+
+# --- 5. Enable and start fail2ban ---
 if ! systemctl is-enabled --quiet fail2ban 2>/dev/null; then
     echo "==> Enabling fail2ban service..."
     sudo systemctl enable fail2ban

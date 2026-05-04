@@ -6,11 +6,11 @@ banaction_allports = iptables-allports
 enabled  = true
 
 # Caddy WP login brute-force protection.
-# Watches CLF-format access logs written by the proxy container.
+# Watches JSON-format access logs written by the proxy container.
 # Log path must match PROXY_LOG_DIR in .env (default: /var/log/caddy-proxy).
 [caddy-wp]
 enabled  = true
-filter   = apache-auth
+filter   = caddy-wp
 logpath  = /var/log/caddy-proxy/wp-staging-access.log
            /var/log/caddy-proxy/wp-dev-access.log
 maxretry = 5
