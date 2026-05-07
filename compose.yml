@@ -39,8 +39,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-    mem_limit: 600m
+    mem_limit: 768m
     environment:
+      NODE_OPTIONS: --max-old-space-size=512
       DEV_CMS: ${DOMAIN_DEV_CMS}
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${DEV_MODE:-development}
@@ -78,6 +79,7 @@ services:
       retries: 3
       start_period: 10s
     environment:
+      NODE_OPTIONS: --max-old-space-size=512
       DEV_CMS: ${DOMAIN_DEV_CMS}
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${STAGING_MODE:-staging}
