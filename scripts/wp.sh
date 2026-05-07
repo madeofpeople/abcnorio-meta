@@ -11,8 +11,8 @@ ENV="${1:?Usage: scripts/wp.sh <dev|staging> [wp-cli args...]}"
 shift
 
 case "$ENV" in
-  dev)     CONTAINER=cms_dev ;;
-  staging) CONTAINER=cms_staging ;;
+  dev)     CONTAINER=wp_dev ;;
+  staging) CONTAINER=wp_staging ;;
   *) echo "Unknown env: $ENV (expected dev or staging)" >&2; exit 1 ;;
 esac
 
