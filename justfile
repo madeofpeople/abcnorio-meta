@@ -32,6 +32,10 @@ down:
 dev-up:
     docker compose up -d astro cms_dev
 
+# Just astro restart
+r-astro:
+    docker compose restart astro && docker compose restart astro-staging
+
 # Stop dev-only services to reclaim ~734 MiB when not developing
 dev-down:
     docker compose stop astro cms_dev
@@ -73,6 +77,13 @@ build-production:
 # Trigger a scoped build   e.g. just build-scoped preview events
 build-scoped target scope:
     bash scripts/trigger-build.sh {{ target }} {{ scope }}
+
+# Clear vite cache inside astro containers and restart them
+clear-vite-cache:
+    docker compose exec astro rm -rf /app/node_modules/.vite
+    docker compose exec astro-staging rm -rf /app/node_modules/.vite
+    docker compose restart astro astro-staging
+    echo "done"
 
 # ── Data sync ──────────────────────────────────────────────────────────────────
 
