@@ -17,6 +17,8 @@ RUN install-php-extensions \
     intl \
     zip
 
+RUN apt-get update && apt-get install -y --no-install-recommends ghostscript && rm -rf /var/lib/apt/lists/*
+
 COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer
 
 COPY --from=node:22-slim /usr/local/bin/node /usr/local/bin/node
