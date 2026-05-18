@@ -45,7 +45,7 @@
   ],
   "require": {
     "php": ">=8.3",
-    "madeofpeople/abcnorio-func": "^0.5.3",
+    "madeofpeople/abcnorio-func": "^0.7.1",
     "automattic/vip-block-data-api": "dev-trunk",
     "composer/installers": "^2.2",
     "oscarotero/env": "^2.1",
@@ -76,7 +76,7 @@
   "extra": {
     "installer-paths": {
       "web/app/plugins/abcnorio-func/": [
-        "abcnorio/custom-func"
+        "madeofpeople/abcnorio-func"
       ],
       "web/app/mu-plugins/{$name}/": [
         "type:wordpress-muplugin"

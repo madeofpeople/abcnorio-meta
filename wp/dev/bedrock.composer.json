@@ -48,9 +48,9 @@
   ],
   "require": {
     "php": ">=8.3",
-    "abcnorio/custom-func": "^0.5.3",
     "automattic/vip-block-data-api": "dev-trunk",
     "composer/installers": "^2.2",
+    "madeofpeople/abcnorio-func": "^0.7.1",
     "oscarotero/env": "^2.1",
     "roots/bedrock-autoloader": "^1.0",
     "roots/bedrock-disallow-indexing": "^2.0",
@@ -58,6 +58,7 @@
     "roots/wp-config": "1.0.0",
     "vlucas/phpdotenv": "^5.5",
     "wp-plugin/advanced-custom-fields": "^6.7",
+    "wp-plugin/autodescription": "^5.1",
     "wp-plugin/fluent-smtp": "^2.2",
     "wp-plugin/login-as-user": "^1.6"
   },
@@ -80,7 +81,7 @@
   "extra": {
     "installer-paths": {
       "web/app/plugins/abcnorio-func/": [
-        "abcnorio/custom-func"
+        "madeofpeople/abcnorio-func"
       ],
       "web/app/mu-plugins/{$name}/": [
         "type:wordpress-muplugin"

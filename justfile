@@ -103,6 +103,16 @@ db-to-staging:
 db-to-dev:
     bash scripts/sync-db.sh staging-to-dev
 
+# ── Media ──────────────────────────────────────────────────────────────────────
+
+# Regenerate thumbnails   e.g. just regen-thumbs dev
+regen-thumbs env:
+    bash scripts/regen-thumbs.sh {{ env }}
+
+# One-off: downscale all upload originals to max 1600px   e.g. just downscale-originals staging
+downscale-originals env:
+    bash scripts/downscale-originals.sh {{ env }}
+
 # ── DB admin ───────────────────────────────────────────────────────────────────
 
 # Dump a database to backups/mariadb/   e.g. just dump-db staging
