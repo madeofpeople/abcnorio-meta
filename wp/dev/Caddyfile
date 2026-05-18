@@ -10,7 +10,7 @@
 	# Typically 3-10x faster for REST/API requests vs traditional php_server.
 	#
 	# ROLLBACK: if you see global state leaks, session bugs, or unexpected 500s,
-	# remove the `worker` block below and restart the frank container.
+	# remove the `worker` block below and restart the container.
 	# Pre-worker config was: php_server { resolve_root_symlink false }
 	php_server {
 		resolve_root_symlink false

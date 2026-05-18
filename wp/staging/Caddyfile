@@ -14,6 +14,8 @@
 	# Pre-worker config was: php_server { resolve_root_symlink false }
 	php_server {
 		resolve_root_symlink false
-		worker /app/web/worker.php
+		worker /app/web/worker.php {
+			num 6
+		}
 	}
 }
