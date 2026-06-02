@@ -6,6 +6,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
 
 # --- 1. Install Docker CE if not present ---
 if ! command -v docker &>/dev/null; then
@@ -36,11 +37,12 @@ fi
 # --- 3. Install rootless extras ---
 echo "==> Installing rootless extras..."
 sudo apt-get install -y docker-ce-rootless-extras uidmap
+ROOTLESS_SETUP_TOOL="$(command -v dockerd-rootless-setuptool.sh)"
 
 # --- 4. Install rootless Docker for current user ---
 if ! systemctl --user is-active --quiet docker 2>/dev/null; then
     echo "==> Installing rootless Docker for $USER..."
-    dockerd-rootless-setuptool.sh install
+    "$ROOTLESS_SETUP_TOOL" install
 else
     echo "==> Rootless Docker already running for $USER, skipping install."
 fi
@@ -58,7 +60,7 @@ fi
 # --- 6. Enable linger so user services survive logout ---
 if ! loginctl show-user "$USER" 2>/dev/null | grep -q 'Linger=yes'; then
     echo "==> Enabling linger for $USER..."
-    loginctl enable-linger "$USER"
+    sudo loginctl enable-linger "$USER"
 else
     echo "==> Linger already enabled for $USER."
 fi

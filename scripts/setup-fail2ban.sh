@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Install and configure fail2ban on the host.
-# Safe to re-run; skips steps already done.
+# Install and configure fail2ban for host SSH and proxy login hardening.
+# Safe to re-run.
 
 set -euo pipefail
 
@@ -8,13 +8,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_F2B_CONF="$SCRIPT_DIR/../f2b/fail2ban/jail.local"
 REPO_F2B_FILTER_DIR="$SCRIPT_DIR/../f2b/fail2ban/filter.d"
 SYSTEM_JAIL_LOCAL="/etc/fail2ban/jail.local"
-
-# Read PROXY_LOG_DIR from .env if present, fall back to the conventional default.
-# This path must match logpath in f2b/fail2ban/jail.local.
 ENV_FILE="$SCRIPT_DIR/../.env"
 PROXY_LOG_DIR="/var/log/caddy-proxy"
+
 if [[ -f "$ENV_FILE" ]]; then
-    _val=$(grep -E '^PROXY_LOG_DIR=' "$ENV_FILE" | cut -d= -f2- | tr -d '"'"'" 2>/dev/null || true)
+    _val=$(grep -E '^PROXY_LOG_DIR=' "$ENV_FILE" | cut -d= -f2- | tr -d '"' 2>/dev/null || true)
     [[ -n "$_val" ]] && PROXY_LOG_DIR="$_val"
 fi
 
@@ -27,14 +25,13 @@ else
     echo "==> fail2ban already installed ($(fail2ban-client --version | head -1))."
 fi
 
-# --- 2. Create proxy log directory (Caddy bind-mount target) ---
-if [[ ! -d "$PROXY_LOG_DIR" ]]; then
-    echo "==> Creating proxy log dir at $PROXY_LOG_DIR..."
-    sudo mkdir -p "$PROXY_LOG_DIR"
-    sudo chmod 755 "$PROXY_LOG_DIR"
-else
-    echo "==> Proxy log dir exists: $PROXY_LOG_DIR"
-fi
+# --- 2. Ensure proxy log paths exist for fail2ban ---
+echo "==> Ensuring proxy log paths exist at $PROXY_LOG_DIR..."
+sudo mkdir -p "$PROXY_LOG_DIR"
+sudo chmod 755 "$PROXY_LOG_DIR"
+sudo touch "$PROXY_LOG_DIR/wp-staging-access.log"
+sudo touch "$PROXY_LOG_DIR/wp-dev-access.log"
+sudo chmod 644 "$PROXY_LOG_DIR/wp-staging-access.log" "$PROXY_LOG_DIR/wp-dev-access.log"
 
 # --- 3. Deploy jail.local ---
 if [[ ! -f "$REPO_F2B_CONF" ]]; then
@@ -42,17 +39,21 @@ if [[ ! -f "$REPO_F2B_CONF" ]]; then
     exit 1
 fi
 
+RENDERED_JAIL_LOCAL="$(mktemp)"
+trap 'rm -f "$RENDERED_JAIL_LOCAL"' EXIT
+sed "s|__PROXY_LOG_DIR__|$PROXY_LOG_DIR|g" "$REPO_F2B_CONF" > "$RENDERED_JAIL_LOCAL"
+
 if [[ -f "$SYSTEM_JAIL_LOCAL" ]]; then
-    if diff -q "$REPO_F2B_CONF" "$SYSTEM_JAIL_LOCAL" &>/dev/null; then
+    if diff -q "$RENDERED_JAIL_LOCAL" "$SYSTEM_JAIL_LOCAL" &>/dev/null; then
         echo "==> /etc/fail2ban/jail.local already up to date."
     else
         echo "==> Updating /etc/fail2ban/jail.local..."
-        sudo cp "$REPO_F2B_CONF" "$SYSTEM_JAIL_LOCAL"
+        sudo cp "$RENDERED_JAIL_LOCAL" "$SYSTEM_JAIL_LOCAL"
         RELOAD=true
     fi
 else
     echo "==> Installing /etc/fail2ban/jail.local..."
-    sudo cp "$REPO_F2B_CONF" "$SYSTEM_JAIL_LOCAL"
+    sudo cp "$RENDERED_JAIL_LOCAL" "$SYSTEM_JAIL_LOCAL"
     RELOAD=true
 fi
 
@@ -79,10 +80,18 @@ fi
 
 if ! systemctl is-active --quiet fail2ban 2>/dev/null; then
     echo "==> Starting fail2ban..."
-    sudo systemctl start fail2ban
+    if ! sudo systemctl start fail2ban; then
+        echo "ERROR: failed to start fail2ban. Recent journal:" >&2
+        sudo journalctl -u fail2ban --no-pager -n 50 || true
+        exit 1
+    fi
 elif [[ "${RELOAD:-false}" == "true" ]]; then
     echo "==> Reloading fail2ban to apply updated jail.local..."
-    sudo fail2ban-client reload
+    if ! sudo fail2ban-client reload; then
+        echo "ERROR: failed to reload fail2ban. Recent journal:" >&2
+        sudo journalctl -u fail2ban --no-pager -n 50 || true
+        exit 1
+    fi
 fi
 
 echo ""

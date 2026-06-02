@@ -12,8 +12,8 @@ localhost {
 {$DOMAIN_PRODUCTION} {
     @health path /_healthz
     respond @health "ok:abcnorio" 200
-
-    @ssr path /events/listing /events/listing/* /search/api /search/api/*
+    # fallback to avoid issues when the production ssr components aren't running.
+    @ssr path /events/listing /events/listing/* /articles/listing /articles/listing/* /search/api /search/api/*
     reverse_proxy @ssr astro-prod:3033 {
         # Pool up to 32 idle keepalive connections to astro-prod.
         # Without this, each request tears down and re-establishes a TCP connection —
@@ -24,7 +24,18 @@ localhost {
         }
         @down status 502 503 504
         handle_response @down {
-            respond `<p class="listing-unavailable">Events filtering is temporarily unavailable. <a href="/events/">View all events</a></p>` 503
+            respond `<p class="listing-unavailable">Filtering is temporarily unavailable. <a href="/events/">View all events</a></p>` 503
+        }
+    }
+
+    handle_errors {
+        @ssr_errors path /events/listing /events/listing/* /articles/listing /articles/listing/* /search/api /search/api/*
+        @ssr_proxy_down expression `{http.error.status_code} in [502, 503, 504]`
+
+        handle @ssr_errors {
+            handle @ssr_proxy_down {
+                respond `<p class="listing-unavailable">Filtering is temporarily unavailable. <a href="/events/">View all events</a></p>` 503
+            }
         }
     }
 
@@ -49,6 +60,10 @@ localhost {
 
     @wp_login_get_stg_no_query `path('/wp/wp-login.php') && method('GET') && {query} == ''`
     redir @wp_login_get_stg_no_query /abcnorio-login 302
+
+    # serve uploads from web (static copy) instead of wp_staging — production independence
+    @wp_uploads path /app/uploads/*
+    reverse_proxy @wp_uploads web:80
 
     reverse_proxy wp_staging:80
 

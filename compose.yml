@@ -98,6 +98,33 @@ services:
       - deploy-orchestrator
     networks:
       - abcnorio_net_internal
+  astro-prod:
+    build:
+      context: ${ASTRO_HOST_ROOT}
+      dockerfile: prod-ssr/Dockerfile
+      args:
+        SHARED_GID: ${PROJECT_GID}
+        SHARED_GROUP: ${PROJECT_GROUP}
+    container_name: astro-prod
+    user: node
+    restart: always
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- 'http://127.0.0.1:3033/search/api?q=health' >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    environment:
+      MODE: production
+      PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
+      REST_ENDPOINT: ${REST_ENDPOINT}
+      MENU_ENDPOINT: ${MENU_ENDPOINT}
+      BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
+    volumes:
+      - ${STATIC_SERVER_SITE_DIR}/prod/.ssr:/app/
+    networks:
+      - abcnorio_net_internal
   web:
     image: caddy:2.11-alpine
     container_name: web
@@ -105,6 +132,7 @@ services:
     mem_limit: 128m
     environment:
       DOMAIN_PRODUCTION: ${DOMAIN_PRODUCTION}
+      DOMAIN_WP_STAGING: ${DOMAIN_WP_STAGING}
       DOMAIN_DEV: ${DOMAIN_DEV}
       DOMAIN_STAGING: ${DOMAIN_STAGING}
       DOMAIN_PREVIEW: ${DOMAIN_PREVIEW}
@@ -148,13 +176,17 @@ services:
     environment:
       ASTRO_SITE_ROOT: /astro-site
       ASTRO_STAGING_SITE_ROOT: /staging-site
+      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       MODE: ${DEV_MODE:-development}
+      DEV_CMS: ${DOMAIN_DEV_CMS}
+      STAGING_CMS: ${DOMAIN_STAGING_CMS}
       PROJECT_GID: ${PROJECT_GID}
       PROJECT_GROUP: ${PROJECT_GROUP}
       PRODUCTION_BUILD_PATH: /shared/static/prod
       PREVIEW_BUILD_PATH: /shared/static/preview
       STAGING_UPLOADS_DIR: /staging-uploads
       DEV_UPLOADS_DIR: /dev-uploads
+      PRODUCTION_UPLOADS_PATH: /shared/static/uploads
       STAGING_DB_HOST: mariadb
       STAGING_DB_NAME: ${STAGING_DB_NAME}
       STAGING_DB_USER: ${STAGING_DB_USER}
@@ -164,7 +196,7 @@ services:
       DEV_DB_USER: ${DEV_DB_USER}
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
     command: >
-      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/preview /astro-site/build-archives && cd /orchestrator && ([ -d node_modules ] || npm install) && node index.mjs"
+      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /astro-site/build-archives && cd /orchestrator && ([ -d node_modules ] || npm install) && node index.mjs"
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/
       - ${ASTRO_SITE_DIR}:/astro-site/
@@ -202,6 +234,7 @@ services:
       - ./wp/runtime.env
       - ./wp/staging.env
     environment:
+      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       HEADLESS_FRONTEND_URL: https://${DOMAIN_STAGING}/
       PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
@@ -258,6 +291,7 @@ services:
       - ./wp/runtime.env
       - ./wp/dev.env
     environment:
+      ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       HEADLESS_FRONTEND_URL: https://${DOMAIN_DEV}/
       PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/

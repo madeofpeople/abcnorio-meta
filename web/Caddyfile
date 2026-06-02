@@ -4,6 +4,21 @@
 	}
 }
 
+(cache_headers) {
+        @vendor path /vendor/*
+        header @vendor Cache-Control "public, max-age=2592000"
+
+        @static path /favicon/* /images/* /robots.txt /site.webmanifest
+        header @static Cache-Control "public, max-age=31536000"
+
+        @static_img path_regexp \.(webp|avif|jpg|jpeg|png|gif|svg|ico|woff2|woff)$
+        header @static_img Cache-Control "public, max-age=31536000"
+
+        # Must be last — overrides @static_img for /_astro/* to preserve immutable
+        @hashed path /_astro/*
+        header @hashed Cache-Control "public, max-age=31536000, immutable"
+}
+
 :80 {
 	@prod host {$DOMAIN_PRODUCTION}
 	@dev host {$DOMAIN_DEV}
@@ -15,38 +30,51 @@
 		file_server
 		templates
 		encode zstd gzip
+                import cache_headers
+        }
+
+        handle @dev {
+                root /srv/dev/client/
+                file_server
+                templates
+                encode zstd gzip
+                import cache_headers
+        }
+
+        handle @staging {
+                root /srv/staging/client/
+                file_server
+                templates
+                encode zstd gzip
+                import cache_headers
+        }
+
+        handle @preview {
+                root /srv/preview/client/
+                file_server
+                templates
+                encode zstd gzip
+                import cache_headers
+        }
+
+        @docs host {$DOCS_DOMAIN}
+        handle @docs {
+                root /srv/docs/
+                file_server
+                encode zstd gzip
+                import cache_headers
 	}
 
-	handle @dev {
-		root /srv/dev/client/
-		file_server
-		templates
-		encode zstd gzip
-	}
-
-	handle @staging {
-		root /srv/staging/client/
-		file_server
-		templates
-		encode zstd gzip
-	}
-
-	handle @preview {
-		root /srv/preview/client/
-		file_server
-		templates
-		encode zstd gzip
-	}
-
-	@docs host {$DOCS_DOMAIN}
-	handle @docs {
-		root /srv/docs/
-		file_server
-		encode zstd gzip
-	}
-
-	handle_errors {
-		rewrite * /404.html
-		file_server
+	# for serving images from static server
+	@wp_uploads host {$DOMAIN_WP_STAGING}
+	handle @wp_uploads {
+		@uploads_path path /app/uploads/*
+		handle @uploads_path {
+			uri strip_prefix /app/uploads
+			root * /srv/uploads/
+			import cache_headers
+			file_server
+		}
+		respond 404
 	}
 }

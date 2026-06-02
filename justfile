@@ -12,33 +12,39 @@ set dotenv-load := false
 setup-rootless-docker:
     bash scripts/setup-rootless-docker.sh
 
-# Install and configure fail2ban on the host.
-# Deploys f2b/fail2ban/jail.local to /etc/fail2ban/jail.local.
+# Host fail2ban setup.
+# Deploys the repo SSH and Caddy-backed WP login jails plus any extra filters.
 # Safe to re-run.
 setup-fail2ban:
     bash scripts/setup-fail2ban.sh
 
 # ── Stack ──────────────────────────────────────────────────────────────────────
 
-# Bring the full stack up (detached)
-up:
-    docker compose up -d
+# Bring services up: full stack, or env-specific   e.g. just up | just up dev
+up env="":
+    #!/usr/bin/env bash
+    if [[ "{{ env }}" == "dev" ]]; then
+        docker compose up -d astro wp_dev
+    elif [[ "{{ env }}" == "staging" ]]; then
+        docker compose up -d astro-staging wp_staging
+    else
+        docker compose up -d
+    fi
 
-# Bring the stack down
-down:
-    docker compose down
-
-# Start dev-only services (astro + wp_dev) for active development
-dev-up:
-    docker compose up -d astro cms_dev
+# Bring services down: full stack, or stop env-specific   e.g. just down | just down dev
+down env="":
+    #!/usr/bin/env bash
+    if [[ "{{ env }}" == "dev" ]]; then
+        docker compose stop astro wp_dev
+    elif [[ "{{ env }}" == "staging" ]]; then
+        docker compose stop astro-staging wp_staging
+    else
+        docker compose down
+    fi
 
 # Just astro restart
-r-astro:
+astro-restart:
     docker compose restart astro && docker compose restart astro-staging
-
-# Stop dev-only services to reclaim ~734 MiB when not developing
-dev-down:
-    docker compose stop astro cms_dev
 
 # Rebuild and restart specific services (space-separated)
 rebuild *services:
@@ -56,27 +62,15 @@ logs service="":
 
 # ── WP-CLI ─────────────────────────────────────────────────────────────────────
 
-# Run a WP-CLI command in dev   e.g. just wp-dev cache flush
-wp-dev *args:
-    bash scripts/wp.sh dev {{ args }}
-
-# Run a WP-CLI command in staging   e.g. just wp-staging plugin list
-wp-staging *args:
-    bash scripts/wp.sh staging {{ args }}
+# Run a WP-CLI command   e.g. just wp dev cache flush
+wp env *args:
+    bash scripts/wp.sh {{ env }} {{ args }}
 
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
-# Trigger a preview build (builds from staging content)
-build-preview:
-    bash scripts/trigger-build.sh preview full
-
-# Trigger a production build
-build-production:
-    bash scripts/trigger-build.sh production full
-
-# Trigger a scoped build   e.g. just build-scoped preview events
-build-scoped target scope:
-    bash scripts/trigger-build.sh {{ target }} {{ scope }}
+# Trigger a build   e.g. just build production | just build preview events
+build env scope="full":
+    bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:
@@ -133,7 +127,7 @@ db-shell env="staging":
 
 # Run composer in a bedrock dir (env: dev or staging)
 composer env *args:
-    docker exec cms_{{ env }} composer {{ args }} --working-dir=/app
+    docker exec wp_{{ env }} composer {{ args }} --working-dir=/app
 
 # ── Plugin ─────────────────────────────────────────────────────────────────────
 
@@ -147,4 +141,8 @@ plugin-build:
 
 # Run PHP tests in the plugin (via bedrock dev container)
 plugin-test:
-    docker exec cms_dev composer test --working-dir=/app/web/app/plugins/abcnorio-func
+    docker exec wp_dev composer test --working-dir=/app/web/app/plugins/abcnorio-func
+
+# Build admin styles
+build-admin-styles:
+    cd ../abcnorio-astro/site-dev/ && npm run build:wp-admin-styles

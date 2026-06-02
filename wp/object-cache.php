@@ -105,19 +105,76 @@ if (! function_exists('wp_cache_switch_to_blog')) {
 
 if (! class_exists('WP_Object_Cache_APCu')) :
 class WP_Object_Cache_APCu {
-    private string $prefix;
+    private string $site_prefix;
+    private string $namespace_version;
     private array  $global_groups       = [];
     private array  $non_persistent_groups = [];
     private array  $local               = [];   // per-request store for non-persistent groups
 
     public function __construct() {
-        // Prefix by site URL to isolate caches across WP installs sharing the same APCu pool.
-        $this->prefix = md5(ABSPATH) . ':';
+        // Prefix by site path to isolate caches across WP installs sharing the same APCu pool.
+        $this->site_prefix = md5(ABSPATH) . ':';
+        $this->namespace_version = $this->read_namespace_version();
+        $this->synchronize_namespace();
     }
 
     private function key(string $key, string $group): string {
         $group = $group ?: 'default';
-        return $this->prefix . $group . ':' . $key;
+        return $this->site_prefix . $this->namespace_version . ':' . $group . ':' . $key;
+    }
+
+    private function read_namespace_version(): string {
+        $path = ABSPATH . 'tmp/object-cache-namespace';
+
+        if (! is_readable($path)) {
+            return 'v1';
+        }
+
+        $value = trim((string) file_get_contents($path));
+
+        if ($value === '') {
+            return 'v1';
+        }
+
+        return substr(sha1($value), 0, 12);
+    }
+
+    private function can_inspect_cache(): bool {
+        if (! function_exists('apcu_cache_info')) {
+            return false;
+        }
+
+        if (PHP_SAPI === 'cli') {
+            return (bool) ini_get('apc.enable_cli');
+        }
+
+        return true;
+    }
+
+    private function synchronize_namespace(): void {
+        if (! $this->can_inspect_cache()) {
+            return;
+        }
+
+        $marker_key = $this->site_prefix . '__namespace';
+        $success = false;
+        $previous = apcu_fetch($marker_key, $success);
+
+        if ($success && $previous === $this->namespace_version) {
+            return;
+        }
+
+        $info = apcu_cache_info(false);
+
+        foreach ($info['cache_list'] ?? [] as $entry) {
+            $entry_key = (string) ($entry['info'] ?? '');
+
+            if (str_starts_with($entry_key, $this->site_prefix)) {
+                apcu_delete($entry_key);
+            }
+        }
+
+        apcu_store($marker_key, $this->namespace_version);
     }
 
     private function is_non_persistent(string $group): bool {
@@ -151,6 +208,7 @@ class WP_Object_Cache_APCu {
             $found = isset($this->local[$group][$key]);
             return $found ? $this->local[$group][$key] : false;
         }
+        $success = false;
         $value = apcu_fetch($this->key($key, $group), $success);
         $found = $success;
         return $success ? $value : false;
@@ -191,10 +249,15 @@ class WP_Object_Cache_APCu {
 
     public function flush(): bool {
         $this->local = [];
+        if (! $this->can_inspect_cache()) {
+            return true;
+        }
+
         $info = apcu_cache_info(false);
         foreach ($info['cache_list'] ?? [] as $entry) {
-            if (str_starts_with($entry['info'], $this->prefix)) {
-                apcu_delete($entry['info']);
+            $entry_key = (string) ($entry['info'] ?? '');
+            if (str_starts_with($entry_key, $this->site_prefix)) {
+                apcu_delete($entry_key);
             }
         }
         return true;
@@ -202,11 +265,16 @@ class WP_Object_Cache_APCu {
 
     public function flush_group(string $group): bool {
         unset($this->local[$group]);
-        $prefix = $this->prefix . ($group ?: 'default') . ':';
+        if (! $this->can_inspect_cache()) {
+            return true;
+        }
+
+        $prefix = $this->site_prefix . $this->namespace_version . ':' . ($group ?: 'default') . ':';
         $info = apcu_cache_info(false);
         foreach ($info['cache_list'] ?? [] as $entry) {
-            if (str_starts_with($entry['info'], $prefix)) {
-                apcu_delete($entry['info']);
+            $entry_key = (string) ($entry['info'] ?? '');
+            if (str_starts_with($entry_key, $prefix)) {
+                apcu_delete($entry_key);
             }
         }
         return true;

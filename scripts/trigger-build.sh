@@ -3,17 +3,17 @@
 # Usage: scripts/trigger-build.sh <target> [scope]
 #   target: production | preview
 #   scope:  full (default) | events | <page-slug>
-# Requires ASTRO_BUILD_TRIGGER_SECRET in environment or .env
+# Requires ASTRO_BUILD_TRIGGER_SECRET in environment or abcnorio-meta/.env
 
 set -euo pipefail
 
 TARGET="${1:?Usage: scripts/trigger-build.sh <staging|production|preview> [scope]}"
 SCOPE="${2:-full}"
 
-# Load secret from astro/site/.env if not already set
+# Load secret from abcnorio-meta/.env if not already set
 if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  ENV_FILE="$SCRIPT_DIR/../../abcnorio-astro/site/.env"
+  ENV_FILE="$SCRIPT_DIR/../.env"
   if [[ -f "$ENV_FILE" ]]; then
     ASTRO_BUILD_TRIGGER_SECRET="$(grep '^ASTRO_BUILD_TRIGGER_SECRET=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")"
   fi

@@ -14,10 +14,10 @@ case "$DIRECTION" in
   *) echo "Unknown direction: $DIRECTION (expected dev-to-staging or staging-to-dev)" >&2; exit 1 ;;
 esac
 
-# Load secret from astro/site/.env if not already set
+# Load secret from abcnorio-meta/.env if not already set
 if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  ENV_FILE="$SCRIPT_DIR/../../../abcnorio-astro/site/.env"
+  ENV_FILE="$SCRIPT_DIR/../.env"
   if [[ -f "$ENV_FILE" ]]; then
     ASTRO_BUILD_TRIGGER_SECRET="$(grep '^ASTRO_BUILD_TRIGGER_SECRET=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")"
   fi
