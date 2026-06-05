@@ -4,8 +4,8 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../.env"
+META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$META_DIR/.env"
 
 mkdir -p "${STATIC_SERVER_SITE_DIR}docs"
 image=$(docker build -q "${DOCS_HOST_ROOT}")

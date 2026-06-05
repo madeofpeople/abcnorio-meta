@@ -6,7 +6,7 @@
 # Warms:
 #   - WP object cache (first REST query populates it)
 #   - FrankenPHP OPcache (already warm via validate_timestamps=0, but safe to touch)
-#   - Caddy keepalive pool (establishes connections to astro-prod + wp_staging)
+#   - Caddy keepalive pool (establishes connections to astro-prod + abcwpstaging)
 #
 # Usage:
 #   scripts/warm-cache.sh [host]

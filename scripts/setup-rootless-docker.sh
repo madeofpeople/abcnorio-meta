@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
 
 # --- 1. Install Docker CE if not present ---
@@ -21,10 +21,13 @@ if ! command -v docker &>/dev/null; then
 https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
         | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
     sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-buildx-plugin
 else
     echo "==> Docker already installed ($(docker --version))."
 fi
+
+echo "==> Ensuring Docker buildx plugin is installed..."
+sudo apt-get install -y docker-buildx-plugin
 
 # --- 2. Disable root Docker daemon if running ---
 if systemctl is-active --quiet docker 2>/dev/null || systemctl is-enabled --quiet docker 2>/dev/null; then
@@ -82,12 +85,7 @@ echo "==> Ensuring external networks exist..."
 docker network inspect abcnorio_net_internal &>/dev/null || docker network create abcnorio_net_internal
 docker network inspect abcnorio_net_web &>/dev/null      || docker network create abcnorio_net_web
 
-# --- 9. Bring stack up ---
-echo "==> Bringing stack up (full rebuild)..."
-cd "$SCRIPT_DIR/.."
-docker compose up -d --build
-
 echo ""
 echo "Done. Rootless Docker is active."
 echo "Run: source ~/.bashrc   (or open a new shell) to persist DOCKER_HOST."
-echo "Run: just status        to verify all containers are healthy."
+echo "Run: docker compose up -d --build   from abcnorio-meta/ to start the stack."

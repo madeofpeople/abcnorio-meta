@@ -31,8 +31,9 @@ services:
         SHARED_GID: ${PROJECT_GID}
         SHARED_GROUP: ${PROJECT_GROUP}
     container_name: astro
-    user: node
+    user: root
     restart: always
+    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run docker-dev"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
       interval: 30s
@@ -67,10 +68,10 @@ services:
         SHARED_GID: ${PROJECT_GID}
         SHARED_GROUP: ${PROJECT_GROUP}
     container_name: astro-staging
-    user: node
+    user: root
     restart: always
     mem_limit: 750m
-    command: ["bash", "-c", "umask 0002 && cd /app && ([ -d node_modules ] || npm install) && npm run docker-staging"]
+    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run docker-staging"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
       interval: 30s
@@ -158,7 +159,7 @@ services:
         SHARED_GID: ${PROJECT_GID}
         SHARED_GROUP: ${PROJECT_GROUP}
     container_name: deploy-orchestrator
-    user: node
+    user: root
     mem_limit: 800m
     stop_grace_period: 120s
     group_add:
@@ -174,7 +175,8 @@ services:
       - ${ASTRO_SITE_DIR}/.env
       - ${ORCHESTRATOR_HOST_DIR}/.env
     environment:
-      ASTRO_SITE_ROOT: /astro-site
+      ASTRO_SITE_ROOT: /astro-source
+      ASTRO_BUILD_WORKDIR: /astro-build
       ASTRO_STAGING_SITE_ROOT: /staging-site
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       MODE: ${DEV_MODE:-development}
@@ -196,10 +198,11 @@ services:
       DEV_DB_USER: ${DEV_DB_USER}
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
     command: >
-      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /astro-site/build-archives && cd /orchestrator && ([ -d node_modules ] || npm install) && node index.mjs"
+      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /astro-build/build-archives && cd /orchestrator && node index.mjs"
     volumes:
-      - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/
-      - ${ASTRO_SITE_DIR}:/astro-site/
+      - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/:ro
+      - ${ASTRO_SITE_DIR}:/astro-source/:ro
+      - ${ASTRO_BUILD_WORKDIR_HOST_DIR}:/astro-build/
       - ${ASTRO_STAGING_SITE_DIR}:/staging-site/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
       - ${STAGING_HOST_ROOT}bedrock/web/app/uploads:/staging-uploads
@@ -209,7 +212,7 @@ services:
         condition: service_healthy
     networks:
       - abcnorio_net_orchestrator
-  cms_staging:
+  abcwpstaging:
     build: 
       context: ${STAGING_HOST_ROOT}
       dockerfile: ../Dockerfile
@@ -217,7 +220,7 @@ services:
         USER: ${STAGING_USER}
         SHARED_GID: ${PROJECT_GID}
         SHARED_GROUP: ${PROJECT_GROUP}
-    container_name: wp_staging
+    container_name: abcwpstaging
     mem_limit: 512m
     depends_on:
       mariadb:
@@ -266,7 +269,7 @@ services:
     networks:
       - abcnorio_net_orchestrator
       - abcnorio_net_internal
-  cms_dev:
+  abcwpdev:
     build: 
       context: ${DEV_HOST_ROOT}
       dockerfile: ../Dockerfile
@@ -274,7 +277,7 @@ services:
         USER: ${DEV_USER}
         SHARED_GID: ${PROJECT_GID}
         SHARED_GROUP: ${PROJECT_GROUP}
-    container_name: wp_dev
+    container_name: abcwpdev
     mem_limit: 512m
     depends_on:
       mariadb:
@@ -320,7 +323,7 @@ services:
       - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${DEV_HOST_ROOT}bedrock:/app
       - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
-      - ${ABCNORIO_FUNC_HOST_DIR}:/app/packages/abcnorio-func
+      - ${ABCNORIO_FUNC_HOST_DIR}:${ABCNORIO_FUNC_HOST_DIR}
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
       - abcnorio_net_orchestrator

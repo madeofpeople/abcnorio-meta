@@ -7,8 +7,8 @@ set -euo pipefail
 ENV="${1:?Usage: scripts/downscale-originals.sh <dev|staging>}"
 
 case "$ENV" in
-  dev)     CONTAINER=wp_dev ;;
-  staging) CONTAINER=wp_staging ;;
+  dev)     CONTAINER=abcwpdev ;;
+  staging) CONTAINER=abcwpstaging ;;
   *) echo "Unknown env: $ENV (expected dev or staging)" >&2; exit 1 ;;
 esac
 

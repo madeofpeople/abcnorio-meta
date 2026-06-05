@@ -16,8 +16,8 @@ esac
 
 # Load secret from abcnorio-meta/.env if not already set
 if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  ENV_FILE="$SCRIPT_DIR/../.env"
+  META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  ENV_FILE="$META_DIR/.env"
   if [[ -f "$ENV_FILE" ]]; then
     ASTRO_BUILD_TRIGGER_SECRET="$(grep '^ASTRO_BUILD_TRIGGER_SECRET=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")"
   fi

@@ -24,9 +24,9 @@ setup-fail2ban:
 up env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        docker compose up -d astro wp_dev
+        docker compose up -d astro abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
-        docker compose up -d astro-staging wp_staging
+        docker compose up -d astro-staging abcwpstaging
     else
         docker compose up -d
     fi
@@ -35,9 +35,9 @@ up env="":
 down env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        docker compose stop astro wp_dev
+        docker compose stop astro abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
-        docker compose stop astro-staging wp_staging
+        docker compose stop astro-staging abcwpstaging
     else
         docker compose down
     fi
@@ -127,7 +127,7 @@ db-shell env="staging":
 
 # Run composer in a bedrock dir (env: dev or staging)
 composer env *args:
-    docker exec wp_{{ env }} composer {{ args }} --working-dir=/app
+    docker exec abcwp{{ if env == "staging" { "staging" } else { "dev" } }} composer {{ args }} --working-dir=/app
 
 # ── Plugin ─────────────────────────────────────────────────────────────────────
 
@@ -141,8 +141,28 @@ plugin-build:
 
 # Run PHP tests in the plugin (via bedrock dev container)
 plugin-test:
-    docker exec wp_dev composer test --working-dir=/app/web/app/plugins/abcnorio-func
+    docker exec abcwpdev composer test --working-dir=/app/web/app/plugins/abcnorio-func
 
 # Build admin styles
 build-admin-styles:
     cd ../abcnorio-astro/site-dev/ && npm run build:wp-admin-styles
+
+# Capture host, Docker, filesystem, and bind-mount facts for comparing this machine
+# with another environment where astro/orchestrator write permissions worked.
+# Usage: just runtime-host-report
+#    or: just runtime-host-report /tmp/runtime-host-report.txt
+runtime-host-report target="":
+    #!/usr/bin/env bash
+    target="{{ target }}"
+
+    if [[ "$target" == *=* ]]; then
+        echo "Use: just runtime-host-report [output-path]" >&2
+        exit 1
+    fi
+
+    if [[ -n "$target" ]]; then
+        bash scripts/runtime-host-report.sh > "$target"
+        echo "wrote $target"
+    else
+        bash scripts/runtime-host-report.sh
+    fi

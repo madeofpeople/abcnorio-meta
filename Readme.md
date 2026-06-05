@@ -39,8 +39,8 @@ Internet
    ├──▶ astro          (SSR dev,     :3033)           │
    ├──▶ astro-staging  (SSR staging, :3034)           │
    ├──▶ web            (static prod/preview/docs)     │
-   ├──▶ wp_dev         (WP admin/REST, dev)           │
-   └──▶ wp_staging     (WP admin/REST, staging)       │
+   ├──▶ abcwpdev       (WP admin/REST, dev)           │
+   └──▶ abcwpstaging   (WP admin/REST, staging)       │
                                                       │
 deploy-orchestrator (:4011) ◀── trigger (bearer) ────┘
    │  └── build queue (in-memory, 1 at a time)
@@ -48,7 +48,7 @@ deploy-orchestrator (:4011) ◀── trigger (bearer) ────┘
    │       ├── web/static/prod/client (static prod served by web)
    │       └── web/static/prod/.ssr (prod SSR runtime mounted by astro-prod)
    │
-wp_dev / wp_staging
+abcwpdev / abcwpstaging
    ├── MariaDB (shared container, separate DBs)
    └── APCu object cache (in-process, per-container)
 
@@ -60,14 +60,14 @@ Networks:
 - `abcnorio_net_web` (external): 
   - `proxy`, `web`
 - `abcnorio_net_internal` (external): 
-  - `proxy`, `astro`, `astro-staging`, `deploy-orchestrator`, `wp_dev`, `wp_staging`, `mariadb`
+   - `proxy`, `astro`, `astro-staging`, `deploy-orchestrator`, `abcwpdev`, `abcwpstaging`, `mariadb`
 - `abcnorio_net_orchestrator` (internal):
   - `deploy-orchestrator` ↔ `astro`, `astro-staging`
 
 ## Plugin Development Model
 
 - Canonical plugin source lives in `/abcnorio-func/`.
-- Dev WordPress live-mounts plugin source to `/app/packages/abcnorio-func`, hot loads changes.
+- Dev Bedrock symlinks `packages/abcnorio-func` to the canonical host repo, and the dev container mounts that repo at the same absolute path so the plugin resolves identically on host and in container.
 - Staging, bump semver, composer update on staging in the bedrock directory.
 
 ## Quick Commands
@@ -81,7 +81,7 @@ Run `just --list` for all recipes.
 ```sh
 just up                              # bring full stack up (detached)
 just down                            # bring stack down
-just up dev                          # start dev-only services (astro + wp_dev)
+just up dev                          # start dev-only services (astro + abcwpdev)
 just down dev                        # stop dev-only services
 just rebuild [service …]             # rebuild + restart services
 just pull                            # pull latest images and restart
@@ -111,7 +111,7 @@ just setup-fail2ban                  # install fail2ban on host + deploy SSH/Cad
 ```
 
 For user management and composer ops: `bash scripts/wp-admin.sh <function> [args]`
-For standalone Bedrock bootstrap fallback: `bash scripts/bootstrap.sh`
+For standalone Bedrock bootstrap fallback: `bash scripts/bedrock-bootstrap.sh`
 
 The proxy already writes JSON access logs into `PROXY_LOG_DIR`, and fail2ban reads those host-side files directly for the `caddy-wp` jail.
 

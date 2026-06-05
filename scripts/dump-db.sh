@@ -9,9 +9,9 @@ set -euo pipefail
 
 ENV="${1:?Usage: scripts/dump-db.sh <dev|staging>}"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="$SCRIPT_DIR/../.env"
-BACKUP_DIR="$SCRIPT_DIR/../backups/mariadb"
+META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="$META_DIR/.env"
+BACKUP_DIR="$META_DIR/backups/mariadb"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "ERROR: .env not found at $ENV_FILE" >&2

@@ -4,8 +4,6 @@
 	try_files {path} index.php
 	root * {$CADDY_ROOT}
   	{$CADDY_SERVER_EXTRA_DIRECTIVES}
-	redir /wp/wp-admin /wp/wp-admin/index.php
-	redir /wp/wp-admin/ /wp/wp-admin/index.php
 	# WORKER MODE: FrankenPHP boots WordPress once and reuses the process.
 	# Typically 3-10x faster for REST/API requests vs traditional php_server.
 	#
@@ -14,6 +12,8 @@
 	# Pre-worker config was: php_server { resolve_root_symlink false }
 	php_server {
 		resolve_root_symlink false
-		worker /app/web/worker.php
+		worker {
+			file /app/web/worker.php
+		}
 	}
 }
