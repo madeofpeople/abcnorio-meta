@@ -1,7 +1,7 @@
 
 :80 {
 	encode zstd br gzip
-	try_files {path} index.php
+	try_files {path} {path}/index.php index.php
 	root * {$CADDY_ROOT}
   	{$CADDY_SERVER_EXTRA_DIRECTIVES}
 	# WORKER MODE: FrankenPHP boots WordPress once and reuses the process.
