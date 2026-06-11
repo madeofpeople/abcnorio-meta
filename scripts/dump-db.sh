@@ -18,18 +18,33 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-get_env() { grep -E "^$1=" "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d "'\""; }
+# shellcheck source=/dev/null
+source "$ENV_FILE"
+
+require_env() {
+  local key="$1"
+  if [[ -z "${!key:-}" ]]; then
+    echo "ERROR: Missing required env var $key in $ENV_FILE" >&2
+    exit 1
+  fi
+}
 
 case "$ENV" in
   dev)
-    DB_NAME=$(get_env DEV_DB_NAME)
-    DB_USER=$(get_env DEV_DB_USER)
-    DB_PASSWORD=$(get_env DEV_DB_PASSWORD)
+    require_env DEV_DB_NAME
+    require_env DEV_DB_USER
+    require_env DEV_DB_PASSWORD
+    DB_NAME="$DEV_DB_NAME"
+    DB_USER="$DEV_DB_USER"
+    DB_PASSWORD="$DEV_DB_PASSWORD"
     ;;
   staging)
-    DB_NAME=$(get_env STAGING_DB_NAME)
-    DB_USER=$(get_env STAGING_DB_USER)
-    DB_PASSWORD=$(get_env STAGING_DB_PASSWORD)
+    require_env STAGING_DB_NAME
+    require_env STAGING_DB_USER
+    require_env STAGING_DB_PASSWORD
+    DB_NAME="$STAGING_DB_NAME"
+    DB_USER="$STAGING_DB_USER"
+    DB_PASSWORD="$STAGING_DB_PASSWORD"
     ;;
   *)
     echo "Unknown env: $ENV (expected dev or staging)" >&2; exit 1 ;;

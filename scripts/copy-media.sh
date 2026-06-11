@@ -6,6 +6,9 @@
 
 set -euo pipefail
 
+META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="$META_DIR/.env"
+
 DIRECTION="${1:?Usage: scripts/copy-media.sh <dev-to-staging|staging-to-dev>}"
 
 case "$DIRECTION" in
@@ -14,13 +17,13 @@ case "$DIRECTION" in
   *) echo "Unknown direction: $DIRECTION (expected dev-to-staging or staging-to-dev)" >&2; exit 1 ;;
 esac
 
-# Load secret from abcnorio-meta/.env if not already set
 if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
-  META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  ENV_FILE="$META_DIR/.env"
-  if [[ -f "$ENV_FILE" ]]; then
-    ASTRO_BUILD_TRIGGER_SECRET="$(grep '^ASTRO_BUILD_TRIGGER_SECRET=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")"
+  if [[ ! -f "$ENV_FILE" ]]; then
+    echo "ERROR: Missing required env file: $ENV_FILE" >&2
+    exit 1
   fi
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
 fi
 
 : "${ASTRO_BUILD_TRIGGER_SECRET:?ASTRO_BUILD_TRIGGER_SECRET not set}"

@@ -12,8 +12,9 @@ ENV_FILE="$META_DIR/.env"
 PROXY_LOG_DIR="./proxy/logs"
 
 if [[ -f "$ENV_FILE" ]]; then
-    _val=$(grep -E '^PROXY_LOG_DIR=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"" 2>/dev/null || true)
-    [[ -n "$_val" ]] && PROXY_LOG_DIR="$_val"
+    # shellcheck source=/dev/null
+    source "$ENV_FILE"
+    PROXY_LOG_DIR="${PROXY_LOG_DIR:-./proxy/logs}"
 fi
 
 if [[ "$PROXY_LOG_DIR" != /* ]]; then

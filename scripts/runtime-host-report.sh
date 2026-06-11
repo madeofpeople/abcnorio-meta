@@ -4,7 +4,7 @@ set -euo pipefail
 
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-if [ -f "$META_DIR/.env" ]; then
+if [[ -f "$META_DIR/.env" ]]; then
   # shellcheck source=/dev/null
   source "$META_DIR/.env"
 fi

@@ -7,16 +7,19 @@
 
 set -euo pipefail
 
+META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="$META_DIR/.env"
+
 TARGET="${1:?Usage: scripts/trigger-build.sh <staging|production|preview> [scope]}"
 SCOPE="${2:-full}"
 
-# Load secret from abcnorio-meta/.env if not already set
 if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
-  META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  ENV_FILE="$META_DIR/.env"
-  if [[ -f "$ENV_FILE" ]]; then
-    ASTRO_BUILD_TRIGGER_SECRET="$(grep '^ASTRO_BUILD_TRIGGER_SECRET=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")"
+  if [[ ! -f "$ENV_FILE" ]]; then
+    echo "ERROR: Missing required env file: $ENV_FILE" >&2
+    exit 1
   fi
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
 fi
 
 : "${ASTRO_BUILD_TRIGGER_SECRET:?ASTRO_BUILD_TRIGGER_SECRET not set}"

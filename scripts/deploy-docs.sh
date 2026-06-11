@@ -5,6 +5,12 @@
 set -euo pipefail
 
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ ! -f "$META_DIR/.env" ]]; then
+    echo "ERROR: Missing required env file: $META_DIR/.env" >&2
+    exit 1
+fi
+
 source "$META_DIR/.env"
 
 mkdir -p "${STATIC_SERVER_SITE_DIR}docs"
