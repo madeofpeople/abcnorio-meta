@@ -24,7 +24,7 @@ setup-fail2ban:
 up env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        docker compose up -d astro abcwpdev
+        docker compose up -d astro-dev abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
         docker compose up -d astro-staging abcwpstaging
     else
@@ -35,7 +35,7 @@ up env="":
 down env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        docker compose stop astro abcwpdev
+        docker compose stop astro-dev abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
         docker compose stop astro-staging abcwpstaging
     else
@@ -44,7 +44,7 @@ down env="":
 
 # Just astro restart
 astro-restart:
-    docker compose restart astro && docker compose restart astro-staging
+    docker compose restart astro-dev && docker compose restart astro-staging
 
 # Rebuild and restart specific services (space-separated)
 rebuild *services:
@@ -86,9 +86,9 @@ push-code-to-staging:
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:
-    docker compose exec astro rm -rf /app/node_modules/.vite
+    docker compose exec astro-dev rm -rf /app/node_modules/.vite
     docker compose exec astro-staging rm -rf /app/node_modules/.vite
-    docker compose restart astro astro-staging
+    docker compose restart astro-dev astro-staging
     echo "done"
 
 # ── Data sync ──────────────────────────────────────────────────────────────────

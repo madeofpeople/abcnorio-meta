@@ -106,7 +106,7 @@ localhost {
     @health path /_healthz
     respond @health "ok:dev" 200
 
-    reverse_proxy astro:3033
+    reverse_proxy astro-dev:3033
 }
 
 # Static Site - staging

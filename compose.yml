@@ -34,7 +34,7 @@ services:
     container_name: astro
     user: root
     restart: always
-    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run docker-dev"]
+    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
       interval: 30s
