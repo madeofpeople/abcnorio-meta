@@ -59,7 +59,6 @@ services:
       - 127.0.0.1:3033:3033
     volumes:
       - ${ASTRO_SITE_DIR}:/app/
-      - ${ASTRO_HOST_ROOT}/design-tokens:/design-tokens:ro
     networks:
       - abcnorio_net_proxy
   astro-staging:
@@ -97,8 +96,6 @@ services:
       - 127.0.0.1:3034:3033
     volumes:
       - ${ASTRO_STAGING_SITE_DIR}:/app/
-      - ${ASTRO_HOST_ROOT}/design-tokens:/design-tokens:ro
-      - ${ASTRO_HOST_ROOT}/design-tokens:/abcnorio-design-tokens:ro
     depends_on:
       - deploy-orchestrator
     networks:
@@ -152,7 +149,6 @@ services:
       - 127.0.0.1:3035:3033
     volumes:
       - ${ASTRO_WEBCOMPONENTS_DIR}:/app/
-      - ${ASTRO_HOST_ROOT}/design-tokens:/abcnorio-design-tokens:ro
     networks:
       - abcnorio_net_proxy
   web:

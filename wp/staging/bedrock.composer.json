@@ -34,11 +34,8 @@
       ]
     },
     {
-      "type": "path",
-      "url": "./packages/abcnorio-func",
-      "options": {
-        "symlink": true
-      }
+      "type": "vcs",
+      "url": "https://github.com/madeofpeople/abcnorio-func.git"
     },
     {
       "type": "vcs",
@@ -50,7 +47,7 @@
     "php": ">=8.3",
     "automattic/vip-block-data-api": "dev-trunk",
     "composer/installers": "^2.2",
-    "madeofpeople/abcnorio-func": "^0.7.1",
+    "madeofpeople/abcnorio-func": "0.8.2",
     "oscarotero/env": "^2.1",
     "roots/bedrock-autoloader": "^1.0",
     "roots/bedrock-disallow-indexing": "^2.0",
@@ -58,8 +55,6 @@
     "roots/wp-config": "1.0.0",
     "vlucas/phpdotenv": "^5.5",
     "wp-plugin/advanced-custom-fields": "^6.7",
-    "wp-plugin/autodescription": "^5.1",
-    "wp-plugin/fluent-smtp": "^2.2",
     "wp-plugin/login-as-user": "^1.6"
   },
   "require-dev": {

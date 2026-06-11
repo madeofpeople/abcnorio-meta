@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e20bc2b4c65626afffc6f5799389174f",
+    "content-hash": "db3fe9fa352728dd799bafc0e7e14ed3",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Automattic/vip-block-data-api.git",
-                "reference": "ef1e032f2391f8d51bf25cbbaaf90ee2fca90e7e"
+                "reference": "dca0d3679bf81abf1edede8e87a653dfc06807d7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Automattic/vip-block-data-api/zipball/ef1e032f2391f8d51bf25cbbaaf90ee2fca90e7e",
-                "reference": "ef1e032f2391f8d51bf25cbbaaf90ee2fca90e7e",
+                "url": "https://api.github.com/repos/Automattic/vip-block-data-api/zipball/dca0d3679bf81abf1edede8e87a653dfc06807d7",
+                "reference": "dca0d3679bf81abf1edede8e87a653dfc06807d7",
                 "shasum": ""
             },
             "require": {
@@ -58,7 +58,7 @@
                 "GPL-2.0-or-later"
             ],
             "description": "A WordPress plugin that provides an API to retrieve Gutenberg content as structured JSON",
-            "time": "2026-05-29T18:38:25+00:00"
+            "time": "2026-06-11T07:29:51+00:00"
         },
         {
             "name": "composer/installers",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.7.1",
+            "version": "0.8.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/madeofpeople/abcnorio-func.git",
-                "reference": "6549981223b1a7d87379f8601717669fbc6220ce"
+                "reference": "fc195f1a51dddcf17e9b5409b6d01dc1bd0f3e01"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/6549981223b1a7d87379f8601717669fbc6220ce",
-                "reference": "6549981223b1a7d87379f8601717669fbc6220ce",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/fc195f1a51dddcf17e9b5409b6d01dc1bd0f3e01",
+                "reference": "fc195f1a51dddcf17e9b5409b6d01dc1bd0f3e01",
                 "shasum": ""
             },
             "require": {
@@ -311,10 +311,10 @@
                 "wordpress"
             ],
             "support": {
-                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.7.1",
+                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.8.2",
                 "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
             },
-            "time": "2026-05-12T16:24:22+00:00"
+            "time": "2026-06-11T14:49:06+00:00"
         },
         {
             "name": "masterminds/html5",
@@ -1099,16 +1099,16 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.38.1",
+            "version": "v1.38.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
-                "reference": "14c5439eec4ccff081ac14eca2dc57feb2a66d92"
+                "reference": "d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/14c5439eec4ccff081ac14eca2dc57feb2a66d92",
-                "reference": "14c5439eec4ccff081ac14eca2dc57feb2a66d92",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6",
+                "reference": "d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6",
                 "shasum": ""
             },
             "require": {
@@ -1160,7 +1160,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.38.1"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.38.2"
             },
             "funding": [
                 {
@@ -1180,7 +1180,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-26T12:51:13+00:00"
+            "time": "2026-05-27T06:59:30+00:00"
         },
         {
             "name": "symfony/polyfill-php80",
@@ -1352,15 +1352,15 @@
         },
         {
             "name": "wp-plugin/advanced-custom-fields",
-            "version": "6.8.3",
+            "version": "6.8.4",
             "source": {
                 "type": "svn",
                 "url": "https://plugins.svn.wordpress.org/advanced-custom-fields/",
-                "reference": "tags/6.8.3"
+                "reference": "tags/6.8.4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/advanced-custom-fields.6.8.3.zip"
+                "url": "https://downloads.wordpress.org/plugin/advanced-custom-fields.6.8.4.zip"
             },
             "require": {
                 "composer/installers": "~1.0|~2.0"
@@ -1379,7 +1379,7 @@
                 "issues": "https://wordpress.org/support/plugin/advanced-custom-fields",
                 "source": "https://plugins.svn.wordpress.org/advanced-custom-fields"
             },
-            "time": "2026-06-02T16:45:46+00:00"
+            "time": "2026-06-10T14:45:41+00:00"
         },
         {
             "name": "wp-plugin/login-as-user",
@@ -1509,28 +1509,29 @@
         },
         {
             "name": "composer/pcre",
-            "version": "3.3.2",
+            "version": "3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/pcre.git",
-                "reference": "b2bed4734f0cc156ee1fe9c0da2550420d99a21e"
+                "reference": "d5a341b3fb61f3001970940afb1d332968a183ed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/pcre/zipball/b2bed4734f0cc156ee1fe9c0da2550420d99a21e",
-                "reference": "b2bed4734f0cc156ee1fe9c0da2550420d99a21e",
+                "url": "https://api.github.com/repos/composer/pcre/zipball/d5a341b3fb61f3001970940afb1d332968a183ed",
+                "reference": "d5a341b3fb61f3001970940afb1d332968a183ed",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.4 || ^8.0"
             },
             "conflict": {
-                "phpstan/phpstan": "<1.11.10"
+                "phpstan/phpstan": "<2.2.2"
             },
             "require-dev": {
-                "phpstan/phpstan": "^1.12 || ^2",
-                "phpstan/phpstan-strict-rules": "^1 || ^2",
-                "phpunit/phpunit": "^8 || ^9"
+                "phpstan/phpstan": "^2",
+                "phpstan/phpstan-deprecation-rules": "^2",
+                "phpstan/phpstan-strict-rules": "^2",
+                "phpunit/phpunit": "^9"
             },
             "type": "library",
             "extra": {
@@ -1568,7 +1569,7 @@
             ],
             "support": {
                 "issues": "https://github.com/composer/pcre/issues",
-                "source": "https://github.com/composer/pcre/tree/3.3.2"
+                "source": "https://github.com/composer/pcre/tree/3.4.0"
             },
             "funding": [
                 {
@@ -1578,13 +1579,9 @@
                 {
                     "url": "https://github.com/composer",
                     "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/composer/composer",
-                    "type": "tidelift"
                 }
             ],
-            "time": "2024-11-12T16:29:46+00:00"
+            "time": "2026-06-07T11:47:49+00:00"
         },
         {
             "name": "composer/xdebug-handler",
