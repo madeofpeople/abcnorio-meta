@@ -72,6 +72,18 @@ wp env *args:
 build env scope="full":
     bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
+# Push Astro source code to staging workdir via orchestrator endpoint
+push-code-to-staging:
+    #!/usr/bin/env bash
+    set -e
+    source .env
+
+    docker exec deploy-orchestrator curl -sf \
+        -X POST "http://localhost:4011/dev-tools/push-to-staging" \
+        -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
+        | cat
+    echo
+
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:
     docker compose exec astro rm -rf /app/node_modules/.vite
@@ -129,6 +141,17 @@ db-shell env="staging":
 composer env *args:
     docker exec abcwp{{ if env == "staging" { "staging" } else { "dev" } }} composer {{ args }} --working-dir=/app
 
+# Copy live Bedrock composer files back to the bootstrap seed files (env: dev or staging)
+bedrock-snapshot env="dev":
+        #!/usr/bin/env bash
+        case "{{ env }}" in
+            dev|staging) ;;
+            *) echo "Unknown env: {{ env }} (expected dev or staging)"; exit 1 ;;
+        esac
+        cp "wp/{{ env }}/bedrock/composer.json" "wp/{{ env }}/bedrock.composer.json"
+        cp "wp/{{ env }}/bedrock/composer.lock" "wp/{{ env }}/bedrock.composer.lock"
+        echo "synced {{ env }} bedrock composer files back to seed"
+
 # ── Plugin ─────────────────────────────────────────────────────────────────────
 
 # Build and deploy the docs site to web/static/docs
@@ -144,8 +167,8 @@ plugin-test:
     docker exec abcwpdev composer test --working-dir=/app/web/app/plugins/abcnorio-func
 
 # Build admin styles
-build-admin-styles:
-    cd ../abcnorio-astro/site-dev/ && npm run build:wp-admin-styles
+#build-admin-styles:
+#    cd ../abcnorio-astro/site-dev/ && npm run build:wp-admin-styles
 
 # Capture host, Docker, filesystem, and bind-mount facts for comparing this machine
 # with another environment where astro/orchestrator write permissions worked.

@@ -1,14 +1,29 @@
 #!/usr/bin/env bash
 # Bootstrap dev and staging Bedrock directories.
 # Run once from abcnorio-meta/ before `docker compose up`.
-# Requires: composer, node, npm (for post-install plugin JS build)
+# Requires: composer
 
 set -euo pipefail
 
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FUNC_SOURCE_DIR="$(cd "${META_DIR}/../abcnorio-func" && pwd)"
 WORKER_SOURCE="${META_DIR}/wp/worker.php"
+HEADLESS_THEME_SOURCE_DIR="${META_DIR}/wp/theme-headless-placeholder"
 BEDROCK_VERSION="1.31.0"
+
+seed_headless_theme() {
+    local env="$1"
+    local target_dir="${META_DIR}/wp/${env}/bedrock/web/app/themes/headless"
+
+    if [ ! -d "${META_DIR}/wp/${env}/bedrock" ]; then
+        echo "[${env}] bedrock missing, cannot seed headless theme" >&2
+        exit 1
+    fi
+
+    mkdir -p "$target_dir"
+    rsync -a --delete "${HEADLESS_THEME_SOURCE_DIR}/" "$target_dir/"
+    echo "[${env}] seeded headless theme"
+}
 
 bootstrap_bedrock() {
     local env="$1"
@@ -43,7 +58,13 @@ bootstrap_bedrock() {
     if [ "$env" = "dev" ]; then
         echo "[${env}] symlinking abcnorio-func into packages/..."
         mkdir -p "$bedrock_dir/packages"
-        ln -sf "$FUNC_SOURCE_DIR" "$bedrock_dir/packages/abcnorio-func"
+        if [ -e "$bedrock_dir/packages/abcnorio-func" ] && [ ! -L "$bedrock_dir/packages/abcnorio-func" ]; then
+            echo "[${env}] unexpected non-symlink at ${bedrock_dir}/packages/abcnorio-func" >&2
+            echo "[${env}] remove it and rerun bootstrap" >&2
+            exit 1
+        fi
+        rm -f "$bedrock_dir/packages/abcnorio-func"
+        ln -s "$FUNC_SOURCE_DIR" "$bedrock_dir/packages/abcnorio-func"
     fi
 
     echo "[${env}] running composer install..."
@@ -65,3 +86,6 @@ bootstrap_bedrock() {
 
 bootstrap_bedrock dev
 bootstrap_bedrock staging
+
+seed_headless_theme dev
+seed_headless_theme staging

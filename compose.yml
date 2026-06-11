@@ -8,13 +8,14 @@ services:
       - 80:80
       - 443:443
     environment:
-      DOCS_DOMAIN: ${DOCS_DOMAIN}
+      DOMAIN_DOCS: ${DOMAIN_DOCS}
       DOMAIN_PRODUCTION: ${DOMAIN_PRODUCTION}
       DOMAIN_WP_STAGING: ${DOMAIN_WP_STAGING}
       DOMAIN_WP_DEV: ${DOMAIN_WP_DEV}
       DOMAIN_DEV: ${DOMAIN_DEV}
       DOMAIN_STAGING: ${DOMAIN_STAGING}
       DOMAIN_PREVIEW: ${DOMAIN_PREVIEW}
+      DOMAIN_COMPONENTS: ${DOMAIN_COMPONENTS}
     volumes:
       - ${PROXY_CADDYFILE}:/etc/caddy/Caddyfile
       - ${PROXY_LOG_DIR}:/var/log/caddy
@@ -22,7 +23,7 @@ services:
       - proxy_config:/config
     networks:
       - abcnorio_net_web
-      - abcnorio_net_internal
+      - abcnorio_net_proxy
   astro:
     build: 
       context: ${ASTRO_HOST_ROOT}
@@ -58,8 +59,9 @@ services:
       - 127.0.0.1:3033:3033
     volumes:
       - ${ASTRO_SITE_DIR}:/app/
+      - ${ASTRO_HOST_ROOT}/design-tokens:/design-tokens:ro
     networks:
-      - abcnorio_net_internal
+      - abcnorio_net_proxy
   astro-staging:
     build:
       context: ${ASTRO_HOST_ROOT}
@@ -95,10 +97,12 @@ services:
       - 127.0.0.1:3034:3033
     volumes:
       - ${ASTRO_STAGING_SITE_DIR}:/app/
+      - ${ASTRO_HOST_ROOT}/design-tokens:/design-tokens:ro
+      - ${ASTRO_HOST_ROOT}/design-tokens:/abcnorio-design-tokens:ro
     depends_on:
       - deploy-orchestrator
     networks:
-      - abcnorio_net_internal
+      - abcnorio_net_proxy
   astro-prod:
     build:
       context: ${ASTRO_HOST_ROOT}
@@ -125,7 +129,32 @@ services:
     volumes:
       - ${STATIC_SERVER_SITE_DIR}/prod/.ssr:/app/
     networks:
-      - abcnorio_net_internal
+      - abcnorio_net_proxy
+  webcomponents:
+    build: 
+      context: ${ASTRO_HOST_ROOT}
+      dockerfile: Dockerfile
+      args:
+        SHARED_GID: ${PROJECT_GID}
+        SHARED_GROUP: ${PROJECT_GROUP}
+    container_name: webcomponents
+    user: root
+    restart: always
+    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run docker-dev"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 300m
+    ports: 
+      - 127.0.0.1:3035:3033
+    volumes:
+      - ${ASTRO_WEBCOMPONENTS_DIR}:/app/
+      - ${ASTRO_HOST_ROOT}/design-tokens:/abcnorio-design-tokens:ro
+    networks:
+      - abcnorio_net_proxy
   web:
     image: caddy:2.11-alpine
     container_name: web
@@ -137,7 +166,8 @@ services:
       DOMAIN_DEV: ${DOMAIN_DEV}
       DOMAIN_STAGING: ${DOMAIN_STAGING}
       DOMAIN_PREVIEW: ${DOMAIN_PREVIEW}
-      DOCS_DOMAIN: ${DOCS_DOMAIN}
+      DOMAIN_DOCS: ${DOMAIN_DOCS}
+      COMPONENTS_DOMAIN: ${DOMAIN_COMPONENTS}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 30s
@@ -268,7 +298,7 @@ services:
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
       - abcnorio_net_orchestrator
-      - abcnorio_net_internal
+      - abcnorio_net_proxy
   abcwpdev:
     build: 
       context: ${DEV_HOST_ROOT}
@@ -327,7 +357,7 @@ services:
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
       - abcnorio_net_orchestrator
-      - abcnorio_net_internal
+      - abcnorio_net_proxy
   mariadb:
     image: mariadb:11.4
     container_name: mariadb
@@ -359,7 +389,7 @@ services:
       - ${STAGING_HOST_ROOT}mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro
       - ${WP_SQL_INIT_SCRIPT:-./wp/sql/001-dev-staging-dbs.sh}:/docker-entrypoint-initdb.d/001-dev-staging-dbs.sh:ro
     networks:
-      - abcnorio_net_internal
+      - abcnorio_net_proxy
       - abcnorio_net_orchestrator
 volumes:
   abcwp_mardiadb_vol: {}
@@ -370,8 +400,8 @@ volumes:
 networks:
   abcnorio_net_orchestrator:
     name: abcnorio_net_orchestrator
-  abcnorio_net_internal:
-    name: abcnorio_net_internal
+  abcnorio_net_proxy:
+    name: abcnorio_net_proxy
     external: true
   abcnorio_net_web:
     name: abcnorio_net_web

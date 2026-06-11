@@ -57,7 +57,7 @@
                 import cache_headers
         }
 
-        @docs host {$DOCS_DOMAIN}
+        @docs host {$DOMAIN_DOCS}
         handle @docs {
                 root /srv/docs/
                 file_server

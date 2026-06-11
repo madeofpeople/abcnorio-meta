@@ -129,9 +129,20 @@ localhost {
 }
 
 # Starlight docs
-{$DOCS_DOMAIN} {
+{$DOMAIN_DOCS} {
     @health path /_healthz
     respond @health "ok:docs" 200
 
     reverse_proxy web:80
+}
+
+# Component libarary
+{$DOMAIN_COMPONENTS} {
+    @health path /_healthz
+    respond @health "ok:docs" 200
+
+    reverse_proxy webcomponents:3033 {
+        header_up Upgrade {http.request.header.Upgrade}
+        header_up Connection {http.request.header.Connection}
+    }
 }
