@@ -132,6 +132,9 @@ echo "==> Bringing stack up (full rebuild)..."
 export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
 (cd "$SCRIPT_DIR" && docker compose up -d --build)
 
+echo "==> Aligning dev plugin symlink to runtime contract..."
+(cd "$SCRIPT_DIR" && docker compose exec -T abcwpdev sh -lc 'set -euo pipefail; mkdir -p /app/packages; rm -f /app/packages/abcnorio-func; ln -s /abcnorio-func /app/packages/abcnorio-func; cd /app && composer reinstall madeofpeople/abcnorio-func --no-interaction')
+
 if should_activate_plugin dev; then
     echo "==> Activating abcnorio-func in dev..."
     bash "$SCRIPT_DIR/scripts/wp.sh" dev plugin activate abcnorio-func

@@ -24,17 +24,17 @@ services:
     networks:
       - abcnorio_net_web
       - abcnorio_net_proxy
-  astro:
+  astro-dev:
     build: 
       context: ${ASTRO_HOST_ROOT}
       dockerfile: Dockerfile
       args:
         SHARED_GID: ${PROJECT_GID}
         SHARED_GROUP: ${PROJECT_GROUP}
-    container_name: astro
+    container_name: astro-dev
     user: root
     restart: always
-    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
+    command: ["bash", "-c", "umask 0002 && cd /app && rm -rf /app/abcnorio-webcomponents && ln -s /abcnorio-webcomponents /app/abcnorio-webcomponents && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
       interval: 30s
@@ -59,6 +59,7 @@ services:
       - 127.0.0.1:3033:3033
     volumes:
       - ${ASTRO_SITE_DIR}:/app/
+      - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents
     networks:
       - abcnorio_net_proxy
   astro-staging:
@@ -349,7 +350,7 @@ services:
       - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${DEV_HOST_ROOT}bedrock:/app
       - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
-      - ${ABCNORIO_FUNC_HOST_DIR}:${ABCNORIO_FUNC_HOST_DIR}
+      - ${ABCNORIO_FUNC_HOST_DIR}:/abcnorio-func
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
     networks:
       - abcnorio_net_orchestrator
