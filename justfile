@@ -42,9 +42,9 @@ down env="":
         docker compose down
     fi
 
-# Just astro restart
-astro-restart:
-    docker compose restart astro-dev && docker compose restart astro-staging
+# restart services
+restart env="":
+    docker compose restart {{env}}
 
 # Rebuild and restart specific services (space-separated)
 rebuild *services:

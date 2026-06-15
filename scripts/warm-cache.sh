@@ -10,11 +10,16 @@
 #
 # Usage:
 #   scripts/warm-cache.sh [host]
-#   host default: https://abcnorio.itztlacoliuhqui.org
+#   host default: $WARM_CACHE_HOST
 
 set -euo pipefail
 
-HOST="${1:-https://abcnorio.itztlacoliuhqui.org}"
+HOST="${1:-${WARM_CACHE_HOST:-}}"
+
+if [[ -z "${HOST}" ]]; then
+    echo "Missing host. Pass host arg or set WARM_CACHE_HOST." >&2
+    exit 1
+fi
 
 URLS=(
     "${HOST}/events/listing?date-filter=ongoing-and-upcoming&order=desc"

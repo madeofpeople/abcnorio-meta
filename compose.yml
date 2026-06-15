@@ -129,7 +129,7 @@ services:
     networks:
       - abcnorio_net_proxy
   webcomponents:
-    build: 
+    build:
       context: ${ASTRO_HOST_ROOT}
       dockerfile: Dockerfile
       args:
@@ -146,6 +146,8 @@ services:
       retries: 3
       start_period: 15s
     mem_limit: 300m
+    environment:
+      DOMAIN_COMPONENTS: ${DOMAIN_COMPONENTS}
     ports: 
       - 127.0.0.1:3035:3033
     volumes:
