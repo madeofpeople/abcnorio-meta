@@ -28,8 +28,8 @@ ensure_webcomponents_artifacts() {
     echo "==> Building abcnorio-webcomponents library artifacts..."
     (cd "$webcomponents_dir" && npm run build)
 
-    if [ ! -f "$webcomponents_dir/dist/fixtures-manifest.json" ]; then
-        echo "==> Missing fixtures-manifest.json after webcomponents build" >&2
+    if [ ! -f "$webcomponents_dir/dist/manifest.json" ]; then
+        echo "==> Missing manifest.json after webcomponents build" >&2
         exit 1
     fi
 }

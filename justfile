@@ -162,6 +162,22 @@ docs:
 plugin-build:
     cd ../abcnorio-func && npm run build
 
+# Build the abcnorio-webcomponents package (dist + manifest generation/validation)
+build-webcomponents:
+    cd ../abcnorio-webcomponents && npm run build
+
+# Verify current webcomponents manifest contract without rebuilding
+verify-webcomponents:
+    cd ../abcnorio-webcomponents && npm run check:manifest
+
+# Build + verify + release plugin into selected WP env.
+# Usage:
+#   just update-wp-dev-plugin dev
+#   just update-wp-dev-plugin staging minor
+#   just update-wp-dev-plugin dev patch dry   (dry-run)
+update-wp-dev-plugin env bump="patch" mode="":
+    bash scripts/update-wp-dev-plugin.sh {{ env }} {{ bump }} {{ mode }}
+
 # Run PHP tests in the plugin (via bedrock dev container)
 plugin-test:
     docker exec abcwpdev composer test --working-dir=/app/web/app/plugins/abcnorio-func
