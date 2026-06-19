@@ -48,6 +48,10 @@ else
   CONTAINER="abcwpstaging"
 fi
 
+PLUGIN_BOOTSTRAP_PATH="/app/web/app/plugins/abcnorio-func/custom-func.php"
+PLUGIN_MANIFEST_PATH="/app/web/app/plugins/abcnorio-func/resources/vendor/components/dist/manifest.json"
+PLUGIN_SLUG="$(basename "$(dirname "$PLUGIN_BOOTSTRAP_PATH")")"
+
 if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   echo "Container not running: $CONTAINER. Start it with: just up $ENV" >&2
   exit 1
@@ -128,8 +132,9 @@ else
   docker exec "$CONTAINER" sh -lc 'set -euo pipefail; cd /app && composer require madeofpeople/abcnorio-func:'"$NEXT_VERSION"' --no-interaction'
 fi
 
-docker exec "$CONTAINER" test -f /app/web/app/plugins/abcnorio-func/resources/vendor/components/dist/manifest.json
-INSTALLED_VERSION="$(docker exec "$CONTAINER" wp --allow-root --path=/app/web/wp plugin get custom-func --field=version)"
+docker exec "$CONTAINER" test -f "$PLUGIN_BOOTSTRAP_PATH"
+docker exec "$CONTAINER" test -f "$PLUGIN_MANIFEST_PATH"
+INSTALLED_VERSION="$(docker exec "$CONTAINER" wp --allow-root --path=/app/web/wp plugin get "$PLUGIN_SLUG" --field=version)"
 echo "Runtime plugin version ($ENV): $INSTALLED_VERSION"
 if [[ "$INSTALLED_VERSION" != "$NEXT_VERSION" ]]; then
   echo "Version mismatch: expected $NEXT_VERSION got $INSTALLED_VERSION" >&2
