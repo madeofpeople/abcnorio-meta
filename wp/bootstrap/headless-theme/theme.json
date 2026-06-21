@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "settings": {
+    "color": {
+      "custom": false,
+      "customText": false,
+      "customBackground": false,
+      "defaultPalette": false,
+      "defaultGradients": false,
+      "customGradient": false,
+      "link": false
+    },
+    "typography": {
+      "customFontSize": false,
+      "dropCap": false,
+      "lineHeight": false,
+      "textTransform": false,
+      "textDecoration": false,
+      "letterSpacing": false
+    }
+  }
+}

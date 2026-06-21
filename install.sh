@@ -25,8 +25,11 @@ ensure_webcomponents_artifacts() {
     echo "==> Installing abcnorio-webcomponents dependencies..."
     (cd "$webcomponents_dir" && npm install)
 
-    echo "==> Building abcnorio-webcomponents library artifacts..."
+    echo "==> Building abcnorio-webcomponents library artifacts for site-dev workshop and WP ingestion..."
     (cd "$webcomponents_dir" && npm run build)
+
+    echo "==> Validating abcnorio-webcomponents manifest contract..."
+    (cd "$webcomponents_dir" && npm run check:manifest)
 
     if [ ! -f "$webcomponents_dir/dist/manifest.json" ]; then
         echo "==> Missing manifest.json after webcomponents build" >&2

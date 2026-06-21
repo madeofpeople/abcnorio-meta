@@ -144,7 +144,7 @@ fi
 docker exec "$CONTAINER" wp --allow-root --path=/app/web/wp cache flush
 
 echo "[7/7] Sync Bedrock seed composer files"
-cp "${META_DIR}/wp/${ENV}/bedrock/composer.json" "${META_DIR}/wp/${ENV}/bedrock.composer.json"
-cp "${META_DIR}/wp/${ENV}/bedrock/composer.lock" "${META_DIR}/wp/${ENV}/bedrock.composer.lock"
+cp "${META_DIR}/wp/${ENV}/bedrock/composer.json" "${META_DIR}/wp/bootstrap/${ENV}/bedrock.composer.json"
+cp "${META_DIR}/wp/${ENV}/bedrock/composer.lock" "${META_DIR}/wp/bootstrap/${ENV}/bedrock.composer.lock"
 
 echo "done: updated plugin to v$NEXT_VERSION for $ENV"

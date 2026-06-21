@@ -7,8 +7,8 @@ set -euo pipefail
 
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FUNC_SOURCE_DIR="$(cd "${META_DIR}/../abcnorio-func" && pwd)"
-WORKER_SOURCE="${META_DIR}/wp/worker.php"
-HEADLESS_THEME_SOURCE_DIR="${META_DIR}/wp/theme-headless-placeholder"
+WORKER_SOURCE="${META_DIR}/wp/bootstrap/worker.php"
+HEADLESS_THEME_SOURCE_DIR="${META_DIR}/wp/bootstrap/headless-theme"
 BEDROCK_VERSION="1.31.0"
 
 seed_headless_theme() {
@@ -28,8 +28,8 @@ seed_headless_theme() {
 bootstrap_bedrock() {
     local env="$1"
     local bedrock_dir="${META_DIR}/wp/${env}/bedrock"
-    local seed="${META_DIR}/wp/${env}/bedrock.composer.json"
-    local lock_seed="${META_DIR}/wp/${env}/bedrock.composer.lock"
+    local seed="${META_DIR}/wp/bootstrap/${env}/bedrock.composer.json"
+    local lock_seed="${META_DIR}/wp/bootstrap/${env}/bedrock.composer.lock"
     local wp_entry="${bedrock_dir}/web/wp/wp-blog-header.php"
     local autoload_file="${bedrock_dir}/vendor/autoload.php"
 

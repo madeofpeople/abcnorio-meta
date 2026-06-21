@@ -148,8 +148,8 @@ bedrock-snapshot env="dev":
             dev|staging) ;;
             *) echo "Unknown env: {{ env }} (expected dev or staging)"; exit 1 ;;
         esac
-        cp "wp/{{ env }}/bedrock/composer.json" "wp/{{ env }}/bedrock.composer.json"
-        cp "wp/{{ env }}/bedrock/composer.lock" "wp/{{ env }}/bedrock.composer.lock"
+        cp "wp/{{ env }}/bedrock/composer.json" "wp/bootstrap/{{ env }}/bedrock.composer.json"
+        cp "wp/{{ env }}/bedrock/composer.lock" "wp/bootstrap/{{ env }}/bedrock.composer.lock"
         echo "synced {{ env }} bedrock composer files back to seed"
 
 # ── Plugin ─────────────────────────────────────────────────────────────────────
