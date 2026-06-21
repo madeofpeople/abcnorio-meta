@@ -15,7 +15,6 @@ services:
       DOMAIN_DEV: ${DOMAIN_DEV}
       DOMAIN_STAGING: ${DOMAIN_STAGING}
       DOMAIN_PREVIEW: ${DOMAIN_PREVIEW}
-      DOMAIN_COMPONENTS: ${DOMAIN_COMPONENTS}
     volumes:
       - ${PROXY_CADDYFILE}:/etc/caddy/Caddyfile
       - ${PROXY_LOG_DIR}:/var/log/caddy
@@ -34,7 +33,7 @@ services:
     container_name: astro-dev
     user: root
     restart: always
-    command: ["bash", "-c", "umask 0002 && cd /app && rm -rf /app/abcnorio-webcomponents && ln -s /abcnorio-webcomponents /app/abcnorio-webcomponents && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
+    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
       interval: 30s
@@ -46,6 +45,7 @@ services:
       DEV_CMS: ${DOMAIN_DEV_CMS}
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${DEV_MODE:-development}
+      ASTRO_RUNTIME_CONTAINER: '1'
       MENU_ENDPOINT: ${MENU_ENDPOINT}
       REST_ENDPOINT: ${REST_ENDPOINT}
       BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
@@ -128,32 +128,6 @@ services:
       - ${STATIC_SERVER_SITE_DIR}/prod/.ssr:/app/
     networks:
       - abcnorio_net_proxy
-  webcomponents:
-    build:
-      context: ${ASTRO_HOST_ROOT}
-      dockerfile: Dockerfile
-      args:
-        SHARED_GID: ${PROJECT_GID}
-        SHARED_GROUP: ${PROJECT_GROUP}
-    container_name: webcomponents
-    user: root
-    restart: always
-    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run docker-dev"]
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3033/add-to-calendar"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    mem_limit: 300m
-    environment:
-      DOMAIN_COMPONENTS: ${DOMAIN_COMPONENTS}
-    ports: 
-      - 127.0.0.1:3035:3033
-    volumes:
-      - ${ASTRO_WEBCOMPONENTS_DIR}:/app/
-    networks:
-      - abcnorio_net_proxy
   web:
     image: caddy:2.11-alpine
     container_name: web
@@ -166,7 +140,6 @@ services:
       DOMAIN_STAGING: ${DOMAIN_STAGING}
       DOMAIN_PREVIEW: ${DOMAIN_PREVIEW}
       DOMAIN_DOCS: ${DOMAIN_DOCS}
-      COMPONENTS_DOMAIN: ${DOMAIN_COMPONENTS}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 30s

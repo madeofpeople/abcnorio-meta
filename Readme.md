@@ -68,6 +68,7 @@ Networks:
 
 - Canonical plugin source lives in `/abcnorio-func/`.
 - Dev Bedrock symlinks `packages/abcnorio-func` to the canonical host repo, and the dev container mounts that repo at the same absolute path so the plugin resolves identically on host and in container.
+- `abcnorio-webcomponents` stays as a package dependency for Astro and the plugin; its old standalone Stargazer preview host is gone, and workshop pages in `abcnorio-astro/site-dev` are now the preview surface.
 - Staging, bump semver, composer update on staging in the bedrock directory.
 
 ## Quick Commands
