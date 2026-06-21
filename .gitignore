@@ -25,6 +25,7 @@ cache
 # logs
 *.log
 npm-debug.log*
+proxy/logs/*
 
 # wp
 wp/**/backups/
