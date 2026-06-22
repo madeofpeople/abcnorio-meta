@@ -72,17 +72,50 @@ wp env *args:
 build env scope="full":
     bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
-# Push Astro source code to staging workdir via orchestrator endpoint
-push-code-to-staging:
+# Approve current commit for staging deployment   e.g. just approve-staging VERSION=0.8.3
+approve-staging VERSION="":
+    #!/usr/bin/env bash
+    set -e
+    if [[ -z "{{ VERSION }}" ]]; then
+        echo "usage: just approve-staging VERSION=x.y.z"
+        exit 1
+    fi
+    cd abcnorio-astro/site-dev
+    if [[ -n $(git status -s) ]]; then
+        echo "error: working tree must be clean"
+        exit 1
+    fi
+    if git rev-parse "staging-v{{ VERSION }}" 2>/dev/null; then
+        echo "error: tag staging-v{{ VERSION }} already exists"
+        exit 1
+    fi
+    git tag -a "staging-v{{ VERSION }}" -m "Approved for staging: v{{ VERSION }}"
+    git push origin "staging-v{{ VERSION }}"
+    echo "Approved: staging-v{{ VERSION }}"
+
+# Push approved staging code to staging container   e.g. just push-code-to-staging VERSION=0.8.3 | just push-code-to-staging (latest tag)
+push-code-to-staging VERSION="":
     #!/usr/bin/env bash
     set -e
     source .env
 
+    PAYLOAD=$(jq -n --arg version "{{ VERSION }}" '{version: $version}')
     docker exec deploy-orchestrator curl -sf \
         -X POST "http://localhost:4011/dev-tools/push-to-staging" \
         -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
+        -H "Content-Type: application/json" \
+        -d "$PAYLOAD" \
         | cat
     echo
+
+# Get currently deployed staging version
+staging-status:
+    #!/usr/bin/env bash
+    source .env
+    docker exec deploy-orchestrator curl -sf \
+        -X GET "http://localhost:4011/dev-tools/status" \
+        -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
+        | jq '.push // {status: "unknown"}'
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:

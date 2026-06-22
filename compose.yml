@@ -40,7 +40,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-    mem_limit: 600m
+    mem_limit: 512m
     environment:
       DEV_CMS: ${DOMAIN_DEV_CMS}
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
@@ -73,7 +73,7 @@ services:
     user: root
     restart: always
     mem_limit: 750m
-    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run docker-staging"]
+    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
       interval: 30s
@@ -84,6 +84,7 @@ services:
       DEV_CMS: ${DOMAIN_DEV_CMS}
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${STAGING_MODE:-staging}
+      ASTRO_RUNTIME_CONTAINER: '1'
       MENU_ENDPOINT: ${MENU_ENDPOINT}
       REST_ENDPOINT: ${REST_ENDPOINT}
       BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
@@ -97,6 +98,7 @@ services:
       - 127.0.0.1:3034:3033
     volumes:
       - ${ASTRO_STAGING_SITE_DIR}:/app/
+      - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents
     depends_on:
       - deploy-orchestrator
     networks:
@@ -184,6 +186,11 @@ services:
       MODE: ${DEV_MODE:-development}
       DEV_CMS: ${DOMAIN_DEV_CMS}
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
+      DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
+      STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
+      PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
+      PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
+      ASTRO_WEBCOMPONENTS_SOURCE_DIR: /astro-build/abcnorio-webcomponents
       PROJECT_GID: ${PROJECT_GID}
       PROJECT_GROUP: ${PROJECT_GROUP}
       PRODUCTION_BUILD_PATH: /shared/static/prod
@@ -204,6 +211,7 @@ services:
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/:ro
       - ${ASTRO_SITE_DIR}:/astro-source/:ro
+      - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents/:ro
       - ${ASTRO_BUILD_WORKDIR_HOST_DIR}:/astro-build/
       - ${ASTRO_STAGING_SITE_DIR}:/staging-site/
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
