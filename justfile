@@ -74,39 +74,11 @@ build env scope="full":
 
 # Approve current commit for staging deployment   e.g. just approve-staging VERSION=0.8.3
 approve-staging VERSION="":
-    #!/usr/bin/env bash
-    set -e
-    if [[ -z "{{ VERSION }}" ]]; then
-        echo "usage: just approve-staging VERSION=x.y.z"
-        exit 1
-    fi
-    cd abcnorio-astro/site-dev
-    if [[ -n $(git status -s) ]]; then
-        echo "error: working tree must be clean"
-        exit 1
-    fi
-    if git rev-parse "staging-v{{ VERSION }}" 2>/dev/null; then
-        echo "error: tag staging-v{{ VERSION }} already exists"
-        exit 1
-    fi
-    git tag -a "staging-v{{ VERSION }}" -m "Approved for staging: v{{ VERSION }}"
-    git push origin "staging-v{{ VERSION }}"
-    echo "Approved: staging-v{{ VERSION }}"
+    bash scripts/approve-staging.sh {{ VERSION }}
 
-# Push approved staging code to staging container   e.g. just push-code-to-staging VERSION=0.8.3 | just push-code-to-staging (latest tag)
+# Push approved staging code to staging container   e.g. just push-code-to-staging VERSION=0.8.3
 push-code-to-staging VERSION="":
-    #!/usr/bin/env bash
-    set -e
-    source .env
-
-    PAYLOAD=$(jq -n --arg version "{{ VERSION }}" '{version: $version}')
-    docker exec deploy-orchestrator curl -sf \
-        -X POST "http://localhost:4011/dev-tools/push-to-staging" \
-        -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
-        -H "Content-Type: application/json" \
-        -d "$PAYLOAD" \
-        | cat
-    echo
+    bash scripts/push-code-to-staging.sh {{ VERSION }}
 
 # Get currently deployed staging version
 staging-status:
@@ -188,7 +160,7 @@ bedrock-snapshot env="dev":
 # ── Plugin ─────────────────────────────────────────────────────────────────────
 
 # Build and deploy the docs site to web/static/docs
-docs:
+build-docs:
     bash scripts/deploy-docs.sh
 
 # Build the abcnorio-func plugin JS assets
@@ -218,23 +190,3 @@ plugin-test:
 # Build admin styles
 #build-admin-styles:
 #    cd ../abcnorio-astro/site-dev/ && npm run build:wp-admin-styles
-
-# Capture host, Docker, filesystem, and bind-mount facts for comparing this machine
-# with another environment where astro/orchestrator write permissions worked.
-# Usage: just runtime-host-report
-#    or: just runtime-host-report /tmp/runtime-host-report.txt
-runtime-host-report target="":
-    #!/usr/bin/env bash
-    target="{{ target }}"
-
-    if [[ "$target" == *=* ]]; then
-        echo "Use: just runtime-host-report [output-path]" >&2
-        exit 1
-    fi
-
-    if [[ -n "$target" ]]; then
-        bash scripts/runtime-host-report.sh > "$target"
-        echo "wrote $target"
-    else
-        bash scripts/runtime-host-report.sh
-    fi
