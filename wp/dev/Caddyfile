@@ -4,6 +4,13 @@
 	try_files {path} {path}/index.php index.php
 	root * {$CADDY_ROOT}
   	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+	@wp_api path /wp-json*
+	header @wp_api {
+		Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+		Pragma "no-cache"
+		Expires "0"
+		-Etag
+	}
 	# WORKER MODE: FrankenPHP boots WordPress once and reuses the process.
 	# Typically 3-10x faster for REST/API requests vs traditional php_server.
 	#
@@ -14,6 +21,7 @@
 		resolve_root_symlink false
 		worker {
 			file /app/web/worker.php
+			num 6
 		}
 	}
 }

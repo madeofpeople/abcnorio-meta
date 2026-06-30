@@ -35,7 +35,7 @@ services:
     restart: always
     command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -43,6 +43,7 @@ services:
     mem_limit: 512m
     environment:
       DEV_CMS: ${DOMAIN_DEV_CMS}
+      DEV_CMS_FETCH: http://abcwpdev/
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${DEV_MODE:-development}
       ASTRO_RUNTIME_CONTAINER: '1'
@@ -75,7 +76,7 @@ services:
     mem_limit: 750m
     command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3033/"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -83,6 +84,7 @@ services:
     environment:
       DEV_CMS: ${DOMAIN_DEV_CMS}
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
+      STAGING_CMS_FETCH: http://abcwpstaging/
       MODE: ${STAGING_MODE:-staging}
       ASTRO_RUNTIME_CONTAINER: '1'
       MENU_ENDPOINT: ${MENU_ENDPOINT}
@@ -191,6 +193,7 @@ services:
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
       PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
       ASTRO_WEBCOMPONENTS_SOURCE_DIR: /astro-build/abcnorio-webcomponents
+      PROJECT_UID: ${PROJECT_UID}
       PROJECT_GID: ${PROJECT_GID}
       PROJECT_GROUP: ${PROJECT_GROUP}
       PRODUCTION_BUILD_PATH: /shared/static/prod
@@ -253,6 +256,8 @@ services:
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
       DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
       STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
+      PROJECT_UID: ${PROJECT_UID}
+      PROJECT_GID: ${PROJECT_GID}
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {
@@ -310,6 +315,8 @@ services:
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
       DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
       STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
+      PROJECT_UID: ${PROJECT_UID}
+      PROJECT_GID: ${PROJECT_GID}
       CADDY_GLOBAL_OPTIONS: |
         auto_https off
         frankenphp {

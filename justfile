@@ -4,6 +4,7 @@
 # List all recipes: just --list
 
 set dotenv-load := false
+set positional-arguments := true
 
 # ── Host setup ────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,12 @@ logs service="":
 
 # Run a WP-CLI command   e.g. just wp dev cache flush
 wp env *args:
-    bash scripts/wp.sh {{ env }} {{ args }}
+    bash scripts/wp.sh "$@"
+
+# Run a WP-CLI eval expression safely as one argument.
+# Example: just wp-eval dev '$v = wp_cache_get("test_key"); echo ($v === false ? "cache-miss-ok" : "cache-hit");'
+wp-eval env code:
+    bash scripts/wp.sh {{ env }} eval '{{ code }}'
 
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
@@ -164,7 +170,7 @@ build-docs:
     bash scripts/deploy-docs.sh
 
 # Build the abcnorio-func plugin JS assets
-plugin-build:
+build-plugin:
     cd ../abcnorio-func && npm run build
 
 # Build the abcnorio-webcomponents package (dist + manifest generation/validation)
@@ -174,6 +180,12 @@ build-webcomponents:
 # Verify current webcomponents manifest contract without rebuilding
 verify-webcomponents:
     cd ../abcnorio-webcomponents && npm run check:manifest
+
+# Scaffold a new webcomponent directory with starter Astro debug file
+# Usage:
+#   just create-webcomponent event-card
+create-webcomponent component_name:
+    bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ component_name }}
 
 # Build + verify + release plugin into selected WP env.
 # Usage:

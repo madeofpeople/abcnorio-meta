@@ -77,11 +77,19 @@ Requires [just](https://github.com/casey/just).
 
 Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo`. It installs host prerequisites (`git`, `rsync`, `composer`, `nodejs`, `npm`, `just`), bootstraps Bedrock inline, bootstraps `site-staging` from `site-dev`, sets up rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
 
+Permissions contract is deterministic and fixed: uploads run as `UID 1000`, shared group `abcnorio` with `GID 2000`, directories `2775`, files `0664`.
+
+For already-installed machines, run one explicit migration once:
+
+```sh
+bash install.sh migrate-permissions-once
+```
+
+After migration, runtime services only validate this contract and fail on mismatch; they do not auto-repair permissions.
+
 If dev or staging WordPress is already installed when the stack comes up, `install.sh` activates `abcnorio-func` with WP-CLI. If not, install or restore WordPress first, then run `just wp dev plugin activate abcnorio-func` and `just wp staging plugin activate abcnorio-func` as needed.
 
-Once WordPress is installed and `abcnorio-func` is active, `install.sh` also runs `wp abcnorio seed-minimal` in dev and staging. The command is idempotent and creates the minimum menus, pages, taxonomy terms, and sample entries the frontend expects. You can rerun it manually with `just wp dev abcnorio seed-minimal` or `just wp staging abcnorio seed-minimal`.
-
-Dev Astro expects active `abcnorio-func` plus real or seeded REST content. A fresh empty WordPress tree will answer many frontend requests with `404` until content exists. `astro-prod` restarting before the first production deploy is expected, and staging or production frontend paths remain incomplete until the deploy flow runs.
+Dev Astro expects active `abcnorio-func` plus real REST content. A fresh empty WordPress tree will answer many frontend requests with `404` until content exists. `astro-prod` restarting before the first production deploy is expected, and staging or production frontend paths remain incomplete until the deploy flow runs.
 
 Run `just --list` for all recipes.
 
@@ -111,7 +119,7 @@ just media-to-dev                    # copy media uploads staging → dev
 just dump-db staging                 # dump staging DB to backups/mariadb/
 just db-shell dev                    # open MariaDB shell
 
-just plugin-build                    # build abcnorio-func plugin JS assets
+just build-plugin                    # build abcnorio-func plugin JS assets
 just plugin-test                     # run PHP tests in the plugin
 
 just setup-fail2ban                  # install fail2ban on host + deploy SSH/Caddy jails

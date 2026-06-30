@@ -14,6 +14,71 @@ REPO_ORCHESTRATOR="git@github.com:madeofpeople/abcnorio-orchestrator.git"
 REPO_DOCS="git@github.com:madeofpeople/abcnorio-docs.git"
 REPO_WEBCOMPONENTS="git@github.com:madeofpeople/abcnorio-webcomponents.git"
 
+SHARED_UID=1000
+SHARED_GID=2000
+SHARED_GROUP="abcnorio"
+
+load_compose_env() {
+    if [[ ! -f "$SCRIPT_DIR/.env" ]]; then
+        echo "==> Missing $SCRIPT_DIR/.env" >&2
+        echo "    Create it first (or run install without migrate-permissions-once)." >&2
+        exit 1
+    fi
+
+    # shellcheck disable=SC1091
+    source "$SCRIPT_DIR/.env"
+}
+
+ensure_shared_group_contract() {
+    local existing_group
+    existing_group="$(getent group "$SHARED_GID" | cut -d: -f1 || true)"
+
+    if [[ -n "$existing_group" && "$existing_group" != "$SHARED_GROUP" ]]; then
+        echo "==> Host GID $SHARED_GID belongs to group '$existing_group', expected '$SHARED_GROUP'." >&2
+        echo "    Resolve this collision manually before continuing." >&2
+        exit 1
+    fi
+
+    if getent group "$SHARED_GROUP" >/dev/null 2>&1; then
+        local name_gid
+        name_gid="$(getent group "$SHARED_GROUP" | cut -d: -f3)"
+        if [[ "$name_gid" != "$SHARED_GID" ]]; then
+            echo "==> Group '$SHARED_GROUP' exists with GID $name_gid, expected $SHARED_GID." >&2
+            echo "    Resolve this mismatch manually before continuing." >&2
+            exit 1
+        fi
+        return
+    fi
+
+    echo "==> Creating shared host group $SHARED_GROUP:$SHARED_GID"
+    sudo groupadd -g "$SHARED_GID" "$SHARED_GROUP"
+}
+
+apply_upload_permissions_contract() {
+    load_compose_env
+
+    local dev_uploads staging_uploads
+    dev_uploads="${DEV_HOST_ROOT%/}/bedrock/web/app/uploads"
+    staging_uploads="${STAGING_HOST_ROOT%/}/bedrock/web/app/uploads"
+
+    ensure_shared_group_contract
+
+    for uploads_dir in "$dev_uploads" "$staging_uploads"; do
+        echo "==> Applying uploads contract to $uploads_dir"
+        sudo install -d -o "$SHARED_UID" -g "$SHARED_GID" -m 2775 "$uploads_dir"
+        sudo chown -R "$SHARED_UID:$SHARED_GID" "$uploads_dir"
+        sudo find "$uploads_dir" -type d -exec chmod 2775 {} +
+        sudo find "$uploads_dir" -type f -exec chmod 0664 {} +
+    done
+}
+
+if [[ "${1:-}" == "migrate-permissions-once" ]]; then
+    echo "==> Running one-time uploads permissions migration"
+    apply_upload_permissions_contract
+    echo "==> One-time migration complete"
+    exit 0
+fi
+
 ensure_webcomponents_artifacts() {
     local webcomponents_dir="$WORKSPACE_ROOT/abcnorio-webcomponents"
 
@@ -127,6 +192,9 @@ fi
 echo "==> Bootstrapping Bedrock..."
 bash "$SCRIPT_DIR/scripts/bedrock-bootstrap.sh"
 
+echo "==> Applying deterministic uploads permissions contract..."
+apply_upload_permissions_contract
+
 # -- 6. Install rootless docker
 bash "$SCRIPT_DIR/scripts/setup-rootless-docker.sh"
 
@@ -145,22 +213,12 @@ fi
 
 ensure_headless_theme_active dev
 
-if bash "$SCRIPT_DIR/scripts/wp.sh" dev core is-installed >/dev/null 2>&1 && bash "$SCRIPT_DIR/scripts/wp.sh" dev plugin is-active abcnorio-func >/dev/null 2>&1; then
-    echo "==> Seeding minimal content in dev..."
-    bash "$SCRIPT_DIR/scripts/wp.sh" dev abcnorio seed-minimal
-fi
-
 if should_activate_plugin staging; then
     echo "==> Activating abcnorio-func in staging..."
     bash "$SCRIPT_DIR/scripts/wp.sh" staging plugin activate abcnorio-func
 fi
 
 ensure_headless_theme_active staging
-
-if bash "$SCRIPT_DIR/scripts/wp.sh" staging core is-installed >/dev/null 2>&1 && bash "$SCRIPT_DIR/scripts/wp.sh" staging plugin is-active abcnorio-func >/dev/null 2>&1; then
-    echo "==> Seeding minimal content in staging..."
-    bash "$SCRIPT_DIR/scripts/wp.sh" staging abcnorio seed-minimal
-fi
 
 # -- 8. Install fail2ban
 bash "$SCRIPT_DIR/scripts/setup-fail2ban.sh"
@@ -182,12 +240,10 @@ echo "  just up"
 echo "  just --list"
 echo ""
 echo "For fresh WordPress trees, visit each env's /wp/wp-admin/install.php or restore a DB backup."
-echo "After install or restore, activate and seed if needed:"
+echo "After install or restore, activate plugin if needed:"
 echo "  just wp dev plugin activate abcnorio-func"
-echo "  just wp dev abcnorio seed-minimal"
 echo "  just wp staging plugin activate abcnorio-func"
-echo "  just wp staging abcnorio seed-minimal"
 echo ""
-echo "Dev Astro expects active abcnorio-func and real or seeded REST content."
+echo "Dev Astro expects active abcnorio-func and real REST content."
 echo "Staging and production frontend paths remain incomplete until deployments run."
 echo "astro-prod restarting before first deployment is expected."
