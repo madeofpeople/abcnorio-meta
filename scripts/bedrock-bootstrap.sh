@@ -6,7 +6,6 @@
 set -euo pipefail
 
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FUNC_SOURCE_DIR="$(cd "${META_DIR}/../abcnorio-func" && pwd)"
 WORKER_SOURCE="${META_DIR}/wp/bootstrap/worker.php"
 HEADLESS_THEME_SOURCE_DIR="${META_DIR}/wp/bootstrap/headless-theme"
 BEDROCK_VERSION="1.31.0"
@@ -53,18 +52,6 @@ bootstrap_bedrock() {
     if [ -f "$lock_seed" ]; then
         echo "[${env}] copying project composer.lock..."
         cp "$lock_seed" "$bedrock_dir/composer.lock"
-    fi
-
-    if [ "$env" = "dev" ]; then
-        echo "[${env}] symlinking abcnorio-func into packages/..."
-        mkdir -p "$bedrock_dir/packages"
-        if [ -e "$bedrock_dir/packages/abcnorio-func" ] && [ ! -L "$bedrock_dir/packages/abcnorio-func" ]; then
-            echo "[${env}] unexpected non-symlink at ${bedrock_dir}/packages/abcnorio-func" >&2
-            echo "[${env}] remove it and rerun bootstrap" >&2
-            exit 1
-        fi
-        rm -f "$bedrock_dir/packages/abcnorio-func"
-        ln -s "$FUNC_SOURCE_DIR" "$bedrock_dir/packages/abcnorio-func"
     fi
 
     echo "[${env}] running composer install..."

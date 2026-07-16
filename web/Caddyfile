@@ -65,16 +65,14 @@
                 import cache_headers
 	}
 
-	# for serving images from static server
-	@wp_uploads host {$DOMAIN_WP_STAGING}
-	handle @wp_uploads {
-		@uploads_path path /app/uploads/*
-		handle @uploads_path {
-			uri strip_prefix /app/uploads
-			root * /srv/uploads/
-			import cache_headers
-			file_server
-		}
-		respond 404
-	}
+        # for serving uploads from static server on WP domains
+        @wp_uploads host {$DOMAIN_WP_STAGING}
+        @wp_uploads path /app/uploads/*
+        handle @wp_uploads {
+                uri strip_prefix /app/uploads
+                root * /srv/uploads/
+                import cache_headers
+                file_server
+        }
+
 }

@@ -34,13 +34,6 @@
       ]
     },
     {
-      "type": "path",
-      "url": "./packages/abcnorio-func",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
       "type": "vcs",
       "url": "https://github.com/Automattic/vip-block-data-api.git",
       "no-api": true
@@ -50,7 +43,6 @@
     "php": ">=8.3",
     "automattic/vip-block-data-api": "dev-trunk",
     "composer/installers": "^2.2",
-    "madeofpeople/abcnorio-func": "0.8.4",
     "oscarotero/env": "^2.1",
     "roots/bedrock-autoloader": "^1.0",
     "roots/bedrock-disallow-indexing": "^2.0",
@@ -80,9 +72,6 @@
   "prefer-stable": true,
   "extra": {
     "installer-paths": {
-      "web/app/plugins/abcnorio-func/": [
-        "madeofpeople/abcnorio-func"
-      ],
       "web/app/mu-plugins/{$name}/": [
         "type:wordpress-muplugin"
       ],

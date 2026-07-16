@@ -67,9 +67,11 @@ Networks:
 ## Plugin Development Model
 
 - Canonical plugin source lives in `/abcnorio-func/`.
-- Dev Bedrock symlinks `packages/abcnorio-func` to the canonical host repo, and the dev container mounts that repo at the same absolute path so the plugin resolves identically on host and in container.
+- Dev WordPress bind-mounts `${ABCNORIO_FUNC_HOST_DIR}` directly to `/app/web/app/plugins/abcnorio-func` for live iteration.
+- Dev and staging Composer operations run in container context.
 - `abcnorio-webcomponents` stays as a package dependency for Astro and the plugin; its old standalone Stargazer preview host is gone, and workshop pages in `abcnorio-astro/site-dev` are now the preview surface.
-- Staging, bump semver, composer update on staging in the bedrock directory.
+- Staging stays Composer-managed (no plugin source bind mount); release flow is bump semver, push, then `just composer staging update`.
+- Plugin release artifacts must include `resources/vendor/components/dist` so staging runtime does not require in-container builds.
 
 ## Quick Commands
 

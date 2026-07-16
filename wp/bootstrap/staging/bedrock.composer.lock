@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "db3fe9fa352728dd799bafc0e7e14ed3",
+    "content-hash": "43ce263dec0865f0d5cbc1ba19defc26",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.8.2",
+            "version": "0.8.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/madeofpeople/abcnorio-func.git",
-                "reference": "fc195f1a51dddcf17e9b5409b6d01dc1bd0f3e01"
+                "reference": "a0bf32d3b1127de1b2dbe729895cb818b903003e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/fc195f1a51dddcf17e9b5409b6d01dc1bd0f3e01",
-                "reference": "fc195f1a51dddcf17e9b5409b6d01dc1bd0f3e01",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/a0bf32d3b1127de1b2dbe729895cb818b903003e",
+                "reference": "a0bf32d3b1127de1b2dbe729895cb818b903003e",
                 "shasum": ""
             },
             "require": {
@@ -311,10 +311,10 @@
                 "wordpress"
             ],
             "support": {
-                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.8.2",
+                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.8.5",
                 "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
             },
-            "time": "2026-06-11T14:49:06+00:00"
+            "time": "2026-07-15T16:40:03+00:00"
         },
         {
             "name": "masterminds/html5",
@@ -1380,6 +1380,68 @@
                 "source": "https://plugins.svn.wordpress.org/advanced-custom-fields"
             },
             "time": "2026-06-10T14:45:41+00:00"
+        },
+        {
+            "name": "wp-plugin/autodescription",
+            "version": "5.1.4",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/autodescription/",
+                "reference": "tags/5.1.4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/autodescription.5.1.4.zip"
+            },
+            "require": {
+                "composer/installers": "~1.0|~2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://wp-packages.org/downloads",
+            "authors": [
+                {
+                    "name": "Sybre Waaijer"
+                }
+            ],
+            "description": "The fastest feature-complete SEO plugin for professional WordPress websites. Secure, fast, unbranded, and automated SEO. Do less; get better results.",
+            "homepage": "https://theseoframework.com/",
+            "support": {
+                "changelog": "https://wordpress.org/plugins/autodescription/#developers",
+                "issues": "https://wordpress.org/support/plugin/autodescription",
+                "source": "https://plugins.svn.wordpress.org/autodescription"
+            },
+            "time": "2026-03-23T19:23:21+00:00"
+        },
+        {
+            "name": "wp-plugin/fluent-smtp",
+            "version": "2.2.95",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/fluent-smtp/",
+                "reference": "tags/2.2.95"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/fluent-smtp.2.2.95.zip"
+            },
+            "require": {
+                "composer/installers": "~1.0|~2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://wp-packages.org/downloads",
+            "authors": [
+                {
+                    "name": "Shahjahan Jewel"
+                }
+            ],
+            "description": "The Ultimate Forever Free Mail SMTP Plugin for WordPress. Connect with any SMTP, SendGrid, Mailgun, Amazon SES, Brevo, Postmark, Sparkpost, Google...",
+            "homepage": "https://fluentsmtp.com",
+            "support": {
+                "changelog": "https://wordpress.org/plugins/fluent-smtp/#developers",
+                "issues": "https://wordpress.org/support/plugin/fluent-smtp",
+                "source": "https://plugins.svn.wordpress.org/fluent-smtp"
+            },
+            "time": "2026-03-23T19:23:21+00:00"
         },
         {
             "name": "wp-plugin/login-as-user",

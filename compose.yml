@@ -182,6 +182,8 @@ services:
       - ${ORCHESTRATOR_HOST_DIR}/.env
     environment:
       ASTRO_SITE_ROOT: /astro-source
+      ASTRO_SITE_GIT_ROOT: /astro-repo
+      ASTRO_SITE_GIT_SUBDIR: site-dev
       ASTRO_BUILD_WORKDIR: /astro-build
       ASTRO_STAGING_SITE_ROOT: /staging-site
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
@@ -210,9 +212,10 @@ services:
       DEV_DB_USER: ${DEV_DB_USER}
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
     command: >
-      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /astro-build/build-archives && cd /orchestrator && node index.mjs"
+      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /astro-build/build-archives /astro-build/build-archives/media /astro-build/build-archives/static-backup && cd /orchestrator && node index.mjs"
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/:ro
+      - ${ASTRO_HOST_ROOT}:/astro-repo/:ro
       - ${ASTRO_SITE_DIR}:/astro-source/:ro
       - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents/:ro
       - ${ASTRO_BUILD_WORKDIR_HOST_DIR}:/astro-build/
@@ -220,6 +223,8 @@ services:
       - ${STATIC_SERVER_SITE_DIR}:/shared/static/
       - ${STAGING_HOST_ROOT}bedrock/web/app/uploads:/staging-uploads
       - ${DEV_HOST_ROOT}bedrock/web/app/uploads:/dev-uploads
+    ports:
+      - 127.0.0.1:4011:4011
     depends_on:
       mariadb:
         condition: service_healthy
@@ -280,7 +285,7 @@ services:
       - ${STAGING_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${STAGING_HOST_ROOT}bedrock:/app
       - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
-      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/app/backups:ro
     networks:
       - abcnorio_net_orchestrator
       - abcnorio_net_proxy
@@ -340,8 +345,8 @@ services:
       - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
       - ${DEV_HOST_ROOT}bedrock:/app
       - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
-      - ${ABCNORIO_FUNC_HOST_DIR}:/abcnorio-func
-      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/astro/build-archives:ro
+      - ${ABCNORIO_FUNC_HOST_DIR}:/app/web/app/plugins/abcnorio-func
+      - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/app/backups:ro
     networks:
       - abcnorio_net_orchestrator
       - abcnorio_net_proxy

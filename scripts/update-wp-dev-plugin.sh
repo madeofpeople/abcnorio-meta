@@ -126,10 +126,10 @@ echo "[5/7] Commit, tag, and push plugin"
 )
 
 echo "[6/7] Update $ENV Bedrock plugin dependency"
-if [[ "$ENV" == "dev" ]]; then
-  docker exec "$CONTAINER" sh -lc 'set -euo pipefail; mkdir -p /app/packages; rm -f /app/packages/abcnorio-func; ln -s /abcnorio-func /app/packages/abcnorio-func; cd /app && composer require madeofpeople/abcnorio-func:'"$NEXT_VERSION"' --no-interaction'
-else
+if [[ "$ENV" == "staging" ]]; then
   docker exec "$CONTAINER" sh -lc 'set -euo pipefail; cd /app && composer require madeofpeople/abcnorio-func:'"$NEXT_VERSION"' --no-interaction'
+else
+  echo "Skipping composer require for dev (mount-only plugin contract)."
 fi
 
 docker exec "$CONTAINER" test -f "$PLUGIN_BOOTSTRAP_PATH"

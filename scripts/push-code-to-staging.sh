@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-VERSION="${1:-}"
 ENV_FILE=".env"
 
 # Validate env file exists
@@ -21,8 +20,7 @@ if [ -z "$ASTRO_BUILD_TRIGGER_SECRET" ]; then
     exit 1
 fi
 
-# Build JSON payload
-PAYLOAD=$(jq -rn --arg version "$VERSION" '{version: $version}')
+PAYLOAD='{}'
 
 # Send to orchestrator
 docker exec deploy-orchestrator curl -sf \

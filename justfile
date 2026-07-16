@@ -78,22 +78,11 @@ wp-eval env code:
 build env scope="full":
     bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
-# Approve current commit for staging deployment   e.g. just approve-staging VERSION=0.8.3
-approve-staging VERSION="":
-    bash scripts/approve-staging.sh {{ VERSION }}
-
-# Push approved staging code to staging container   e.g. just push-code-to-staging VERSION=0.8.3
-push-code-to-staging VERSION="":
-    bash scripts/push-code-to-staging.sh {{ VERSION }}
-
-# Get currently deployed staging version
-staging-status:
-    #!/usr/bin/env bash
-    source .env
-    docker exec deploy-orchestrator curl -sf \
-        -X GET "http://localhost:4011/dev-tools/status" \
-        -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
-        | jq '.push // {status: "unknown"}'
+# Push staging branch code to staging container.
+# Uses site-dev/staging branch HEAD in orchestrator.
+# e.g. just push-code-to-staging
+push-code-to-staging:
+    bash scripts/push-code-to-staging.sh
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:
@@ -181,11 +170,12 @@ build-webcomponents:
 verify-webcomponents:
     cd ../abcnorio-webcomponents && npm run check:manifest
 
-# Scaffold a new webcomponent directory with starter Astro debug file
+# Scaffold a new webcomponent directory with starter Astro debug file.
 # Usage:
 #   just create-webcomponent event-card
-create-webcomponent component_name:
-    bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ component_name }}
+#   just create-webcomponent cover --scope wp-blocks --wp-block core/cover
+create-webcomponent *args:
+    bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ args }}
 
 # Build + verify + release plugin into selected WP env.
 # Usage:
