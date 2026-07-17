@@ -66,8 +66,7 @@
 	}
 
         # for serving uploads from static server on WP domains
-        @wp_uploads host {$DOMAIN_WP_STAGING}
-        @wp_uploads path /app/uploads/*
+        @wp_uploads host {$DOMAIN_WP_STAGING} path /app/uploads/*
         handle @wp_uploads {
                 uri strip_prefix /app/uploads
                 root * /srv/uploads/
