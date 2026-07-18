@@ -1,6 +1,9 @@
 {
   "version": 2,
   "settings": {
+    "layout": {
+      "allowEditing": false
+    },
     "color": {
       "custom": false,
       "customText": false,
