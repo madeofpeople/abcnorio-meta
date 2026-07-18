@@ -166,6 +166,10 @@ build-plugin:
 build-webcomponents:
     cd ../abcnorio-webcomponents && npm run build
 
+# Sync webcomponents module declarations from package exports
+sync-webcomponents-types:
+    cd ../abcnorio-webcomponents && npm run sync:types
+
 # Verify current webcomponents manifest contract without rebuilding
 verify-webcomponents:
     cd ../abcnorio-webcomponents && npm run check:manifest
