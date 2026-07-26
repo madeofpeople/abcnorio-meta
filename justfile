@@ -78,11 +78,16 @@ wp-eval env code:
 build env scope="full":
     bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
+# Approve current dev HEAD for staging by creating/pushing staging deploy tag.
+# e.g. just approve-staging-deploy
+approve-staging-deploy:
+    bash scripts/approve-staging-deploy.sh
+
 # Push staging branch code to staging container.
-# Uses site-dev/staging branch HEAD in orchestrator.
-# e.g. just push-code-to-staging
-push-code-to-staging:
-    bash scripts/push-code-to-staging.sh
+# Defaults to latest staging-deploy-* tag if TAG not provided.
+# e.g. just push-code-to-staging | just push-code-to-staging staging-deploy-2026-07-26-a1b2c3d
+push-code-to-staging TAG="":
+    bash scripts/push-code-to-staging.sh {{ TAG }}
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:
