@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3ea05f2338a050ba165419b471f75e5c",
+    "content-hash": "dd4a4fd06901646007ddac5d315d1819",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.8.6",
+            "version": "0.10.0",
             "source": {
                 "type": "git",
-                "url": "git@github.com:madeofpeople/abcnorio-func.git",
-                "reference": "af74d4da563132cf749105dc0c213c3bd24b4e11"
+                "url": "https://github.com/madeofpeople/abcnorio-func.git",
+                "reference": "e1e4f6458a4c214b969d524dcda47fabfda5f494"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/af74d4da563132cf749105dc0c213c3bd24b4e11",
-                "reference": "af74d4da563132cf749105dc0c213c3bd24b4e11",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/e1e4f6458a4c214b969d524dcda47fabfda5f494",
+                "reference": "e1e4f6458a4c214b969d524dcda47fabfda5f494",
                 "shasum": ""
             },
             "require": {
@@ -310,7 +310,11 @@
                 "headless",
                 "wordpress"
             ],
-            "time": "2026-07-17T00:06:15+00:00"
+            "support": {
+                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.10.0",
+                "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
+            },
+            "time": "2026-07-26T13:38:13+00:00"
         },
         {
             "name": "masterminds/html5",
@@ -5513,5 +5517,5 @@
         "php": ">=8.3"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b597a6f3ad8b1b99dc7323f18b65aaef",
+    "content-hash": "347ba4600757bca69a6a6b10001656ad",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -1425,6 +1425,68 @@
                 "source": "https://plugins.svn.wordpress.org/login-as-user"
             },
             "time": "2026-05-25T21:41:12+00:00"
+        },
+        {
+            "name": "wp-plugin/mailchimp",
+            "version": "2.1.0",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/mailchimp/",
+                "reference": "tags/2.1.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/mailchimp.2.1.0.zip"
+            },
+            "require": {
+                "composer/installers": "~1.0|~2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://wp-packages.org/downloads",
+            "authors": [
+                {
+                    "name": "Mailchimp"
+                }
+            ],
+            "description": "Add a Mailchimp signup form block, widget, or shortcode to your WordPress site.",
+            "homepage": "https://mailchimp.com/help/connect-or-disconnect-list-subscribe-for-wordpress/",
+            "support": {
+                "changelog": "https://wordpress.org/plugins/mailchimp/#developers",
+                "issues": "https://wordpress.org/support/plugin/mailchimp",
+                "source": "https://plugins.svn.wordpress.org/mailchimp"
+            },
+            "time": "2026-06-03T16:25:53+00:00"
+        },
+        {
+            "name": "wp-plugin/mailchimp-for-wp",
+            "version": "4.13.1",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/mailchimp-for-wp/",
+                "reference": "tags/4.13.1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/mailchimp-for-wp.4.13.1.zip"
+            },
+            "require": {
+                "composer/installers": "~1.0|~2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://wp-packages.org/downloads",
+            "authors": [
+                {
+                    "name": "Danny van Kooten"
+                }
+            ],
+            "description": "The #1 Mailchimp plugin for WordPress. Allows you to add a multitude of newsletter sign-up methods to your site.",
+            "homepage": "https://www.mc4wp.com/#utm_source=wp-plugin&utm_medium=mailchimp-for-wp&utm_campaign=plugins-page",
+            "support": {
+                "changelog": "https://wordpress.org/plugins/mailchimp-for-wp/#developers",
+                "issues": "https://wordpress.org/support/plugin/mailchimp-for-wp",
+                "source": "https://plugins.svn.wordpress.org/mailchimp-for-wp"
+            },
+            "time": "2026-06-22T10:30:53+00:00"
         }
     ],
     "packages-dev": [
