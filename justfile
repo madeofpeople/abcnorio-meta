@@ -192,7 +192,3 @@ update-wp-dev-plugin env bump="patch" mode="":
 # Run PHP tests in the plugin (via bedrock dev container)
 plugin-test:
     docker exec abcwpdev composer test --working-dir=/app/web/app/plugins/abcnorio-func
-
-# Build admin styles
-#build-admin-styles:
-#    cd ../abcnorio-astro/site-dev/ && npm run build:wp-admin-styles
