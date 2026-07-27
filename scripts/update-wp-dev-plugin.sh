@@ -57,9 +57,21 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   exit 1
 fi
 
-if [[ "$MODE" != "dry" ]]; then
-  require_clean_repo "$WC_DIR" "Dirty tree in $WC_DIR. Commit/stash first."
-  require_clean_repo "$FUNC_DIR" "Dirty tree in $FUNC_DIR. Commit/stash first."
+require_clean_repo "$WC_DIR" "Dirty tree in $WC_DIR. Commit/stash first."
+require_clean_repo "$FUNC_DIR" "Dirty tree in $FUNC_DIR. Commit/stash first."
+
+CURRENT_VERSION="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(String(p.version||""));' "$FUNC_DIR/composer.json")"
+[[ -n "$CURRENT_VERSION" ]] || { echo "Failed reading current version from composer.json" >&2; exit 1; }
+
+NEXT_VERSION="$(node -e 'const [v,b]=process.argv.slice(1); const m=v.match(/^(\d+)\.(\d+)\.(\d+)$/); if(!m){process.exit(2)} let [_,M,mn,p]=m; M=+M; mn=+mn; p=+p; if(b==="patch") p+=1; else if(b==="minor"){mn+=1;p=0}else if(b==="major"){M+=1;mn=0;p=0}else{process.exit(3)} process.stdout.write(`${M}.${mn}.${p}`);' "$CURRENT_VERSION" "$BUMP")"
+[[ -n "$NEXT_VERSION" ]] || { echo "Failed computing next version" >&2; exit 1; }
+
+if [[ "$MODE" == "dry" ]]; then
+  echo "Current version: $CURRENT_VERSION"
+  echo "Next version:    $NEXT_VERSION"
+  echo "[dry-run] No mutation steps executed."
+  echo "[dry-run] Skipping build/install, version write, commit/tag/push, composer require, cache flush, snapshot."
+  exit 0
 fi
 
 echo "[1/7] Build webcomponents"
@@ -77,24 +89,11 @@ MANIFEST_PATH="$FUNC_DIR/resources/vendor/components/dist/manifest.json"
   exit 1
 }
 
-if [[ "$MODE" != "dry" ]]; then
-  require_clean_repo "$WC_DIR" "Build changed $WC_DIR. Commit/stash those changes before release."
-  require_clean_repo "$FUNC_DIR" "Build changed $FUNC_DIR. Commit/stash those changes before release."
-fi
-
-CURRENT_VERSION="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(String(p.version||""));' "$FUNC_DIR/composer.json")"
-[[ -n "$CURRENT_VERSION" ]] || { echo "Failed reading current version from composer.json" >&2; exit 1; }
-
-NEXT_VERSION="$(node -e 'const [v,b]=process.argv.slice(1); const m=v.match(/^(\d+)\.(\d+)\.(\d+)$/); if(!m){process.exit(2)} let [_,M,mn,p]=m; M=+M; mn=+mn; p=+p; if(b==="patch") p+=1; else if(b==="minor"){mn+=1;p=0}else if(b==="major"){M+=1;mn=0;p=0}else{process.exit(3)} process.stdout.write(`${M}.${mn}.${p}`);' "$CURRENT_VERSION" "$BUMP")"
-[[ -n "$NEXT_VERSION" ]] || { echo "Failed computing next version" >&2; exit 1; }
+require_clean_repo "$WC_DIR" "Build changed $WC_DIR. Commit/stash those changes before release."
+require_clean_repo "$FUNC_DIR" "Build changed $FUNC_DIR. Commit/stash those changes before release."
 
 echo "Current version: $CURRENT_VERSION"
 echo "Next version:    $NEXT_VERSION"
-
-if [[ "$MODE" == "dry" ]]; then
-  echo "[dry-run] Skipping version write, commit, tag, push, composer update, cache flush, snapshot"
-  exit 0
-fi
 
 echo "[4/7] Bump plugin versions"
 node -e '
