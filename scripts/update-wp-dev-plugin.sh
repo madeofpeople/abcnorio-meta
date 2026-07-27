@@ -3,7 +3,7 @@ set -euo pipefail
 
 ENV="${1:-}"
 BUMP="${2:-patch}"
-MODE="${3:-}"
+EXTRA_ARG="${3:-}"
 
 require_clean_repo() {
   local repo_dir="$1"
@@ -25,10 +25,11 @@ case "$BUMP" in
   *) echo "Unknown bump: $BUMP (expected patch|minor|major)" >&2; exit 1 ;;
 esac
 
-case "$MODE" in
-  ""|dry) ;;
-  *) echo "Unknown mode: $MODE (expected 'dry' or empty)" >&2; exit 1 ;;
-esac
+if [[ -n "$EXTRA_ARG" ]]; then
+  echo "Unexpected third argument: $EXTRA_ARG" >&2
+  echo "Usage: update-wp-dev-plugin.sh <dev|staging> [patch|minor|major]" >&2
+  exit 1
+fi
 
 for cmd in npm git docker node; do
   command -v "$cmd" >/dev/null 2>&1 || { echo "Missing required command: $cmd" >&2; exit 1; }
@@ -65,14 +66,6 @@ CURRENT_VERSION="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFi
 
 NEXT_VERSION="$(node -e 'const [v,b]=process.argv.slice(1); const m=v.match(/^(\d+)\.(\d+)\.(\d+)$/); if(!m){process.exit(2)} let [_,M,mn,p]=m; M=+M; mn=+mn; p=+p; if(b==="patch") p+=1; else if(b==="minor"){mn+=1;p=0}else if(b==="major"){M+=1;mn=0;p=0}else{process.exit(3)} process.stdout.write(`${M}.${mn}.${p}`);' "$CURRENT_VERSION" "$BUMP")"
 [[ -n "$NEXT_VERSION" ]] || { echo "Failed computing next version" >&2; exit 1; }
-
-if [[ "$MODE" == "dry" ]]; then
-  echo "Current version: $CURRENT_VERSION"
-  echo "Next version:    $NEXT_VERSION"
-  echo "[dry-run] No mutation steps executed."
-  echo "[dry-run] Skipping build/install, version write, commit/tag/push, composer require, cache flush, snapshot."
-  exit 0
-fi
 
 echo "[1/7] Build webcomponents"
 (cd "$WC_DIR" && npm run build)
