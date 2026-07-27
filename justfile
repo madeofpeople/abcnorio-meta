@@ -72,6 +72,12 @@ wp env *args:
 wp-eval env code:
     bash scripts/wp.sh {{ env }} eval '{{ code }}'
 
+# Flush WP object cache + DB transients for an env.
+# Usage: just flush-wp-caches dev
+flush-wp-caches ENV:
+    bash scripts/wp.sh {{ ENV }} cache flush
+    bash scripts/wp.sh {{ ENV }} transient delete --all
+
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
 # Trigger a build   e.g. just build production | just build preview events
