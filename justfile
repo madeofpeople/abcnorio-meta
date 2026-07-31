@@ -194,6 +194,13 @@ verify-webcomponents:
 create-webcomponent *args:
     bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ args }}
 
+# Scaffold a wp-block webcomponent wrapper with required block key wiring.
+# Usage:
+#   just create-webcomponent-wp announcement-tout abcnorio/announcement-tout
+#   just create-webcomponent-wp youtube core/embed
+create-webcomponent-wp component wp_block:
+    bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ component }} --scope wp-blocks --wp-block {{ wp_block }}
+
 # Build + verify + release plugin into selected WP env.
 # Usage:
 #   just update-wp-dev-plugin dev
