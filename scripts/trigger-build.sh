@@ -27,10 +27,13 @@ fi
 ORCHESTRATOR_PORT="${ORCHESTRATOR_PORT:-4011}"
 ORCHESTRATOR_CONTAINER="${ORCHESTRATOR_CONTAINER:-deploy-orchestrator}"
 
-docker exec "$ORCHESTRATOR_CONTAINER" curl -sf \
+printf 'Triggering %s build (%s) via orchestrator...\n' "$TARGET" "$SCOPE"
+
+response="$(docker exec "$ORCHESTRATOR_CONTAINER" curl -sf \
   -X POST "http://localhost:${ORCHESTRATOR_PORT}/trigger" \
   -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
   -H "Content-Type: application/json" \
-  -d "{\"target\":\"${TARGET}\",\"scope\":\"${SCOPE}\",\"source\":\"manual\"}" \
-  | cat
-echo
+  -d "{\"target\":\"${TARGET}\",\"scope\":\"${SCOPE}\",\"source\":\"manual\"}")"
+
+printf '%s\n' "$response"
+printf 'Build request accepted. Monitor the orchestrator output for completion.\n'
