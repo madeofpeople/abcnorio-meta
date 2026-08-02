@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "95ab7b6ca46c2c4b43c4bce5ae68ab09",
+    "content-hash": "ee96a4037c9afaa26eb24cb75a3a1cef",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.14.0",
+            "version": "0.17.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/madeofpeople/abcnorio-func.git",
-                "reference": "6baa5e6503a586c8b89e1a6f15c1b4bd0afe5a97"
+                "url": "git@github.com:madeofpeople/abcnorio-func.git",
+                "reference": "2ca5f087c1a9458565c7daf694422b84f6b8e50b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/6baa5e6503a586c8b89e1a6f15c1b4bd0afe5a97",
-                "reference": "6baa5e6503a586c8b89e1a6f15c1b4bd0afe5a97",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/2ca5f087c1a9458565c7daf694422b84f6b8e50b",
+                "reference": "2ca5f087c1a9458565c7daf694422b84f6b8e50b",
                 "shasum": ""
             },
             "require": {
@@ -310,11 +310,7 @@
                 "headless",
                 "wordpress"
             ],
-            "support": {
-                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.14.0",
-                "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
-            },
-            "time": "2026-07-27T15:54:36+00:00"
+            "time": "2026-08-02T20:54:10+00:00"
         },
         {
             "name": "masterminds/html5",
@@ -5517,5 +5513,5 @@
         "php": ">=8.3"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }

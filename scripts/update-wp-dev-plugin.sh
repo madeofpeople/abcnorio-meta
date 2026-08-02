@@ -31,7 +31,7 @@ if [[ -n "$EXTRA_ARG" ]]; then
   exit 1
 fi
 
-for cmd in npm git docker node; do
+for cmd in npm git docker node composer; do
   command -v "$cmd" >/dev/null 2>&1 || { echo "Missing required command: $cmd" >&2; exit 1; }
 done
 
@@ -119,7 +119,14 @@ echo "[5/7] Commit, tag, and push plugin"
 
 echo "[6/7] Update $ENV Bedrock plugin dependency"
 if [[ "$ENV" == "staging" ]]; then
-  docker exec "$CONTAINER" sh -lc 'set -euo pipefail; cd /app && composer require madeofpeople/abcnorio-func:'"$NEXT_VERSION"' --no-interaction'
+  BEDROCK_DIR="${META_DIR}/wp/staging/bedrock"
+  [[ -d "$BEDROCK_DIR" ]] || { echo "Staging Bedrock directory not found: $BEDROCK_DIR" >&2; exit 1; }
+  [[ -f "$BEDROCK_DIR/composer.json" ]] || { echo "Missing composer.json in staging Bedrock directory: $BEDROCK_DIR" >&2; exit 1; }
+  echo "Updating staging Bedrock dependency from host-side composer"
+  (
+    cd "$BEDROCK_DIR"
+    composer require "madeofpeople/abcnorio-func:$NEXT_VERSION" --no-interaction
+  )
 else
   echo "Skipping composer require for dev (mount-only plugin contract)."
 fi
