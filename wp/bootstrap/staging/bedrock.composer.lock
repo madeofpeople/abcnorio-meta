@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ee96a4037c9afaa26eb24cb75a3a1cef",
+    "content-hash": "1f9518c46e8ccefaba7b195d64f5ffef",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.17.0",
+            "version": "0.18.0",
             "source": {
                 "type": "git",
-                "url": "git@github.com:madeofpeople/abcnorio-func.git",
-                "reference": "2ca5f087c1a9458565c7daf694422b84f6b8e50b"
+                "url": "https://github.com/madeofpeople/abcnorio-func.git",
+                "reference": "f8f7ebb6146eadf13f22c898df31704a52aec73d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/2ca5f087c1a9458565c7daf694422b84f6b8e50b",
-                "reference": "2ca5f087c1a9458565c7daf694422b84f6b8e50b",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/f8f7ebb6146eadf13f22c898df31704a52aec73d",
+                "reference": "f8f7ebb6146eadf13f22c898df31704a52aec73d",
                 "shasum": ""
             },
             "require": {
@@ -310,7 +310,11 @@
                 "headless",
                 "wordpress"
             ],
-            "time": "2026-08-02T20:54:10+00:00"
+            "support": {
+                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.18.0",
+                "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
+            },
+            "time": "2026-08-02T21:51:33+00:00"
         },
         {
             "name": "masterminds/html5",
