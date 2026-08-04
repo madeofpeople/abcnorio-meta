@@ -39,6 +39,7 @@ fi
 ORCHESTRATOR_PORT="${ORCHESTRATOR_PORT:-4011}"
 
 echo "Syncing DB: $DIRECTION (also syncs media uploads)..."
+echo "Note: this command validates data/media sync only. It does not validate frontend deployment state."
 curl -sf \
   -X POST "http://localhost:${ORCHESTRATOR_PORT}${ENDPOINT}" \
   -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
@@ -57,7 +58,7 @@ while (( SECONDS < deadline )); do
 
   case "$op_status" in
     done)
-      echo "Sync completed."
+      echo "Sync completed (data/media scope only)."
       break
       ;;
     failed)

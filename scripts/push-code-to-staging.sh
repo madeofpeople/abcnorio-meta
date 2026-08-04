@@ -7,6 +7,68 @@ POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-2}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-1800}"
 ASTRO_REPO_DIR="${ASTRO_REPO_DIR:-../abcnorio-astro}"
 STAGING_BRANCH_NAME="${STAGING_BRANCH_NAME:-staging}"
+WP_RUNTIME_ENV_FILE="wp/runtime.env"
+
+strip_wrapping_quotes() {
+    local value="$1"
+    value="${value%\"}"
+    value="${value#\"}"
+    value="${value%\'}"
+    value="${value#\'}"
+    printf '%s' "$value"
+}
+
+read_runtime_env_value() {
+    local key="$1"
+    local raw=""
+
+    if [ ! -f "$WP_RUNTIME_ENV_FILE" ]; then
+        return
+    fi
+
+    raw="$(sed -n "s/^${key}=//p" "$WP_RUNTIME_ENV_FILE" | tail -n 1)"
+    if [ -z "$raw" ]; then
+        return
+    fi
+
+    raw="$(strip_wrapping_quotes "$raw")"
+    printf '%s\n' "$raw"
+}
+
+resolve_deployment_status_path() {
+    local explicit_path=""
+    local archive_dir=""
+
+    explicit_path="$(read_runtime_env_value "ASTRO_DEPLOYMENT_STATUS_FILE")"
+    if [ -n "$explicit_path" ]; then
+        printf '%s\n' "$explicit_path"
+        return
+    fi
+
+    archive_dir="$(read_runtime_env_value "ASTRO_BUILD_ARCHIVE_DIR")"
+    if [ -n "$archive_dir" ]; then
+        archive_dir="${archive_dir%/}"
+        printf '%s/deployment-status.json\n' "$archive_dir"
+        return
+    fi
+
+    printf '/app/backups/deployment-status.json\n'
+}
+
+assert_deployment_status_contract() {
+    local phase="$1"
+    local status_path="$2"
+
+    if ! docker exec abcwpstaging sh -lc "test -r '$status_path'"; then
+        echo "error: ${phase} deployment status contract failed: unreadable file at ${status_path}" >&2
+        exit 1
+    fi
+
+    if ! docker exec abcwpstaging sh -lc "grep -q '\"envs\"' '$status_path'"; then
+        echo "error: ${phase} deployment status contract failed: missing envs payload in ${status_path}" >&2
+        exit 1
+    fi
+}
 
 # Validate env file exists
 if [ ! -f "$ENV_FILE" ]; then
@@ -40,6 +102,9 @@ if ! command -v docker >/dev/null 2>&1; then
     echo "error: docker is required"
     exit 1
 fi
+
+DEPLOYMENT_STATUS_PATH="$(resolve_deployment_status_path)"
+assert_deployment_status_contract "preflight" "$DEPLOYMENT_STATUS_PATH"
 
 resolve_effective_tag() {
     if [ -n "$TAG" ]; then
@@ -179,6 +244,8 @@ echo "fast-forwarding ${STAGING_BRANCH_NAME} -> $APPROVED_SHA"
     git push origin "$STAGING_BRANCH_NAME"
     git checkout "$CURRENT_BRANCH"
 )
+
+assert_deployment_status_contract "postflight" "$DEPLOYMENT_STATUS_PATH"
 
 echo "branch_update=done"
 exit 0

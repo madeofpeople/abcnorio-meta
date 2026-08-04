@@ -33,7 +33,7 @@ services:
     container_name: astro-dev
     user: root
     restart: always
-    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
+    command: ["bash", "-c", "umask 0002 && cd /app && npm install && npm run dev:docker"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
       interval: 30s
@@ -100,7 +100,6 @@ services:
       - 127.0.0.1:3034:3033
     volumes:
       - ${ASTRO_STAGING_SITE_DIR}:/app/
-      - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents
     depends_on:
       - deploy-orchestrator
     networks:

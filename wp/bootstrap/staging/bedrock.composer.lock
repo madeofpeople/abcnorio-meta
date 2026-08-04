@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1f9518c46e8ccefaba7b195d64f5ffef",
+    "content-hash": "dfec7f4375528cf4c085b88f184d60df",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.18.0",
+            "version": "0.19.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/madeofpeople/abcnorio-func.git",
-                "reference": "f8f7ebb6146eadf13f22c898df31704a52aec73d"
+                "reference": "c82a8f36b8b77e4071fa30ade6db3f8d064aacdf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/f8f7ebb6146eadf13f22c898df31704a52aec73d",
-                "reference": "f8f7ebb6146eadf13f22c898df31704a52aec73d",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/c82a8f36b8b77e4071fa30ade6db3f8d064aacdf",
+                "reference": "c82a8f36b8b77e4071fa30ade6db3f8d064aacdf",
                 "shasum": ""
             },
             "require": {
@@ -311,10 +311,10 @@
                 "wordpress"
             ],
             "support": {
-                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.18.0",
+                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.19.0",
                 "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
             },
-            "time": "2026-08-02T21:51:33+00:00"
+            "time": "2026-08-03T18:20:08+00:00"
         },
         {
             "name": "masterminds/html5",
@@ -1442,6 +1442,37 @@
                 "source": "https://plugins.svn.wordpress.org/fluent-smtp"
             },
             "time": "2026-03-23T19:23:21+00:00"
+        },
+        {
+            "name": "wp-plugin/lightbox-photoswipe",
+            "version": "5.10.1",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/lightbox-photoswipe/",
+                "reference": "tags/5.10.1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/lightbox-photoswipe.5.10.1.zip"
+            },
+            "require": {
+                "composer/installers": "~1.0|~2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://wp-packages.org/downloads",
+            "authors": [
+                {
+                    "name": "Arno Welzel"
+                }
+            ],
+            "description": "Integration of PhotoSwipe (http://photoswipe.com) for WordPress.",
+            "homepage": "https://wordpress.org/plugins/lightbox-photoswipe/",
+            "support": {
+                "changelog": "https://wordpress.org/plugins/lightbox-photoswipe/#developers",
+                "issues": "https://wordpress.org/support/plugin/lightbox-photoswipe",
+                "source": "https://plugins.svn.wordpress.org/lightbox-photoswipe"
+            },
+            "time": "2026-08-02T08:56:14+00:00"
         },
         {
             "name": "wp-plugin/login-as-user",
