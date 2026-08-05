@@ -91,7 +91,7 @@ approve-staging-deploy:
 
 # Push approved staging tag code to staging runtime with completion feedback.
 # Script polls orchestrator, temporarily stops astro-staging during cutover,
-# then fast-forwards `staging` branch host-side after successful push.
+# waits for astro-staging health, and verifies staging plugin/editor artifacts.
 # Defaults to latest staging-deploy-* tag if TAG not provided.
 # e.g. just push-code-to-staging | just push-code-to-staging staging-deploy-2026-07-26-a1b2c3d
 push-code-to-staging TAG="":

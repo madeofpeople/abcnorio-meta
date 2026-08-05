@@ -5,8 +5,6 @@ ENV_FILE=".env"
 TAG="${1:-}"
 POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-2}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-1800}"
-ASTRO_REPO_DIR="${ASTRO_REPO_DIR:-../abcnorio-astro}"
-STAGING_BRANCH_NAME="${STAGING_BRANCH_NAME:-staging}"
 WP_RUNTIME_ENV_FILE="wp/runtime.env"
 
 strip_wrapping_quotes() {
@@ -70,6 +68,26 @@ assert_deployment_status_contract() {
     fi
 }
 
+assert_staging_plugin_artifacts() {
+    local required_files=(
+        "/app/web/app/plugins/abcnorio-func/build/index.js"
+        "/app/web/app/plugins/abcnorio-func/build/index.asset.php"
+        "/app/web/app/plugins/abcnorio-func/resources/vendor/components/dist/manifest.json"
+    )
+
+    local missing=0
+    for file_path in "${required_files[@]}"; do
+        if ! docker exec abcwpstaging sh -lc "test -r '$file_path'"; then
+            echo "error: postflight artifact contract failed: missing unreadable file at ${file_path}" >&2
+            missing=1
+        fi
+    done
+
+    if [ "$missing" -ne 0 ]; then
+        exit 1
+    fi
+}
+
 # Validate env file exists
 if [ ! -f "$ENV_FILE" ]; then
     echo "error: $ENV_FILE not found in $(pwd)"
@@ -93,11 +111,6 @@ else
     PAYLOAD='{}'
 fi
 
-if ! command -v git >/dev/null 2>&1; then
-    echo "error: git is required"
-    exit 1
-fi
-
 if ! command -v docker >/dev/null 2>&1; then
     echo "error: docker is required"
     exit 1
@@ -106,50 +119,46 @@ fi
 DEPLOYMENT_STATUS_PATH="$(resolve_deployment_status_path)"
 assert_deployment_status_contract "preflight" "$DEPLOYMENT_STATUS_PATH"
 
-resolve_effective_tag() {
-    if [ -n "$TAG" ]; then
-        printf '%s\n' "$TAG"
-        return
-    fi
-
-    (
-      cd "$ASTRO_REPO_DIR"
-      git tag --list 'staging-deploy-*' --sort=-creatordate | head -n 1
-    )
+staging_stopped=0
+start_staging() {
+    echo "starting astro-staging..."
+    docker compose start astro-staging >/dev/null
 }
 
-EFFECTIVE_TAG="$(resolve_effective_tag)"
-if [ -z "$EFFECTIVE_TAG" ]; then
-    echo "error: no staging-deploy-* tag found"
-    exit 1
-fi
+wait_for_staging_health() {
+    local deadline=$((SECONDS + MAX_WAIT_SECONDS))
 
-APPROVED_SHA="$(cd "$ASTRO_REPO_DIR" && git rev-list -n 1 "$EFFECTIVE_TAG")"
-if [ -z "$APPROVED_SHA" ]; then
-    echo "error: failed to resolve commit for tag $EFFECTIVE_TAG"
-    exit 1
-fi
+    while (( SECONDS < deadline )); do
+        local status
+        status="$(docker inspect --format '{{if .State.Running}}{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}{{else}}stopped{{end}}' astro-staging 2>/dev/null || true)"
 
-REMOTE_STAGING_SHA="$(cd "$ASTRO_REPO_DIR" && git rev-parse --verify --quiet "origin/${STAGING_BRANCH_NAME}^{commit}" || true)"
-if [ -n "$REMOTE_STAGING_SHA" ]; then
-    if ! (cd "$ASTRO_REPO_DIR" && git merge-base --is-ancestor "$REMOTE_STAGING_SHA" "$APPROVED_SHA"); then
-        echo "error: refusing non-fast-forward update for ${STAGING_BRANCH_NAME}: $REMOTE_STAGING_SHA is not ancestor of $APPROVED_SHA"
-        exit 1
-    fi
-fi
+        case "$status" in
+            healthy|running)
+                echo "astro-staging status: $status"
+                return 0
+                ;;
+            starting)
+                echo "astro-staging status: starting"
+                ;;
+            unhealthy|stopped|exited|dead)
+                echo "astro-staging status: $status"
+                ;;
+            *)
+                echo "astro-staging status: ${status:-unknown}"
+                ;;
+        esac
 
-echo "selected_tag=$EFFECTIVE_TAG"
-echo "selected_commit=$APPROVED_SHA"
+        sleep "$POLL_INTERVAL_SECONDS"
+    done
 
-if [ -z "$TAG" ]; then
-    PAYLOAD="{\"tag\":\"$EFFECTIVE_TAG\"}"
-fi
+    echo "error: astro-staging did not become healthy within ${MAX_WAIT_SECONDS}s" >&2
+    docker compose logs --tail=120 astro-staging >&2 || true
+    return 1
+}
 
-staging_stopped=0
 cleanup() {
     if [ "$staging_stopped" -eq 1 ]; then
-        echo "starting astro-staging..."
-        docker compose start astro-staging >/dev/null
+        start_staging
     fi
 }
 trap cleanup EXIT
@@ -234,18 +243,12 @@ while true; do
     sleep "$POLL_INTERVAL_SECONDS"
 done
 
-echo "fast-forwarding ${STAGING_BRANCH_NAME} -> $APPROVED_SHA"
-(
-    cd "$ASTRO_REPO_DIR"
-    git fetch origin --prune
-    CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-    git checkout "$STAGING_BRANCH_NAME"
-    git merge --ff-only "$APPROVED_SHA"
-    git push origin "$STAGING_BRANCH_NAME"
-    git checkout "$CURRENT_BRANCH"
-)
+start_staging
+wait_for_staging_health
+staging_stopped=0
 
 assert_deployment_status_contract "postflight" "$DEPLOYMENT_STATUS_PATH"
+assert_staging_plugin_artifacts
 
-echo "branch_update=done"
+echo "staging_push=done"
 exit 0

@@ -64,46 +64,46 @@ services:
     networks:
       - abcnorio_net_proxy
   astro-staging:
-    build:
-      context: ${ASTRO_HOST_ROOT}
-      dockerfile: Dockerfile
-      args:
-        SHARED_GID: ${PROJECT_GID}
-        SHARED_GROUP: ${PROJECT_GROUP}
-    container_name: astro-staging
-    user: root
-    restart: always
-    mem_limit: 750m
-    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    environment:
-      DEV_CMS: ${DOMAIN_DEV_CMS}
-      STAGING_CMS: ${DOMAIN_STAGING_CMS}
-      STAGING_CMS_FETCH: http://abcwpstaging/
-      MODE: ${STAGING_MODE:-staging}
-      ASTRO_RUNTIME_CONTAINER: '1'
-      MENU_ENDPOINT: ${MENU_ENDPOINT}
-      REST_ENDPOINT: ${REST_ENDPOINT}
-      BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
-      DEV_SEARCH_API: ${DEV_SEARCH_API}
-      STAGING_SEARCH_API: ${STAGING_SEARCH_API}
-      DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
-      STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
-      PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
-      PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
-    ports:
-      - 127.0.0.1:3034:3033
-    volumes:
-      - ${ASTRO_STAGING_SITE_DIR}:/app/
-    depends_on:
-      - deploy-orchestrator
-    networks:
-      - abcnorio_net_proxy
+      build:
+        context: ${ASTRO_HOST_ROOT}
+        dockerfile: Dockerfile
+        args:
+          SHARED_GID: ${PROJECT_GID}
+          SHARED_GROUP: ${PROJECT_GROUP}
+      container_name: astro-staging
+      user: root
+      restart: always
+      mem_limit: 750m
+      command: ["bash", "-c", "umask 0002 && cd /app && (([ -x node_modules/.bin/astro ] && node -e \"require.resolve('shiki')\" >/dev/null 2>&1) || npm install) && npm run dev:docker"]
+      healthcheck:
+        test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
+        interval: 30s
+        timeout: 5s
+        retries: 3
+        start_period: 10s
+      environment:
+        DEV_CMS: ${DOMAIN_DEV_CMS}
+        STAGING_CMS: ${DOMAIN_STAGING_CMS}
+        STAGING_CMS_FETCH: http://abcwpstaging/
+        MODE: ${STAGING_MODE:-staging}
+        ASTRO_RUNTIME_CONTAINER: '1'
+        MENU_ENDPOINT: ${MENU_ENDPOINT}
+        REST_ENDPOINT: ${REST_ENDPOINT}
+        BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
+        DEV_SEARCH_API: ${DEV_SEARCH_API}
+        STAGING_SEARCH_API: ${STAGING_SEARCH_API}
+        DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
+        STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
+        PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
+        PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
+      ports:
+        - 127.0.0.1:3034:3033
+      volumes:
+        - ${ASTRO_STAGING_SITE_DIR}:/app/
+      depends_on:
+        - deploy-orchestrator
+      networks:
+        - abcnorio_net_proxy
   astro-prod:
     build:
       context: ${ASTRO_HOST_ROOT}

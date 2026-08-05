@@ -112,6 +112,8 @@ just composer staging update         # composer in staging bedrock
 just build preview                   # trigger preview build (staging content)
 just build production                # trigger production build
 just build preview events            # scoped build (target scope)
+just approve-staging-deploy          # tag current astro dev HEAD for staging cutover
+just push-code-to-staging            # guarded staging cutover (orchestrator push + health/artifact checks)
 just docs                            # build + deploy docs site
 
 just db-to-staging                   # sync DB + media dev → staging
