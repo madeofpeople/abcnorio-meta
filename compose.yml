@@ -33,7 +33,7 @@ services:
     container_name: astro-dev
     user: root
     restart: always
-    command: ["bash", "-c", "umask 0002 && cd /app && npm install && npm run dev:docker"]
+    command: ["bash", "-c", "umask 0002 && cd /app && (([ -x node_modules/.bin/astro ] && node -e \"require.resolve('shiki')\" >/dev/null 2>&1) || npm install) && npm run dev:docker"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
       interval: 30s
@@ -47,6 +47,8 @@ services:
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${DEV_MODE:-development}
       ASTRO_RUNTIME_CONTAINER: '1'
+      ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
+      ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
       MENU_ENDPOINT: ${MENU_ENDPOINT}
       REST_ENDPOINT: ${REST_ENDPOINT}
       BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
@@ -56,6 +58,8 @@ services:
       STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
       PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
+      FORMS_SUBMIT_ENDPOINT: ${DOMAIN_DEV_CMS}wp-json/abcnorio/v1/forms/submit
+      FORMS_MIN_SUBMIT_MS: ${FORMS_MIN_SUBMIT_MS:-2500}
     ports: 
       - 127.0.0.1:3033:3033
     volumes:
@@ -87,6 +91,8 @@ services:
         STAGING_CMS_FETCH: http://abcwpstaging/
         MODE: ${STAGING_MODE:-staging}
         ASTRO_RUNTIME_CONTAINER: '1'
+        ASTRO_WEBCOMPONENTS_SOURCE_DIR: /app/node_modules/abcnorio-webcomponents
+        ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
         MENU_ENDPOINT: ${MENU_ENDPOINT}
         REST_ENDPOINT: ${REST_ENDPOINT}
         BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
@@ -96,10 +102,13 @@ services:
         STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
         PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
         PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
+        FORMS_SUBMIT_ENDPOINT: ${DOMAIN_STAGING_CMS}wp-json/abcnorio/v1/forms/submit
+        FORMS_MIN_SUBMIT_MS: ${FORMS_MIN_SUBMIT_MS:-2500}
       ports:
         - 127.0.0.1:3034:3033
       volumes:
         - ${ASTRO_STAGING_SITE_DIR}:/app/
+        - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents:ro
       depends_on:
         - deploy-orchestrator
       networks:
