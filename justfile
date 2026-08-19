@@ -84,18 +84,18 @@ flush-wp-caches ENV:
 build env scope="full":
     bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
-# Approve current dev HEAD for staging by creating/pushing staging deploy tag.
-# e.g. just approve-staging-deploy
-approve-staging-deploy:
-    bash scripts/approve-staging-deploy.sh
+# Approve current main HEAD for staging by creating/pushing staging deploy tag.
+# e.g. just approve-frontend-deploy
+approve-frontend-deploy:
+    bash scripts/approve-frontend-deploy.sh
 
 # Push approved staging tag code to staging runtime with completion feedback.
 # Script polls orchestrator, temporarily stops astro-staging during cutover,
 # waits for astro-staging health, and verifies staging plugin/editor artifacts.
 # Defaults to latest staging-deploy-* tag if TAG not provided.
-# e.g. just push-code-to-staging | just push-code-to-staging staging-deploy-2026-07-26-a1b2c3d
-push-code-to-staging TAG="":
-    bash scripts/push-code-to-staging.sh {{ TAG }}
+# e.g. just deploy-staging | just deploy-staging staging-deploy-2026-07-26-a1b2c3d
+deploy-staging TAG="":
+    bash scripts/deploy-staging.sh {{ TAG }}
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:
@@ -203,10 +203,10 @@ create-webcomponent-wp component wp_block:
 
 # Build + verify + release plugin into selected WP env.
 # Usage:
-#   just update-wp-dev-plugin dev
-#   just update-wp-dev-plugin staging minor
-update-wp-dev-plugin env bump="patch":
-    bash scripts/update-wp-dev-plugin.sh {{ env }} {{ bump }}
+#   just update-wp-plugin dev
+#   just update-wp-plugin staging minor
+update-wp-plugin env bump="patch" message="":
+    if [ -n "{{ message }}" ]; then bash scripts/update-wp-plugin.sh {{ env }} {{ bump }} "{{ message }}"; else bash scripts/update-wp-plugin.sh {{ env }} {{ bump }}; fi
 
 # Run PHP tests in the plugin (via bedrock dev container)
 plugin-test:

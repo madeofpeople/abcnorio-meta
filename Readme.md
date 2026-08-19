@@ -42,7 +42,7 @@ Internet
    ├──▶ abcwpdev       (WP admin/REST, dev)           │
    └──▶ abcwpstaging   (WP admin/REST, staging)       │
                                                       │
-deploy-orchestrator (:4011) ◀── trigger (bearer) ────┘
+deploy-orchestrator (:4011) ◀── trigger (bearer) -────┘
    │  └── build queue (in-memory, 1 at a time)
    │       ├── astro container: npm run build:site
    │       ├── web/static/prod/client (static prod served by web)
@@ -69,7 +69,7 @@ Networks:
 - Canonical plugin source lives in `/abcnorio-func/`.
 - Dev WordPress bind-mounts `${ABCNORIO_FUNC_HOST_DIR}` directly to `/app/web/app/plugins/abcnorio-func` for live iteration.
 - Dev and staging Composer operations run in container context.
-- `abcnorio-webcomponents` stays as a package dependency for Astro and the plugin; its old standalone Stargazer preview host is gone, and workshop pages in `abcnorio-astro/site-dev` are now the preview surface.
+- `abcnorio-webcomponents` is a package dependency for Astro and the plugin, and workshop pages in `abcnorio-astro/site-dev` are the preview surface.
 - Staging stays Composer-managed (no plugin source bind mount); release flow is bump semver, push, then `just composer staging update`.
 - Plugin release artifacts must include `resources/vendor/components/dist` so staging runtime does not require in-container builds.
 
@@ -77,7 +77,7 @@ Networks:
 
 Requires [just](https://github.com/casey/just).
 
-Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo`. It installs host prerequisites (`git`, `rsync`, `composer`, `nodejs`, `npm`, `just`), bootstraps Bedrock inline, bootstraps `site-staging` from `site-dev`, sets up rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
+Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo`. It installs host prerequisites (`git`, `rsync`, `composer`, `nodejs`, `npm`, `just`), bootstraps Bedrock inline, bootstraps `site-staging` from latest `staging-deploy-*` tag, auto-creates/pushes first staging deploy tag from `dev` HEAD if none exists, sets up rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
 
 Permissions contract is deterministic and fixed: uploads run as `UID 1000`, shared group `abcnorio` with `GID 2000`, directories `2775`, files `0664`.
 
@@ -112,8 +112,8 @@ just composer staging update         # composer in staging bedrock
 just build preview                   # trigger preview build (staging content)
 just build production                # trigger production build
 just build preview events            # scoped build (target scope)
-just approve-staging-deploy          # tag current astro dev HEAD for staging cutover
-just push-code-to-staging            # guarded staging cutover (orchestrator push + health/artifact checks)
+just approve-frontend-deploy         # tag current astro main HEAD for staging cutover
+just deploy-staging                  # guarded staging cutover (orchestrator push + health/artifact checks)
 just docs                            # build + deploy docs site
 
 just db-to-staging                   # sync DB + media dev → staging
@@ -135,6 +135,6 @@ To snapshot live Bedrock composer state back into the bootstrap seed files: `jus
 
 The proxy already writes JSON access logs into `PROXY_LOG_DIR`, and fail2ban reads those host-side files directly for the `caddy-wp` jail.
 
-`astro-prod` no longer mounts the Astro source tree. Its container image now comes from `abcnorio-astro/prod-ssr/`, which is a small explicit sidecar package with its own `package.json`. On startup it exits until `deploy.sh` stages `web/static/prod/.ssr`; once `/app/server/entry.mjs` and `/app/node_modules` exist, it runs the Astro SSR server directly on port 3033.
+`astro-prod` runs from the `abcnorio-astro/prod-ssr/` container image and does not mount the Astro source tree. The image is a small explicit sidecar package with its own `package.json`. On startup it exits until `deploy.sh` stages `web/static/prod/.ssr`; once `/app/server/entry.mjs` and `/app/node_modules` exist, it runs the Astro SSR server directly on port 3033.
 
 Full preview builds also create a `build-archives/abcnorio-astro-production-candidate-*.zip` archive. If production is triggered while the preview fingerprint still matches that candidate, the orchestrator restores the prebuilt production candidate instead of running a second full production build.

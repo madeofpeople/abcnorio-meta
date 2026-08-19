@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "Unexpected argument: $1" >&2
-      echo "Usage: update-wp-dev-plugin.sh <dev|staging> [patch|minor|major] [-m=<message>]" >&2
+      echo "Usage: update-wp-plugin.sh <dev|staging> [patch|minor|major] [-m=<message>]" >&2
       exit 1
       ;;
   esac

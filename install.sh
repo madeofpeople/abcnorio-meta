@@ -17,6 +17,8 @@ REPO_WEBCOMPONENTS="git@github.com:madeofpeople/abcnorio-webcomponents.git"
 SHARED_UID=1000
 SHARED_GID=2000
 SHARED_GROUP="abcnorio"
+STAGING_TAG_PREFIX="staging-deploy"
+ASTRO_SOURCE_BRANCH="main"
 
 load_compose_env() {
     if [[ ! -f "$SCRIPT_DIR/.env" ]]; then
@@ -140,6 +142,65 @@ ensure_headless_theme_active() {
     bash "$SCRIPT_DIR/scripts/wp.sh" "$env" theme activate headless
 }
 
+bootstrap_site_staging_from_tag() {
+    local astro_repo="$WORKSPACE_ROOT/abcnorio-astro"
+    local staging_dir="$astro_repo/site-staging"
+    local latest_tag=""
+    local current_branch=""
+    local commit_sha=""
+    local short_sha=""
+    local tag_date=""
+
+    if [[ ! -d "$astro_repo/.git" ]]; then
+        echo "==> Missing git repo at $astro_repo" >&2
+        exit 1
+    fi
+
+    if [[ -n "$(git -C "$astro_repo" status --porcelain)" ]]; then
+        echo "==> abcnorio-astro working tree is dirty" >&2
+        exit 1
+    fi
+
+    current_branch="$(git -C "$astro_repo" rev-parse --abbrev-ref HEAD)"
+    if [[ "$current_branch" != "$ASTRO_SOURCE_BRANCH" ]]; then
+        echo "==> Expected abcnorio-astro branch '$ASTRO_SOURCE_BRANCH', found '$current_branch'" >&2
+        exit 1
+    fi
+
+    latest_tag="$(git -C "$astro_repo" for-each-ref --sort=-creatordate --format='%(refname:strip=2)' "refs/tags/${STAGING_TAG_PREFIX}-*" | head -n 1)"
+
+    if [[ -z "$latest_tag" ]]; then
+        commit_sha="$(git -C "$astro_repo" rev-parse --verify HEAD)"
+        short_sha="${commit_sha:0:7}"
+        tag_date="$(date -u +%Y-%m-%d)"
+        latest_tag="${STAGING_TAG_PREFIX}-${tag_date}-${short_sha}"
+
+        echo "==> No ${STAGING_TAG_PREFIX}-* tag found; creating $latest_tag from main HEAD"
+        git -C "$astro_repo" tag -a "$latest_tag" "$commit_sha" -m "Staging deploy approval ${tag_date} ${short_sha}"
+        git -C "$astro_repo" push origin "$latest_tag"
+    fi
+
+    commit_sha="$(git -C "$astro_repo" rev-parse --verify "${latest_tag}^{commit}")"
+
+    if [[ ! -d "$staging_dir" ]]; then
+        mkdir -p "$staging_dir"
+        git -C "$astro_repo" archive --format=tar "$latest_tag" site-dev | tar -xf - -C "$staging_dir" --strip-components=1
+
+        [[ -f "$staging_dir/package.json" ]] || { echo "==> staging bootstrap contract failed: missing package.json" >&2; exit 1; }
+        [[ -f "$staging_dir/astro.config.mjs" ]] || { echo "==> staging bootstrap contract failed: missing astro.config.mjs" >&2; exit 1; }
+        [[ -f "$staging_dir/src/pages/index.astro" ]] || { echo "==> staging bootstrap contract failed: missing src/pages/index.astro" >&2; exit 1; }
+
+        echo "    bootstrapped: $staging_dir"
+        echo "    source_tag: $latest_tag"
+        echo "    source_commit: $commit_sha"
+        return
+    fi
+
+    echo "    exists (skipped): $staging_dir"
+    echo "    current_bootstrap_source_tag: $latest_tag"
+    echo "    current_bootstrap_source_commit: $commit_sha"
+}
+
 # --- 1. Install host packages ---
 echo "==> Installing host packages..."
 sudo apt-get update
@@ -167,23 +228,9 @@ echo "==> Copying env samples..."
 [ -f "$WORKSPACE_ROOT/abcnorio-orchestrator/.env" ] || { cp "$WORKSPACE_ROOT/abcnorio-orchestrator/.env.sample" "$WORKSPACE_ROOT/abcnorio-orchestrator/.env"; echo "    created: $WORKSPACE_ROOT/abcnorio-orchestrator/.env"; }
 mkdir -p "$SCRIPT_DIR/build/astro/build-archives"
 
-# --- 4. Bootstrap site-staging from site-dev (ephemeral, not tracked in git) ---
+# --- 4. Bootstrap site-staging from approved staging tag (ephemeral, not tracked in git) ---
 echo "==> Bootstrapping site-staging..."
-SITE="$WORKSPACE_ROOT/abcnorio-astro/site-dev"
-STAGING="$WORKSPACE_ROOT/abcnorio-astro/site-staging"
-if [ ! -d "$STAGING" ]; then
-    rsync -a \
-        --exclude='.git' \
-        --exclude='node_modules' \
-        --exclude='.astro' \
-        --exclude='dist' \
-        --exclude='build-archives' \
-        --exclude='.env' \
-        "$SITE/" "$STAGING/"
-    echo "    bootstrapped: $STAGING"
-else
-    echo "    exists (skipped): $STAGING"
-fi
+bootstrap_site_staging_from_tag
 
 # site-staging may have been created by bootstrap above.
 [ -f "$WORKSPACE_ROOT/abcnorio-astro/site-staging/.env" ] || { cp "$WORKSPACE_ROOT/abcnorio-astro/site-dev/.env.sample" "$WORKSPACE_ROOT/abcnorio-astro/site-staging/.env"; echo "    created: $WORKSPACE_ROOT/abcnorio-astro/site-staging/.env"; }

@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ $# -gt 0 ]]; then
+  echo "error: unexpected argument: $1" >&2
+  echo "usage: approve-frontend-deploy.sh" >&2
+  exit 1
+fi
+
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ASTRO_REPO_DIR="${ASTRO_REPO_DIR:-${META_DIR}/../abcnorio-astro}"
-SOURCE_BRANCH="${SOURCE_BRANCH:-dev}"
+SOURCE_BRANCH="${SOURCE_BRANCH:-main}"
 TAG_PREFIX="staging-deploy"
 
 cd "$ASTRO_REPO_DIR"

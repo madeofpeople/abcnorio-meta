@@ -82,6 +82,10 @@ if (( SECONDS >= deadline )); then
   exit 1
 fi
 
-echo "Refreshing FrankenPHP workers in ${WP_CONTAINER} (graceful, no container restart)..."
-docker exec "${WP_CONTAINER}" sh -lc 'curl -sf -X POST http://127.0.0.1:2019/frankenphp/workers/restart >/dev/null'
-echo "Workers refreshed."
+echo "Resetting WP runtime cache in ${WP_CONTAINER} (no container restart)..."
+docker exec "${WP_CONTAINER}" sh -lc '
+  wp --allow-root --path=/app/web/wp cache flush >/dev/null
+  wp --allow-root --path=/app/web/wp transient delete --all >/dev/null || true
+  curl -sf -X POST http://127.0.0.1:2019/frankenphp/workers/restart >/dev/null
+'
+echo "Cache reset complete (object cache flushed, transients purge requested, workers refreshed)."

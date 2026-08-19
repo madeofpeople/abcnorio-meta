@@ -126,6 +126,7 @@ start_staging() {
 }
 
 wait_for_staging_health() {
+    local health_started_at=$SECONDS
     local deadline=$((SECONDS + MAX_WAIT_SECONDS))
 
     while (( SECONDS < deadline )); do
@@ -163,9 +164,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
+cutover_started_at="$(date +%s)"
 echo "stopping astro-staging for cutover..."
 docker compose stop astro-staging >/dev/null
 staging_stopped=1
+cutover_stopped_at="$(date +%s)"
+echo "timing_stop_seconds=$((cutover_stopped_at - cutover_started_at))"
 
 extract_push_field() {
     local json="$1"
@@ -243,9 +247,15 @@ while true; do
     sleep "$POLL_INTERVAL_SECONDS"
 done
 
+push_completed_at="$(date +%s)"
+echo "timing_push_seconds=$((push_completed_at - started_at))"
+
 start_staging
 wait_for_staging_health
 staging_stopped=0
+
+staging_healthy_at="$(date +%s)"
+echo "timing_unavailable_seconds=$((staging_healthy_at - cutover_started_at))"
 
 assert_deployment_status_contract "postflight" "$DEPLOYMENT_STATUS_PATH"
 assert_staging_plugin_artifacts
