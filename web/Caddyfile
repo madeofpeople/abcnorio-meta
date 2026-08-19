@@ -5,16 +5,23 @@
 }
 
 (cache_headers) {
+        # Third-party JS/CSS bundles are versioned less aggressively than hashed asset URLs,
+        # but still benefit from a month-long browser cache before revalidation.
         @vendor path /vendor/*
         header @vendor Cache-Control "public, max-age=2592000"
 
+        # Public static root files and image/media directories are cacheable for a long time
+        # because they are rarely updated and safe to reuse across visits.
         @static path /favicon/* /images/* /robots.txt /site.webmanifest
         header @static Cache-Control "public, max-age=31536000"
 
+        # Image and font files are often large and immutable in practice, so serving them
+        # from cache for one year reduces network use without frequent invalidation.
         @static_img path_regexp \.(webp|avif|jpg|jpeg|png|gif|svg|ico|woff2|woff)$
         header @static_img Cache-Control "public, max-age=31536000"
 
-        # Must be last — overrides @static_img for /_astro/* to preserve immutable
+        # Must be last — this catches /_astro/* after the broader image matcher and marks
+        # the hashed Astro build output as immutable, which prevents stale client bundles.
         @hashed path /_astro/*
         header @hashed Cache-Control "public, max-age=31536000, immutable"
 }
