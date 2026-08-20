@@ -42,7 +42,7 @@ process.stdin.on("data", (c) => (data += c));
 process.stdin.on("end", () => {
   try {
     const parsed = JSON.parse(data);
-    const value = parsed?.[process.argv[1]];
+    const value = parsed?.data?.[process.argv[1]] ?? parsed?.[process.argv[1]];
     if (value === null || value === undefined) {
       process.stdout.write("");
       return;
@@ -59,6 +59,33 @@ fetch_runtime_status() {
   docker exec "$ORCHESTRATOR_CONTAINER" curl -sf \
     -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
     "http://localhost:${ORCHESTRATOR_PORT}/status"
+}
+
+fetch_release_status() {
+  docker exec "$ORCHESTRATOR_CONTAINER" curl -sf \
+    -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
+    "http://localhost:${ORCHESTRATOR_PORT}/releases?target=${TARGET}"
+}
+
+read_latest_release_id() {
+  local json="$1"
+  printf '%s' "$json" | node -e '
+let data = "";
+process.stdin.on("data", (c) => (data += c));
+process.stdin.on("end", () => {
+  try {
+    const parsed = JSON.parse(data);
+    const value = parsed?.data?.latest_release_id ?? parsed?.latest_release_id;
+    if (value === null || value === undefined) {
+      process.stdout.write("");
+      return;
+    }
+    process.stdout.write(String(value));
+  } catch {
+    process.stdout.write("");
+  }
+});
+'
 }
 
 printf 'Triggering %s build (%s) via orchestrator...\n' "$TARGET" "$SCOPE"
@@ -105,7 +132,12 @@ while (( SECONDS < deadline )); do
   if [[ "$runtime_target" == "$TARGET" && ( "$runtime_status" == "done" || "$runtime_status" == "failed" ) ]]; then
     if [[ "$seen_current_target_run" == true || "$is_preexisting_same_target_run" == false ]]; then
       if [[ "$runtime_status" == "done" ]]; then
+        release_status_json="$(fetch_release_status || true)"
+        latest_release_id="$(read_latest_release_id "$release_status_json")"
         printf 'Build completed successfully for %s.\n' "$TARGET"
+        if [[ -n "$latest_release_id" ]]; then
+          printf 'release_id=%s\n' "$latest_release_id"
+        fi
         exit 0
       fi
 

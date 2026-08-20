@@ -16,7 +16,7 @@ services:
       DOMAIN_STAGING: ${DOMAIN_STAGING}
       DOMAIN_PREVIEW: ${DOMAIN_PREVIEW}
     volumes:
-      - ${PROXY_CADDYFILE}:/etc/caddy/Caddyfile
+      - ${PROXY_CADDYFILE}:/etc/caddy/Caddyfile:ro
       - ${PROXY_LOG_DIR}:/var/log/caddy
       - proxy_data:/data
       - proxy_config:/config
@@ -33,7 +33,7 @@ services:
     container_name: astro-dev
     user: root
     restart: always
-    command: ["bash", "-c", "umask 0002 && cd /app && (([ -x node_modules/.bin/astro ] && node -e \"require.resolve('shiki')\" >/dev/null 2>&1) || npm install) && npm run dev:docker"]
+    command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm install) && npm run dev:docker"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
       interval: 30s
@@ -47,6 +47,8 @@ services:
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${DEV_MODE:-development}
       ASTRO_RUNTIME_CONTAINER: '1'
+      # Runtime contract: the live webcomponents source must be mounted into the container.
+      # Package-manager symlinks are local convenience only; the app expects this canonical path.
       ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
       ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
       MENU_ENDPOINT: ${MENU_ENDPOINT}
@@ -64,6 +66,7 @@ services:
       - 127.0.0.1:3033:3033
     volumes:
       - ${ASTRO_SITE_DIR}:/app/
+      # Canonical live-source bind mount: the app runtime must see the webcomponents repo here.
       - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents
     networks:
       - abcnorio_net_proxy
@@ -78,7 +81,7 @@ services:
       user: root
       restart: always
       mem_limit: 750m
-      command: ["bash", "-c", "umask 0002 && cd /app && (([ -x node_modules/.bin/astro ] && node -e \"require.resolve('shiki')\" >/dev/null 2>&1) || npm install) && npm run dev:docker"]
+      command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm ci) && npm run dev:docker"]
       healthcheck:
         test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
         interval: 30s
@@ -92,7 +95,7 @@ services:
         MODE: ${STAGING_MODE:-staging}
         ASTRO_RUNTIME_CONTAINER: '1'
         ASTRO_WEBCOMPONENTS_SOURCE_DIR: /app/node_modules/abcnorio-webcomponents
-        ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
+        ASTRO_DESIGN_TOKENS_DIR: /app/node_modules/abcnorio-webcomponents/src/design-tokens
         MENU_ENDPOINT: ${MENU_ENDPOINT}
         REST_ENDPOINT: ${REST_ENDPOINT}
         BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
@@ -108,7 +111,6 @@ services:
         - 127.0.0.1:3034:3033
       volumes:
         - ${ASTRO_STAGING_SITE_DIR}:/app/
-        - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents:ro
       depends_on:
         - deploy-orchestrator
       networks:
@@ -159,8 +161,13 @@ services:
       retries: 3
       start_period: 10s
     volumes:
-      - ${STATIC_SERVER_CADDYFILE}:/etc/caddy/Caddyfile
-      - ${STATIC_SERVER_SITE_DIR}:/srv/
+      - ${STATIC_SERVER_CADDYFILE}:/etc/caddy/Caddyfile:ro
+      - ${STATIC_SERVER_SITE_DIR}/prod:/srv/prod:ro
+      - ${STATIC_SERVER_SITE_DIR}/dev:/srv/dev:ro
+      - ${STATIC_SERVER_SITE_DIR}/staging:/srv/staging:ro
+      - ${STATIC_SERVER_SITE_DIR}/preview:/srv/preview:ro
+      - ${STATIC_SERVER_SITE_DIR}/docs:/srv/docs:ro
+      - ${STATIC_SERVER_SITE_DIR}/uploads:/srv/uploads:ro
       - web_data:/data
       - web_config:/config
     networks:
@@ -174,7 +181,7 @@ services:
         SHARED_GROUP: ${PROJECT_GROUP}
     container_name: deploy-orchestrator
     user: root
-    mem_limit: 800m
+    mem_limit: 1200m
     stop_grace_period: 120s
     group_add:
       - ${PROJECT_GROUP}
@@ -192,37 +199,30 @@ services:
       ASTRO_SITE_ROOT: /astro-source
       ASTRO_SITE_GIT_ROOT: /astro-repo
       ASTRO_SITE_GIT_SUBDIR: site-dev
-      ASTRO_BUILD_WORKDIR: /astro-build
+      ASTRO_BUILD_WORKDIR: /astro-build/site-dev
+      ASTRO_BUILD_ARCHIVE_DIR: /astro-build/build-archives
       ASTRO_STAGING_SITE_ROOT: /staging-site
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
-      MODE: ${DEV_MODE:-development}
-      DEV_CMS: ${DOMAIN_DEV_CMS}
-      STAGING_CMS: ${DOMAIN_STAGING_CMS}
-      DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
-      STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
-      PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
-      PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
       PRODUCTION_HOST: https://${DOMAIN_PRODUCTION}
       PREVIEW_HOST: https://${DOMAIN_PREVIEW}
-      ASTRO_WEBCOMPONENTS_SOURCE_DIR: /astro-build/abcnorio-webcomponents
+      # Use the live mounted source, not a build-workdir copy.
+      ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
+      ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
       PROJECT_UID: ${PROJECT_UID}
       PROJECT_GID: ${PROJECT_GID}
-      PROJECT_GROUP: ${PROJECT_GROUP}
       PRODUCTION_BUILD_PATH: /shared/static/prod
       PREVIEW_BUILD_PATH: /shared/static/preview
       STAGING_UPLOADS_DIR: /staging-uploads
       DEV_UPLOADS_DIR: /dev-uploads
       PRODUCTION_UPLOADS_PATH: /shared/static/uploads
-      STAGING_DB_HOST: mariadb
       STAGING_DB_NAME: ${STAGING_DB_NAME}
       STAGING_DB_USER: ${STAGING_DB_USER}
       STAGING_DB_PASSWORD: ${STAGING_DB_PASSWORD}
-      DEV_DB_HOST: mariadb
       DEV_DB_NAME: ${DEV_DB_NAME}
       DEV_DB_USER: ${DEV_DB_USER}
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
     command: >
-      bash -lc "umask 0002 && mkdir -p /shared/static/dev /shared/static/staging /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /astro-build/build-archives /astro-build/build-archives/media /astro-build/build-archives/static-backup && cd /orchestrator && node index.mjs"
+      bash -lc "umask 0002 && mkdir -p /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /shared/static/uploads /astro-build/site-dev /astro-build/build-archives /astro-build/build-archives/media /astro-build/build-archives/static-backup && cd /orchestrator && node index.mjs"
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/:ro
       - ${ASTRO_HOST_ROOT}:/astro-repo/:ro
@@ -230,7 +230,9 @@ services:
       - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents/:ro
       - ${ASTRO_BUILD_WORKDIR_HOST_DIR}:/astro-build/
       - ${ASTRO_STAGING_SITE_DIR}:/staging-site/
-      - ${STATIC_SERVER_SITE_DIR}:/shared/static/
+      - ${STATIC_SERVER_SITE_DIR}/prod:/shared/static/prod
+      - ${STATIC_SERVER_SITE_DIR}/preview:/shared/static/preview
+      - ${STATIC_SERVER_SITE_DIR}/uploads:/shared/static/uploads
       - ${STAGING_HOST_ROOT}bedrock/web/app/uploads:/staging-uploads
       - ${DEV_HOST_ROOT}bedrock/web/app/uploads:/dev-uploads
     ports:
@@ -292,7 +294,7 @@ services:
         }
     restart: always
     volumes:
-      - ${STAGING_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
+      - ${STAGING_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile:ro
       - ${STAGING_HOST_ROOT}bedrock:/app
       - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/app/backups:ro
@@ -352,7 +354,7 @@ services:
         }
     restart: always
     volumes:
-      - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile
+      - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile:ro
       - ${DEV_HOST_ROOT}bedrock:/app
       - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
       - ${ABCNORIO_FUNC_HOST_DIR}:/app/web/app/plugins/abcnorio-func

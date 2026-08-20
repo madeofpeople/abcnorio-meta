@@ -84,6 +84,16 @@ flush-wp-caches ENV:
 build env scope="full":
     bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
+# Deploy a specific archived release_id to target (production|preview).
+# e.g. just deploy-release production 20260819-120000-abc1234
+deploy-release target release_id:
+    bash scripts/deploy-release.sh {{ target }} {{ release_id }}
+
+# Roll back target to previous successful release_id, or explicit release_id when provided.
+# e.g. just rollback-release production | just rollback-release preview 20260819-120000-abc1234
+rollback-release target release_id="":
+    if [ -n "{{ release_id }}" ]; then bash scripts/rollback-release.sh {{ target }} {{ release_id }}; else bash scripts/rollback-release.sh {{ target }}; fi
+
 # Approve current main HEAD for staging by creating/pushing staging deploy tag.
 # e.g. just approve-frontend-deploy
 approve-frontend-deploy:

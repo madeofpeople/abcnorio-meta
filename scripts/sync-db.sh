@@ -54,7 +54,24 @@ while (( SECONDS < deadline )); do
     -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
     "http://localhost:${ORCHESTRATOR_PORT}/dev-tools/status")"
 
-  op_status="$(printf '%s' "$status_json" | tr -d '\n' | sed -n "s/.*\"${STATUS_KEY}\":{\"status\":\"\([^\"]*\)\".*/\1/p")"
+  op_status="$(printf '%s' "$status_json" | node -e '
+let data = "";
+process.stdin.on("data", (c) => (data += c));
+process.stdin.on("end", () => {
+  try {
+    const parsed = JSON.parse(data);
+    const root = parsed?.data ?? parsed;
+    const value = root?.[process.argv[1]]?.status;
+    if (!value) {
+      process.stdout.write("");
+      return;
+    }
+    process.stdout.write(String(value));
+  } catch {
+    process.stdout.write("");
+  }
+});
+' "$STATUS_KEY")"
 
   case "$op_status" in
     done)

@@ -180,7 +180,7 @@ process.stdin.on("data", (c) => (data += c));
 process.stdin.on("end", () => {
   try {
     const parsed = JSON.parse(data);
-    const value = parsed?.push?.[process.argv[1]];
+        const value = parsed?.data?.push?.[process.argv[1]] ?? parsed?.push?.[process.argv[1]];
     if (value === null || value === undefined) {
       process.stdout.write("");
       return;
@@ -218,6 +218,10 @@ while true; do
             echo "push status: done (${elapsed}s)"
             if [ -n "$push_message" ] && [ "$push_message" != "null" ]; then
                 echo "$push_message"
+                release_id="$(printf '%s' "$push_message" | sed -n 's/.*from tag \([^ ]*\) at.*/\1/p')"
+                if [ -n "$release_id" ]; then
+                    echo "release_id=${release_id}"
+                fi
             fi
             break
             ;;
