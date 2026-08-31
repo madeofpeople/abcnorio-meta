@@ -79,7 +79,6 @@ printf '\n'
 
 report_path 'meta_root' "$META_DIR"
 report_path 'astro_site_dev' "${ASTRO_SITE_DIR:-}"
-report_path 'astro_site_staging' "${ASTRO_STAGING_SITE_DIR:-}"
 report_path 'astro_build_workdir' "${ASTRO_BUILD_WORKDIR_HOST_DIR:-}"
 report_path 'orchestrator_root' "${ORCHESTRATOR_HOST_DIR:-}"
 report_path 'static_output_root' "${STATIC_SERVER_SITE_DIR:-}"

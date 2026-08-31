@@ -94,8 +94,9 @@ services:
         STAGING_CMS_FETCH: http://abcwpstaging/
         MODE: ${STAGING_MODE:-staging}
         ASTRO_RUNTIME_CONTAINER: '1'
-        ASTRO_WEBCOMPONENTS_SOURCE_DIR: /app/node_modules/abcnorio-webcomponents
-        ASTRO_DESIGN_TOKENS_DIR: /app/node_modules/abcnorio-webcomponents/src/design-tokens
+        # Single-source contract: staging and dev share the same Astro app source; only env/target config changes.
+        ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
+        ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
         MENU_ENDPOINT: ${MENU_ENDPOINT}
         REST_ENDPOINT: ${REST_ENDPOINT}
         BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
@@ -110,7 +111,8 @@ services:
       ports:
         - 127.0.0.1:3034:3033
       volumes:
-        - ${ASTRO_STAGING_SITE_DIR}:/app/
+        - ${ASTRO_SITE_DIR}:/app/
+        - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents
       depends_on:
         - deploy-orchestrator
       networks:
@@ -193,15 +195,18 @@ services:
       retries: 3
       start_period: 20s
     env_file:
-      - ${ASTRO_SITE_DIR}/.env
+      - ${ASTRO_SITE_DIR}/.env.development
+      - ${ASTRO_SITE_DIR}/.env.staging
       - ${ORCHESTRATOR_HOST_DIR}/.env
     environment:
       ASTRO_SITE_ROOT: /astro-source
       ASTRO_SITE_GIT_ROOT: /astro-repo
-      ASTRO_SITE_GIT_SUBDIR: site-dev
-      ASTRO_BUILD_WORKDIR: /astro-build/site-dev
+      ASTRO_SITE_GIT_SUBDIR: site-frontend
+      ASTRO_BUILD_WORKDIR: /astro-build/site-frontend
       ASTRO_BUILD_ARCHIVE_DIR: /astro-build/build-archives
-      ASTRO_STAGING_SITE_ROOT: /staging-site
+      # Staging requires a writable worktree and release directory; the orchestrator fails without both.
+      ASTRO_STAGING_SITE_ROOT: /astro-build/staging-site-frontend
+      ASTRO_STAGING_RELEASES_ROOT: /astro-build/staging-releases
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       PRODUCTION_HOST: https://${DOMAIN_PRODUCTION}
       PREVIEW_HOST: https://${DOMAIN_PREVIEW}
@@ -222,14 +227,13 @@ services:
       DEV_DB_USER: ${DEV_DB_USER}
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
     command: >
-      bash -lc "umask 0002 && mkdir -p /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /shared/static/uploads /astro-build/site-dev /astro-build/build-archives /astro-build/build-archives/media /astro-build/build-archives/static-backup && cd /orchestrator && node index.mjs"
+      bash -lc "umask 0002 && mkdir -p /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /shared/static/uploads /astro-build/site-frontend /astro-build/staging-site-frontend /astro-build/staging-releases /astro-build/build-archives /astro-build/build-archives/media /astro-build/build-archives/static-backup && cd /orchestrator && node index.mjs"
     volumes:
       - ${ORCHESTRATOR_HOST_DIR}:/orchestrator/:ro
       - ${ASTRO_HOST_ROOT}:/astro-repo/:ro
       - ${ASTRO_SITE_DIR}:/astro-source/:ro
       - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents/:ro
       - ${ASTRO_BUILD_WORKDIR_HOST_DIR}:/astro-build/
-      - ${ASTRO_STAGING_SITE_DIR}:/staging-site/
       - ${STATIC_SERVER_SITE_DIR}/prod:/shared/static/prod
       - ${STATIC_SERVER_SITE_DIR}/preview:/shared/static/preview
       - ${STATIC_SERVER_SITE_DIR}/uploads:/shared/static/uploads
