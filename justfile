@@ -160,9 +160,15 @@ db-shell env="staging":
 
 # ── Composer ───────────────────────────────────────────────────────────────────
 
-# Run composer in a bedrock dir (env: dev or staging)
+# Run host Composer in a Bedrock dir (env: dev or staging)
 composer env *args:
-    docker exec abcwp{{ if env == "staging" { "staging" } else { "dev" } }} composer {{ args }} --working-dir=/app
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{ env }}" in
+        dev|staging) ;;
+        *) echo "Unknown env: {{ env }} (expected dev or staging)" >&2; exit 1 ;;
+    esac
+    (cd "wp/{{ env }}/bedrock" && composer {{ args }})
 
 # Copy live Bedrock composer files back to the bootstrap seed files (env: dev or staging)
 bedrock-snapshot env="dev":

@@ -68,9 +68,9 @@ Networks:
 
 - Canonical plugin source lives in `/abcnorio-func/`.
 - Dev WordPress bind-mounts `${ABCNORIO_FUNC_HOST_DIR}` directly to `/app/web/app/plugins/abcnorio-func` for live iteration.
-- Dev and staging Composer operations run in container context.
+- Dev and staging Composer operations run on the host from their Bedrock directories.
 - `abcnorio-webcomponents` is a package dependency for Astro and the plugin, and workshop pages in `abcnorio-astro/site-frontend` are the preview surface.
-- Staging stays Composer-managed (no plugin source bind mount); release flow is bump semver, push, then `just composer staging update`.
+- Staging stays Composer-managed (no plugin source bind mount); release flow is bump semver, push, then host-side Composer updates staging Bedrock.
 - Plugin release artifacts must include `resources/vendor/components/dist` so staging runtime does not require in-container builds.
 
 ## Quick Commands
@@ -106,8 +106,8 @@ just logs [service]                  # tail logs (default: all)
 
 just wp dev cache flush              # WP-CLI in dev
 just wp staging plugin list          # WP-CLI in staging
-just composer dev update             # composer in dev bedrock
-just composer staging update         # composer in staging bedrock
+just composer dev update             # host Composer in dev bedrock
+just composer staging update         # host Composer in staging bedrock
 
 just build preview                   # trigger preview build (staging content)
 just build production                # trigger production build
@@ -129,7 +129,7 @@ just plugin-test                     # run PHP tests in the plugin
 just setup-fail2ban                  # install fail2ban on host + deploy SSH/Caddy jails
 ```
 
-For user management and composer ops: `bash scripts/wp-admin.sh <function> [args]`
+For user management: `bash scripts/wp-admin.sh <function> [args]`
 For standalone Bedrock bootstrap fallback: `bash scripts/bedrock-bootstrap.sh`
 To snapshot live Bedrock composer state back into the bootstrap seed files: `just bedrock-snapshot dev`
 

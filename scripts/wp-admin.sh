@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# WP admin helpers — interactive user management and composer ops.
+# WP admin helpers — interactive user management.
 # Usage: source scripts/wp-admin.sh
 #   OR:  bash scripts/wp-admin.sh <function> [args...]
 #
@@ -7,14 +7,8 @@
 #   usercreate <container> <username> <email> [role]
 #   userlist   <container>
 #   chpass     <username> <container>
-#   compinst   <container>
 
 set -euo pipefail
-
-# Run composer update + install inside a container.
-compinst() {
-    docker exec -ti "$1" sh -c "cd /app/ && composer update && composer install"
-}
 
 # List WP users in a container.
 userlist() {

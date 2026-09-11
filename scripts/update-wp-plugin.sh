@@ -65,9 +65,34 @@ PLUGIN_BOOTSTRAP_PATH="/app/web/app/plugins/abcnorio-func/custom-func.php"
 PLUGIN_MANIFEST_PATH="/app/web/app/plugins/abcnorio-func/resources/vendor/components/dist/manifest.json"
 PLUGIN_SLUG="$(basename "$(dirname "$PLUGIN_BOOTSTRAP_PATH")")"
 
+assert_bedrock_write_contract() {
+  local bedrock_dir="$1"
+  local plugin_dir="$bedrock_dir/web/app/plugins/abcnorio-func"
+  local plugin_parent="$(dirname "$plugin_dir")"
+
+  [[ -d "$bedrock_dir" ]] || { echo "Bedrock directory missing: $bedrock_dir" >&2; exit 1; }
+  [[ -w "$bedrock_dir/composer.json" ]] || { echo "Bedrock composer.json is not writable: $bedrock_dir/composer.json" >&2; exit 1; }
+  [[ -w "$bedrock_dir/composer.lock" ]] || { echo "Bedrock composer.lock is not writable: $bedrock_dir/composer.lock" >&2; exit 1; }
+  [[ -d "$plugin_dir" ]] || { echo "Installed plugin directory missing: $plugin_dir" >&2; exit 1; }
+  [[ -w "$plugin_parent" ]] || { echo "Plugin parent directory is not writable: $plugin_parent" >&2; exit 1; }
+
+  local unwritable_dir
+  unwritable_dir="$(find "$plugin_dir" -type d ! -writable -print -quit)"
+  if [[ -n "$unwritable_dir" ]]; then
+    echo "Installed plugin directory contains an unwritable directory: $unwritable_dir" >&2
+    exit 1
+  fi
+}
+
 if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   echo "Container not running: $CONTAINER. Start it with: just up $ENV" >&2
   exit 1
+fi
+
+if [[ "$ENV" == "staging" ]]; then
+  assert_bedrock_write_contract "$META_DIR/wp/staging/bedrock"
+else
+  assert_bedrock_write_contract "$META_DIR/wp/dev/bedrock"
 fi
 
 require_clean_repo "$WC_DIR" "Dirty tree in $WC_DIR. Commit/stash first."

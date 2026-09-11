@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0ecb40fe788b2a9121079096f9298ac0",
+    "content-hash": "78c408789d3a8e412171c079c85f65b6",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.19.1",
+            "version": "0.19.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/madeofpeople/abcnorio-func.git",
-                "reference": "ba219f0d2f5caadf9bc5edf756b9d0fd6f4aeb13"
+                "reference": "2dd198b4051b7dbad0e25c07ddcdc4a89c8204a7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/ba219f0d2f5caadf9bc5edf756b9d0fd6f4aeb13",
-                "reference": "ba219f0d2f5caadf9bc5edf756b9d0fd6f4aeb13",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/2dd198b4051b7dbad0e25c07ddcdc4a89c8204a7",
+                "reference": "2dd198b4051b7dbad0e25c07ddcdc4a89c8204a7",
                 "shasum": ""
             },
             "require": {
@@ -311,10 +311,10 @@
                 "wordpress"
             ],
             "support": {
-                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.19.1",
+                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.19.3",
                 "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
             },
-            "time": "2026-08-05T15:17:34+00:00"
+            "time": "2026-09-11T17:14:40+00:00"
         },
         {
             "name": "masterminds/html5",
