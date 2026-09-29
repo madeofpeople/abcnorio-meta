@@ -191,6 +191,12 @@ build-docs:
 build-plugin:
     cd ../abcnorio-func && npm run build
 
+# Build a clean-room release zip for an abcnorio-func tag (defaults to current composer.json version).
+# Writes to wp/plugin-artifacts/, consumed by Bedrock's Composer artifact repository.
+# e.g. just build-plugin-release | just build-plugin-release v0.23.0
+build-plugin-release tag="":
+    bash scripts/build-plugin-release.sh {{tag}}
+
 # Build the abcnorio-webcomponents package (dist + manifest generation/validation)
 build-webcomponents:
     cd ../abcnorio-webcomponents && npm run build

@@ -32,6 +32,7 @@ wp/**/backups/
 wp/**/logs/
 wp/dev/bedrock/
 wp/staging/bedrock/
+wp/plugin-artifacts/
 #mac crap
 .DS_Store
 

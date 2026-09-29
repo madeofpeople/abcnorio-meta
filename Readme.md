@@ -22,6 +22,7 @@ Umbrella root (`~/abcnorio.org`):
 Inside abcnorio-meta:
 - `wp/dev/` (Bedrock based wp dev environment)
 - `wp/staging/` (Bedrock based wp staging environment)
+- `wp/plugin-artifacts/` (gitignored `abcnorio-func` release tarballs, consumed by staging Bedrock's Composer `artifact` repository — built via `just build-plugin-release`, never committed to git)
 - `wp/runtime.env`, `wp/dev.env`, `wp/staging.env`
 - `scripts/` (admin shell scripts)
 - `f2b/fail2ban/jail.local` (fail2ban config for host SSH + Caddy-backed WP login protection)
