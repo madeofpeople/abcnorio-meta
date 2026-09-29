@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "291d6250b7733347d7e95f17e93b7674",
+    "content-hash": "0f62ee66121f8bfbe5843fa73b0d6048",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,16 +270,16 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.19.6",
+            "version": "0.20.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/madeofpeople/abcnorio-func.git",
-                "reference": "4e2e35be95f207e6818ff26b80e68178e3816d44"
+                "reference": "b3da9bb6a2f2978c67b3aeae45986576bda762b0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/4e2e35be95f207e6818ff26b80e68178e3816d44",
-                "reference": "4e2e35be95f207e6818ff26b80e68178e3816d44",
+                "url": "https://api.github.com/repos/madeofpeople/abcnorio-func/zipball/b3da9bb6a2f2978c67b3aeae45986576bda762b0",
+                "reference": "b3da9bb6a2f2978c67b3aeae45986576bda762b0",
                 "shasum": ""
             },
             "require": {
@@ -311,10 +311,10 @@
                 "wordpress"
             ],
             "support": {
-                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.19.6",
+                "source": "https://github.com/madeofpeople/abcnorio-func/tree/v0.20.0",
                 "issues": "https://github.com/madeofpeople/abcnorio-func/issues"
             },
-            "time": "2026-09-12T19:47:08+00:00"
+            "time": "2026-09-29T16:51:36+00:00"
         },
         {
             "name": "masterminds/html5",
