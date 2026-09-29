@@ -104,20 +104,8 @@ CURRENT_VERSION="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFi
 NEXT_VERSION="$(node -e 'const [v,b]=process.argv.slice(1); const m=v.match(/^(\d+)\.(\d+)\.(\d+)$/); if(!m){process.exit(2)} let [_,M,mn,p]=m; M=+M; mn=+mn; p=+p; if(b==="patch") p+=1; else if(b==="minor"){mn+=1;p=0}else if(b==="major"){M+=1;mn=0;p=0}else{process.exit(3)} process.stdout.write(`${M}.${mn}.${p}`);' "$CURRENT_VERSION" "$BUMP")"
 [[ -n "$NEXT_VERSION" ]] || { echo "Failed computing next version" >&2; exit 1; }
 
-echo "[1/8] Build webcomponents"
-(cd "$WC_DIR" && npm run build)
-
-echo "[2/8] Verify webcomponents manifest"
+echo "[1/6] Verify webcomponents manifest without rebuilding live dist"
 (cd "$WC_DIR" && npm run check:manifest)
-
-echo "[3/8] Build plugin and ingest dist"
-(cd "$FUNC_DIR" && npm install && npm run build)
-
-MANIFEST_PATH="$FUNC_DIR/resources/vendor/components/dist/manifest.json"
-[[ -f "$MANIFEST_PATH" ]] || {
-  echo "Missing ingested manifest: $MANIFEST_PATH" >&2
-  exit 1
-}
 
 require_clean_repo "$WC_DIR" "Build changed $WC_DIR. Commit/stash those changes before release."
 require_clean_repo "$FUNC_DIR" "Build changed $FUNC_DIR. Commit/stash those changes before release."
@@ -131,7 +119,10 @@ if [[ "$COMMIT_MESSAGE_SET" == true ]]; then
   COMMIT_MESSAGE="$COMMIT_MESSAGE_OVERRIDE"
 fi
 
-echo "[4/8] Bump plugin versions"
+echo "[2/6] Build and validate candidate artifact before release commit/tag"
+bash "${SCRIPT_DIR}/build-plugin-release.sh" --candidate-version "$NEXT_VERSION"
+
+echo "[3/6] Bump plugin versions"
 node -e '
   const fs=require("fs");
   const composerPath=process.argv[1];
@@ -150,7 +141,7 @@ node -e '
   fs.writeFileSync(headerPath, updated);
 ' "$FUNC_DIR/composer.json" "$FUNC_DIR/custom-func.php" "$NEXT_VERSION"
 
-echo "[5/8] Commit, tag, and push plugin"
+echo "[4/6] Commit, tag, and push plugin"
 (
   cd "$FUNC_DIR"
   git add composer.json custom-func.php
@@ -160,10 +151,7 @@ echo "[5/8] Commit, tag, and push plugin"
   git push --tags
 )
 
-echo "[6/8] Build release artifact zip (clean-room build from tag, never committed to git)"
-bash "${SCRIPT_DIR}/build-plugin-release.sh" "v$NEXT_VERSION"
-
-echo "[7/8] Update $ENV Bedrock plugin dependency"
+echo "[5/6] Update $ENV Bedrock plugin dependency"
 if [[ "$ENV" == "staging" ]]; then
   BEDROCK_DIR="${META_DIR}/wp/staging/bedrock"
   [[ -d "$BEDROCK_DIR" ]] || { echo "Staging Bedrock directory not found: $BEDROCK_DIR" >&2; exit 1; }
@@ -188,7 +176,7 @@ fi
 
 docker exec "$CONTAINER" wp --allow-root --path=/app/web/wp cache flush
 
-echo "[8/8] Sync Bedrock seed composer files"
+echo "[6/6] Sync Bedrock seed composer files"
 cp "${META_DIR}/wp/${ENV}/bedrock/composer.json" "${META_DIR}/wp/bootstrap/${ENV}/bedrock.composer.json"
 cp "${META_DIR}/wp/${ENV}/bedrock/composer.lock" "${META_DIR}/wp/bootstrap/${ENV}/bedrock.composer.lock"
 
