@@ -101,7 +101,7 @@ localhost {
 
 }
 
-# Static Site - dev (SSR via Astro dev server for instant previews)
+# Frontend - dev (SSR via Astro dev server for instant previews)
 {$DOMAIN_DEV} {
     @health path /_healthz
     respond @health "ok:dev" 200
@@ -109,7 +109,7 @@ localhost {
     reverse_proxy astro-dev:3033
 }
 
-# Static Site - staging
+# Frontend - staging
 {$DOMAIN_STAGING} {
     @health path /_healthz
     respond @health "ok:staging" 200

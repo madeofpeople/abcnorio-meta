@@ -70,6 +70,9 @@ services:
       - ${ASTRO_SITE_DIR}:/app/
       # Canonical live-source bind mount: the app runtime must see the webcomponents repo here.
       - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents
+      # Dev-only: bind-mount the live source directly over the npm-installed copy so
+      # package.json exports resolve against live files instead of the pinned commit.
+      - ${ASTRO_WEBCOMPONENTS_DIR}:/app/node_modules/abcnorio-webcomponents
     networks:
       - abcnorio_net_proxy
   astro-staging:
