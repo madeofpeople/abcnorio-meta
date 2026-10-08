@@ -85,7 +85,25 @@ NODE
 fi
 
 echo "[2/4] Building exported tree"
-(cd "$SCRATCH_DIR" && npm ci && npm run build)
+NPM_LOG_DIR="$SCRATCH_DIR/npm-logs"
+mkdir -p "$NPM_LOG_DIR"
+npm_ci_status=0
+(
+  cd "$SCRATCH_DIR"
+  npm ci --foreground-scripts --loglevel verbose --logs-dir "$NPM_LOG_DIR"
+) || npm_ci_status=$?
+
+if [[ "$npm_ci_status" -ne 0 ]]; then
+  echo "npm ci failed (exit $npm_ci_status); recent npm log output:" >&2
+  for npm_log in "$NPM_LOG_DIR"/*-debug-0.log; do
+    [[ -f "$npm_log" ]] || continue
+    echo "--- $npm_log ---" >&2
+    tail -n 60 "$npm_log" >&2
+  done
+  exit "$npm_ci_status"
+fi
+
+(cd "$SCRATCH_DIR" && npm run build)
 
 for required_file in \
   "build/index.js" \
