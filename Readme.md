@@ -110,11 +110,11 @@ just wp staging plugin list          # WP-CLI in staging
 just composer dev update             # host Composer in dev bedrock
 just composer staging update         # host Composer in staging bedrock
 
-just build preview                   # trigger preview build (staging content)
-just build production                # trigger production build
+just build preview                   # build and deploy preview
 just build preview events            # scoped build (target scope)
-just approve-frontend-deploy         # tag current astro main HEAD for staging cutover
-just deploy-staging                  # guarded staging cutover (orchestrator push + health/artifact checks)
+just deploy-staging                  # deploy current astro staging branch head
+just deploy-release production       # build and promote exact healthy staging SHA
+just rollback-release production     # restore previous production archive
 just docs                            # build + deploy docs site
 
 just db-to-staging                   # sync DB + media dev → staging
@@ -124,7 +124,11 @@ just media-to-dev                    # copy media uploads staging → dev
 just dump-db staging                 # dump staging DB to backups/mariadb/
 just db-shell dev                    # open MariaDB shell
 
-just build-plugin                    # build abcnorio-func plugin JS assets
+just build-webcomponents             # build local webcomponents dist
+just build-plugin                    # build plugin from its installed webcomponents package
+just update-plugin dev               # rebuild local webcomponents + refresh WP dev preview assets; no release/deploy
+just release-plugin dev              # version, commit, tag, push, and verify plugin release
+just release-plugin staging minor    # release plugin and update staging Composer dependency
 just plugin-test                     # run PHP tests in the plugin
 
 just setup-fail2ban                  # install fail2ban on host + deploy SSH/Caddy jails

@@ -84,9 +84,20 @@ services:
           SHARED_GROUP: ${PROJECT_GROUP}
       container_name: astro-staging
       user: root
-      restart: always
+      restart: on-failure
       mem_limit: 750m
-      command: ["bash", "-c", "umask 0002 && cd /app && ([ -x node_modules/.bin/astro ] || npm ci) && npm run dev:docker"]
+      command:
+        - bash
+        - -c
+        - |
+          umask 0002
+          cd /app
+          if [[ ! -f package-lock.json ]]; then
+            echo "[astro-staging] no activated snapshot; run just deploy-staging"
+            exit 0
+          fi
+          if [[ ! -x node_modules/.bin/astro ]]; then npm ci; fi
+          npm run dev:docker
       healthcheck:
         test: ["CMD", "wget", "-qO-", "http://localhost:3033/robots.txt"]
         interval: 30s
@@ -100,8 +111,8 @@ services:
         MODE: ${STAGING_MODE:-staging}
         ASTRO_RUNTIME_CONTAINER: '1'
         # Single-source contract: staging and dev share the same Astro app source; only env/target config changes.
-        ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
-        ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
+        ASTRO_WEBCOMPONENTS_SOURCE_DIR: /app/node_modules/abcnorio-webcomponents
+        ASTRO_DESIGN_TOKENS_DIR: /app/node_modules/abcnorio-webcomponents/src/design-tokens
         MENU_ENDPOINT: ${MENU_ENDPOINT}
         REST_ENDPOINT: ${REST_ENDPOINT}
         BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
@@ -116,8 +127,7 @@ services:
       ports:
         - 127.0.0.1:3034:3033
       volumes:
-        - ${ASTRO_SITE_DIR}:/app/
-        - ${ASTRO_WEBCOMPONENTS_DIR}:/abcnorio-webcomponents
+        - ${ASTRO_BUILD_WORKDIR_HOST_DIR}/staging-site-frontend:/app/
       depends_on:
         - deploy-orchestrator
       networks:
@@ -224,6 +234,9 @@ services:
       PREVIEW_BUILD_PATH: /shared/static/preview
       STAGING_UPLOADS_DIR: /staging-uploads
       DEV_UPLOADS_DIR: /dev-uploads
+      STAGING_HEALTH_URL: http://abcwpstaging/wp-json/
+      STAGING_FRONTEND_HEALTH_URL: http://astro-staging:3033/robots.txt
+      STAGING_PLUGIN_VERSION_URL: http://abcwpstaging/wp-json/abcnorio/v1/deployment/version
       PRODUCTION_UPLOADS_PATH: /shared/static/uploads
       STAGING_DB_NAME: ${STAGING_DB_NAME}
       STAGING_DB_USER: ${STAGING_DB_USER}
@@ -282,6 +295,7 @@ services:
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
       DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
       STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
+      STAGING_PLUGIN_VERSION_URL: http://abcwpstaging/wp-json/abcnorio/v1/deployment/version
       PROJECT_UID: ${PROJECT_UID}
       PROJECT_GID: ${PROJECT_GID}
       CADDY_GLOBAL_OPTIONS: |
@@ -343,6 +357,7 @@ services:
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
       DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
       STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
+      STAGING_PLUGIN_VERSION_URL: http://abcwpstaging/wp-json/abcnorio/v1/deployment/version
       PROJECT_UID: ${PROJECT_UID}
       PROJECT_GID: ${PROJECT_GID}
       CADDY_GLOBAL_OPTIONS: |

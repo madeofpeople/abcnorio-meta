@@ -2,7 +2,6 @@
 set -euo pipefail
 
 ENV_FILE=".env"
-TAG="${1:-}"
 POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-2}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-1800}"
 WP_RUNTIME_ENV_FILE="wp/runtime.env"
@@ -105,11 +104,7 @@ if [ -z "$ASTRO_BUILD_TRIGGER_SECRET" ]; then
     exit 1
 fi
 
-if [ -n "$TAG" ]; then
-    PAYLOAD="{\"tag\":\"$TAG\"}"
-else
-    PAYLOAD='{}'
-fi
+PAYLOAD='{}'
 
 if ! command -v docker >/dev/null 2>&1; then
     echo "error: docker is required"
@@ -122,7 +117,22 @@ assert_deployment_status_contract "preflight" "$DEPLOYMENT_STATUS_PATH"
 staging_stopped=0
 start_staging() {
     echo "starting astro-staging..."
-    docker compose start astro-staging >/dev/null
+    docker compose up -d --no-deps --force-recreate astro-staging >/dev/null
+}
+
+assert_staging_mount() {
+    local expected_source actual_source
+    expected_source="$(realpath "${ASTRO_BUILD_WORKDIR_HOST_DIR%/}/staging-site-frontend")"
+    actual_source="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/app"}}{{.Source}}{{end}}{{end}}' astro-staging)"
+    if [[ -z "$actual_source" ]]; then
+        echo "error: astro-staging has no /app bind mount" >&2
+        exit 1
+    fi
+    actual_source="$(realpath "$actual_source")"
+    if [[ "$actual_source" != "$expected_source" ]]; then
+        echo "error: astro-staging /app mount is '$actual_source', expected '$expected_source'" >&2
+        exit 1
+    fi
 }
 
 wait_for_staging_health() {
@@ -166,8 +176,12 @@ trap cleanup EXIT
 
 cutover_started_at="$(date +%s)"
 echo "stopping astro-staging for cutover..."
-docker compose stop astro-staging >/dev/null
-staging_stopped=1
+if docker inspect astro-staging >/dev/null 2>&1; then
+    docker compose stop astro-staging >/dev/null
+    staging_stopped=1
+else
+    echo "astro-staging has not been created yet; first deployment will create it"
+fi
 cutover_stopped_at="$(date +%s)"
 echo "timing_stop_seconds=$((cutover_stopped_at - cutover_started_at))"
 
@@ -218,7 +232,7 @@ while true; do
             echo "push status: done (${elapsed}s)"
             if [ -n "$push_message" ] && [ "$push_message" != "null" ]; then
                 echo "$push_message"
-                release_id="$(printf '%s' "$push_message" | sed -n 's/.*from tag \([^ ]*\) at.*/\1/p')"
+                release_id="$(printf '%s' "$push_message" | sed -n 's/.*staging release \([^ ]*\) for commit.*/\1/p')"
                 if [ -n "$release_id" ]; then
                     echo "release_id=${release_id}"
                 fi
@@ -256,7 +270,15 @@ echo "timing_push_seconds=$((push_completed_at - started_at))"
 
 start_staging
 wait_for_staging_health
+assert_staging_mount
 staging_stopped=0
+
+verify_response="$(docker exec deploy-orchestrator curl -sf \
+    -X POST "http://localhost:4011/dev-tools/verify-staging" \
+    -H "Authorization: Bearer $ASTRO_BUILD_TRIGGER_SECRET" \
+    -H "Content-Type: application/json" \
+    -d '{}')"
+echo "staging verification response: $verify_response"
 
 staging_healthy_at="$(date +%s)"
 echo "timing_unavailable_seconds=$((staging_healthy_at - cutover_started_at))"

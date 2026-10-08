@@ -27,7 +27,7 @@ up env="":
     if [[ "{{ env }}" == "dev" ]]; then
         docker compose --profile dev up -d astro-dev abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
-        docker compose up -d astro-staging abcwpstaging
+        docker compose up -d deploy-orchestrator abcwpstaging
     else
         docker compose up -d
     fi
@@ -80,13 +80,14 @@ flush-wp-caches ENV:
 
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
-# Trigger a build   e.g. just build production | just build preview events
+# Build and deploy a production promotion from staged code with: just deploy-release production.
+# Manual builds are for preview: just build preview | just build preview events
 build env scope="full":
     bash scripts/trigger-build.sh {{ env }} {{ scope }}
 
-# Deploy a specific archived release_id to target (production|preview).
-# e.g. just deploy-release production 20260819-120000-abc1234
-deploy-release target release_id:
+# Promote the exact frontend commit currently running on healthy staging, or restore a specific archived release.
+# e.g. just deploy-release production | just deploy-release production 20260819-120000-abc1234
+deploy-release target release_id="":
     bash scripts/deploy-release.sh {{ target }} {{ release_id }}
 
 # Roll back target to previous successful release_id, or explicit release_id when provided.
@@ -94,18 +95,12 @@ deploy-release target release_id:
 rollback-release target release_id="":
     if [ -n "{{ release_id }}" ]; then bash scripts/rollback-release.sh {{ target }} {{ release_id }}; else bash scripts/rollback-release.sh {{ target }}; fi
 
-# Approve current main HEAD for staging by creating/pushing staging deploy tag.
-# e.g. just approve-frontend-deploy
-approve-frontend-deploy:
-    bash scripts/approve-frontend-deploy.sh
-
-# Push approved staging tag code to staging runtime with completion feedback.
+# Push current staging branch head to staging runtime with completion feedback.
 # Script polls orchestrator, temporarily stops astro-staging during cutover,
 # waits for astro-staging health, and verifies staging plugin/editor artifacts.
-# Defaults to latest staging-deploy-* tag if TAG not provided.
-# e.g. just deploy-staging | just deploy-staging staging-deploy-2026-07-26-a1b2c3d
-deploy-staging TAG="":
-    bash scripts/deploy-staging.sh {{ TAG }}
+# e.g. just deploy-staging
+deploy-staging:
+    bash scripts/deploy-staging.sh
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:
@@ -117,19 +112,19 @@ clear-vite-cache:
 # ── Data sync ──────────────────────────────────────────────────────────────────
 
 # Copy media uploads from dev → staging
-media-to-staging:
+media-dev-to-staging:
     bash scripts/copy-media.sh dev-to-staging
 
 # Copy media uploads from staging → dev
-media-to-dev:
+media-staging-to-dev:
     bash scripts/copy-media.sh staging-to-dev
 
 # Sync DB + media from dev → staging
-db-to-staging:
+db-dev-to-staging:
     bash scripts/sync-db.sh dev-to-staging
 
 # Sync DB + media from staging → dev
-db-to-dev:
+db-staging-to-dev:
     bash scripts/sync-db.sh staging-to-dev
 
 # ── Media ──────────────────────────────────────────────────────────────────────
@@ -191,6 +186,20 @@ build-docs:
 build-plugin:
     cd ../abcnorio-func && npm run build
 
+# Build local webcomponents and refresh the mounted dev plugin preview assets.
+# Does not release, commit, push, or deploy.
+# Usage: just update-plugin dev
+update-plugin env:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{ env }}" != "dev" ]]; then
+        echo "update-plugin only supports dev; use release-plugin for releases." >&2
+        exit 1
+    fi
+    WEBCOMPONENTS_DIST="$(cd ../abcnorio-webcomponents && pwd)/dist"
+    (cd ../abcnorio-webcomponents && npm run build)
+    (cd ../abcnorio-func && ABCNORIO_COMPONENTS_DIST_SOURCE="$WEBCOMPONENTS_DIST" npm run build)
+
 # Build a clean-room release zip for an abcnorio-func tag (defaults to current composer.json version).
 # Writes to wp/plugin-artifacts/, consumed by Bedrock's Composer artifact repository.
 # e.g. just build-plugin-release | just build-plugin-release v0.23.0
@@ -223,11 +232,11 @@ create-webcomponent *args:
 create-webcomponent-wp component wp_block:
     bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ component }} --scope wp-blocks --wp-block {{ wp_block }}
 
-# Build + verify + release plugin into selected WP env.
+# Release plugin into selected WP env: build artifact, bump version, commit, tag, push, and verify.
 # Usage:
-#   just update-wp-plugin dev
-#   just update-wp-plugin staging minor
-update-wp-plugin env bump="patch" message="":
+#   just release-plugin dev
+#   just release-plugin staging minor
+release-plugin env bump="patch" message="":
     if [ -n "{{ message }}" ]; then bash scripts/update-wp-plugin.sh {{ env }} {{ bump }} "{{ message }}"; else bash scripts/update-wp-plugin.sh {{ env }} {{ bump }}; fi
 
 # Run PHP tests in the plugin (via bedrock dev container)

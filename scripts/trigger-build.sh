@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Trigger an Astro build via the deploy orchestrator.
 # Usage: scripts/trigger-build.sh <target> [scope]
-#   target: production | preview
+#   target: preview
 #   scope:  full (default) | events | <page-slug>
 # Optional env flags:
 #   WAIT_FOR_COMPLETION=0 to return after enqueue (legacy behavior)
@@ -15,6 +15,16 @@ ENV_FILE="$META_DIR/.env"
 
 TARGET="${1:?Usage: scripts/trigger-build.sh <production|preview> [scope]}"
 SCOPE="${2:-full}"
+
+if [[ "$TARGET" == "production" ]]; then
+  echo "Direct production builds are disabled. Promote the healthy staging deployment with: just deploy-release production" >&2
+  exit 1
+fi
+
+if [[ "$TARGET" != "preview" ]]; then
+  echo "Invalid target: $TARGET (expected: preview)" >&2
+  exit 1
+fi
 
 if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
   if [[ ! -f "$ENV_FILE" ]]; then
