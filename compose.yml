@@ -109,6 +109,7 @@ services:
         STAGING_CMS: ${DOMAIN_STAGING_CMS}
         STAGING_CMS_FETCH: http://abcwpstaging/
         MODE: ${STAGING_MODE:-staging}
+        ALLOWED_HOSTS: astro-staging
         ASTRO_RUNTIME_CONTAINER: '1'
         # Single-source contract: staging and dev share the same Astro app source; only env/target config changes.
         ASTRO_WEBCOMPONENTS_SOURCE_DIR: /app/node_modules/abcnorio-webcomponents
@@ -132,6 +133,7 @@ services:
         - deploy-orchestrator
       networks:
         - abcnorio_net_proxy
+        - abcnorio_net_orchestrator
   astro-prod:
     build:
       context: ${ASTRO_HOST_ROOT}
