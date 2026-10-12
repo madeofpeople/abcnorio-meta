@@ -32,6 +32,14 @@ up env="":
         docker compose up -d
     fi
 
+# Start the Staging/Production stack without the Dev profile.
+start-staging-prod:
+    docker compose up -d
+
+# Start all services, including the Dev profile.
+start-all:
+    docker compose --profile dev up -d
+
 # Bring services down: full stack, or stop env-specific   e.g. just down | just down dev
 down env="":
     #!/usr/bin/env bash
