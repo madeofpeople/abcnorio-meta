@@ -15,43 +15,6 @@ strip_wrapping_quotes() {
     printf '%s' "$value"
 }
 
-read_runtime_env_value() {
-    local key="$1"
-    local raw=""
-
-    if [ ! -f "$WP_RUNTIME_ENV_FILE" ]; then
-        return
-    fi
-
-    raw="$(sed -n "s/^${key}=//p" "$WP_RUNTIME_ENV_FILE" | tail -n 1)"
-    if [ -z "$raw" ]; then
-        return
-    fi
-
-    raw="$(strip_wrapping_quotes "$raw")"
-    printf '%s\n' "$raw"
-}
-
-resolve_deployment_status_path() {
-    local explicit_path=""
-    local archive_dir=""
-
-    explicit_path="$(read_runtime_env_value "ASTRO_DEPLOYMENT_STATUS_FILE")"
-    if [ -n "$explicit_path" ]; then
-        printf '%s\n' "$explicit_path"
-        return
-    fi
-
-    archive_dir="$(read_runtime_env_value "ASTRO_BUILD_ARCHIVE_DIR")"
-    if [ -n "$archive_dir" ]; then
-        archive_dir="${archive_dir%/}"
-        printf '%s/deployment-status.json\n' "$archive_dir"
-        return
-    fi
-
-    printf '/app/backups/deployment-status.json\n'
-}
-
 assert_deployment_status_contract() {
     local phase="$1"
     local status_path="$2"
@@ -104,14 +67,23 @@ if [ -z "$ASTRO_BUILD_TRIGGER_SECRET" ]; then
     exit 1
 fi
 
-PAYLOAD='{}'
-
 if ! command -v docker >/dev/null 2>&1; then
     echo "error: docker is required"
     exit 1
 fi
 
-DEPLOYMENT_STATUS_PATH="$(resolve_deployment_status_path)"
+if [ ! -f "$WP_RUNTIME_ENV_FILE" ]; then
+    echo "error: $WP_RUNTIME_ENV_FILE not found" >&2
+    exit 1
+fi
+
+archive_dir="$(sed -n 's/^ASTRO_BUILD_ARCHIVE_DIR=//p' "$WP_RUNTIME_ENV_FILE" | tail -n 1)"
+archive_dir="$(strip_wrapping_quotes "$archive_dir")"
+if [ -z "$archive_dir" ]; then
+    echo "error: ASTRO_BUILD_ARCHIVE_DIR not set in $WP_RUNTIME_ENV_FILE" >&2
+    exit 1
+fi
+DEPLOYMENT_STATUS_PATH="${archive_dir%/}/deployment-status.json"
 assert_deployment_status_contract "preflight" "$DEPLOYMENT_STATUS_PATH"
 
 staging_stopped=0
@@ -194,7 +166,7 @@ process.stdin.on("data", (c) => (data += c));
 process.stdin.on("end", () => {
   try {
     const parsed = JSON.parse(data);
-        const value = parsed?.data?.push?.[process.argv[1]] ?? parsed?.push?.[process.argv[1]];
+        const value = parsed?.data?.push?.[process.argv[1]];
     if (value === null || value === undefined) {
       process.stdout.write("");
       return;
@@ -211,7 +183,7 @@ trigger_response="$(docker exec deploy-orchestrator curl -sf \
     -X POST "http://localhost:4011/dev-tools/push-to-staging" \
     -H "Authorization: Bearer $ASTRO_BUILD_TRIGGER_SECRET" \
     -H "Content-Type: application/json" \
-    -d "$PAYLOAD")"
+    -d '{}')"
 
 echo "push trigger response: $trigger_response"
 echo "waiting for push completion..."
@@ -273,12 +245,27 @@ wait_for_staging_health
 assert_staging_mount
 staging_stopped=0
 
-verify_response="$(docker exec deploy-orchestrator curl -sf \
+verify_curl_status=0
+verify_response="$(docker exec deploy-orchestrator curl -sS \
+    -w '\nHTTP_STATUS:%{http_code}' \
     -X POST "http://localhost:4011/dev-tools/verify-staging" \
     -H "Authorization: Bearer $ASTRO_BUILD_TRIGGER_SECRET" \
     -H "Content-Type: application/json" \
-    -d '{}')"
-echo "staging verification response: $verify_response"
+    -d '{}')" || verify_curl_status=$?
+
+if [[ "$verify_curl_status" -ne 0 ]]; then
+    echo "error: staging verification request failed (curl exit $verify_curl_status): $verify_response" >&2
+    exit "$verify_curl_status"
+fi
+
+verify_http_status="${verify_response##*$'\n'HTTP_STATUS:}"
+verify_body="${verify_response%$'\n'HTTP_STATUS:*}"
+echo "staging verification HTTP status: $verify_http_status"
+echo "staging verification response: $verify_body"
+if [[ "$verify_http_status" != "200" ]]; then
+    echo "error: staging verification returned HTTP $verify_http_status" >&2
+    exit 1
+fi
 
 staging_healthy_at="$(date +%s)"
 echo "timing_unavailable_seconds=$((staging_healthy_at - cutover_started_at))"

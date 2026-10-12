@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 # Trigger an Astro build via the deploy orchestrator.
-# Usage: scripts/trigger-build.sh <target> [scope]
-#   target: preview
+# Usage: scripts/trigger-build.sh preview [scope]
 #   scope:  full (default) | events | <page-slug>
-# Optional env flags:
-#   WAIT_FOR_COMPLETION=0 to return after enqueue (legacy behavior)
-#   POLL_INTERVAL_SECONDS=2 and MAX_WAIT_SECONDS=3600 to tune polling
+# Optional env flags: POLL_INTERVAL_SECONDS=2 and MAX_WAIT_SECONDS=3600 to tune polling
 # Requires ASTRO_BUILD_TRIGGER_SECRET in environment or abcnorio-meta/.env
 
 set -euo pipefail
@@ -13,7 +10,7 @@ set -euo pipefail
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$META_DIR/.env"
 
-TARGET="${1:?Usage: scripts/trigger-build.sh <production|preview> [scope]}"
+TARGET="${1:?Usage: scripts/trigger-build.sh preview [scope]}"
 SCOPE="${2:-full}"
 
 if [[ "$TARGET" == "production" ]]; then
@@ -39,7 +36,6 @@ fi
 
 ORCHESTRATOR_PORT="${ORCHESTRATOR_PORT:-4011}"
 ORCHESTRATOR_CONTAINER="${ORCHESTRATOR_CONTAINER:-deploy-orchestrator}"
-WAIT_FOR_COMPLETION="${WAIT_FOR_COMPLETION:-1}"
 POLL_INTERVAL_SECONDS="${POLL_INTERVAL_SECONDS:-2}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-3600}"
 
@@ -112,11 +108,6 @@ response="$(docker exec "$ORCHESTRATOR_CONTAINER" curl -sf \
   -d "{\"target\":\"${TARGET}\",\"scope\":\"${SCOPE}\",\"source\":\"manual\"}")"
 
 printf '%s\n' "$response"
-
-if [[ "$WAIT_FOR_COMPLETION" == "0" ]]; then
-  printf 'Build request accepted. Monitor orchestrator status for completion.\n'
-  exit 0
-fi
 
 printf 'Build request accepted. Waiting for completion...\n'
 
