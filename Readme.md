@@ -117,16 +117,15 @@ just deploy-release production       # build and promote exact healthy staging S
 just rollback-release production     # restore previous production archive
 just docs                            # build + deploy docs site
 
-just db-to-staging                   # sync DB + media dev → staging
-just db-to-dev                       # sync DB + media staging → dev
-just media-to-staging                # copy media uploads dev → staging
-just media-to-dev                    # copy media uploads staging → dev
+just db-dev-to-staging               # sync DB + media dev → staging
+just db-staging-to-dev               # sync DB + media staging → dev
+just media-dev-to-staging            # copy media uploads dev → staging
+just media-staging-to-dev            # copy media uploads staging → dev
 just dump-db staging                 # dump staging DB to backups/mariadb/
 just db-shell dev                    # open MariaDB shell
 
 just build-webcomponents             # build local webcomponents dist
-just build-plugin                    # build plugin from its installed webcomponents package
-just update-plugin dev               # rebuild local webcomponents + refresh WP dev preview assets; no release/deploy
+just update-dev-plugin               # rebuild local webcomponents + refresh WP dev preview assets; no release/deploy
 just release-plugin dev              # version, commit, tag, push, and verify plugin release
 just release-plugin staging minor    # release plugin and update staging Composer dependency
 just plugin-test                     # run PHP tests in the plugin
@@ -134,7 +133,7 @@ just plugin-test                     # run PHP tests in the plugin
 just setup-fail2ban                  # install fail2ban on host + deploy SSH/Caddy jails
 ```
 
-For user management: `bash scripts/wp-admin.sh <function> [args]`
+For user management: `bash scripts/wp-utils.sh <function> [args]`
 For standalone Bedrock bootstrap fallback: `bash scripts/bedrock-bootstrap.sh`
 To snapshot live Bedrock composer state back into the bootstrap seed files: `just bedrock-snapshot dev`
 

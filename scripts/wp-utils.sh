@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # WP admin helpers — interactive user management.
-# Usage: source scripts/wp-admin.sh
-#   OR:  bash scripts/wp-admin.sh <function> [args...]
+# Usage: source scripts/wp-utils.sh
+#   OR:  bash scripts/wp-utils.sh <function> [args...]
 #
 # Functions:
 #   usercreate <container> <username> <email> [role]
@@ -35,9 +35,9 @@ usercreate() {
     docker exec -ti "$CONTAINER_NAME" wp user get "$NAME" --allow-root
 }
 
-# Allow direct invocation: bash scripts/wp-admin.sh <function> [args...]
+# Allow direct invocation: bash scripts/wp-utils.sh <function> [args...]
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    FN="${1:?Usage: scripts/wp-admin.sh <function> [args...]}"
+    FN="${1:?Usage: scripts/wp-utils.sh <function> [args...]}"
     shift
     "$FN" "$@"
 fi

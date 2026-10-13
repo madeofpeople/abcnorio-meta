@@ -32,14 +32,6 @@ up env="":
         docker compose up -d
     fi
 
-# Start the Staging/Production stack without the Dev profile.
-start-staging-prod:
-    docker compose up -d
-
-# Start all services, including the Dev profile.
-start-all:
-    docker compose --profile dev up -d
-
 # Bring services down: full stack, or stop env-specific   e.g. just down | just down dev
 down env="":
     #!/usr/bin/env bash
@@ -190,20 +182,12 @@ bedrock-snapshot env="dev":
 build-docs:
     bash scripts/deploy-docs.sh
 
-# Build the abcnorio-func plugin JS assets
-build-plugin:
-    cd ../abcnorio-func && npm run build
-
 # Build local webcomponents and refresh the mounted dev plugin preview assets.
 # Does not release, commit, push, or deploy.
-# Usage: just update-plugin dev
-update-plugin env:
+# Releases use release-plugin instead.
+update-dev-plugin:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ "{{ env }}" != "dev" ]]; then
-        echo "update-plugin only supports dev; use release-plugin for releases." >&2
-        exit 1
-    fi
     WEBCOMPONENTS_DIST="$(cd ../abcnorio-webcomponents && pwd)/dist"
     (cd ../abcnorio-webcomponents && npm run build)
     (cd ../abcnorio-func && ABCNORIO_COMPONENTS_DIST_SOURCE="$WEBCOMPONENTS_DIST" npm run build)
