@@ -124,7 +124,8 @@ class WP_Object_Cache_APCu {
     }
 
     private function read_namespace_version(): string {
-        $path = ABSPATH . 'tmp/object-cache-namespace';
+        // Written by the orchestrator after DB pushes; a new value purges this site's entries.
+        $path = WP_CONTENT_DIR . '/uploads/.object-cache-namespace';
 
         if (! is_readable($path)) {
             return 'v1';
