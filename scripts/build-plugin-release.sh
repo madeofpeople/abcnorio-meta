@@ -108,7 +108,8 @@ fi
 for required_file in \
   "build/index.js" \
   "build/index.asset.php" \
-  "resources/vendor/components/dist/manifest.json"
+  "resources/vendor/components/dist/manifest.json" \
+  "resources/vendor/components/dist/gallery-image-sizes.json"
 do
   [[ -f "$SCRATCH_DIR/$required_file" ]] || {
     echo "Build did not produce required runtime file: $required_file" >&2
@@ -137,7 +138,8 @@ for required_entry in \
   "custom-func.php" \
   "build/index.js" \
   "build/index.asset.php" \
-  "resources/vendor/components/dist/manifest.json"
+  "resources/vendor/components/dist/manifest.json" \
+  "resources/vendor/components/dist/gallery-image-sizes.json"
 do
   if ! grep -Fx "$required_entry" <<<"$ARCHIVE_ENTRIES" >/dev/null; then
     echo "Release artifact missing required entry: $required_entry" >&2
