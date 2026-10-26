@@ -57,7 +57,6 @@
     "wp-plugin/advanced-custom-fields": "^6.7",
     "wp-plugin/autodescription": "^5.1",
     "wp-plugin/fluent-smtp": "^2.2",
-    "wp-plugin/lightbox-photoswipe": "^5.10",
     "wp-plugin/login-as-user": "^1.6",
     "wp-plugin/mailchimp": "^2.1"
   },

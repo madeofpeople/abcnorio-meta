@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d375bee98a25b754e93992bddfca8b7",
+    "content-hash": "8c99ff44310fb44da230e4627ca77f90",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -1432,37 +1432,6 @@
                 "source": "https://plugins.svn.wordpress.org/fluent-smtp"
             },
             "time": "2026-09-27T14:25:58+00:00"
-        },
-        {
-            "name": "wp-plugin/lightbox-photoswipe",
-            "version": "5.13.0",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/lightbox-photoswipe/",
-                "reference": "tags/5.13.0"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/lightbox-photoswipe.5.13.0.zip"
-            },
-            "require": {
-                "composer/installers": "~1.0|~2.0"
-            },
-            "type": "wordpress-plugin",
-            "notification-url": "https://wp-packages.org/downloads",
-            "authors": [
-                {
-                    "name": "Arno Welzel"
-                }
-            ],
-            "description": "Integration of PhotoSwipe (http://photoswipe.com) for WordPress.",
-            "homepage": "https://wordpress.org/plugins/lightbox-photoswipe/",
-            "support": {
-                "changelog": "https://wordpress.org/plugins/lightbox-photoswipe/#developers",
-                "issues": "https://wordpress.org/support/plugin/lightbox-photoswipe",
-                "source": "https://plugins.svn.wordpress.org/lightbox-photoswipe"
-            },
-            "time": "2026-08-30T10:56:07+00:00"
         },
         {
             "name": "wp-plugin/login-as-user",
