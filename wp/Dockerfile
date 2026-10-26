@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:1.12.1-php8.4 AS runner
+FROM dunglas/frankenphp:1.13.2-php8.4 AS runner
 ARG USER
 ARG SHARED_GID=2000
 ARG SHARED_GROUP=abcnorio
