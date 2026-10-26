@@ -53,8 +53,7 @@
     "wp-plugin/autodescription": "^5.1",
     "wp-plugin/fluent-smtp": "^2.2",
     "wp-plugin/login-as-user": "^1.6",
-    "wp-plugin/mailchimp": "^2.1",
-    "wp-plugin/mailchimp-for-wp": "^4.13"
+    "wp-plugin/mailchimp": "^2.1"
   },
   "require-dev": {
     "laravel/pint": "^1.27",
