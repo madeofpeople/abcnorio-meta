@@ -133,6 +133,11 @@ db-staging-to-dev:
 regen-thumbs env:
     bash scripts/regen-thumbs.sh {{ env }}
 
+# Back up production uploads, then replace generated image derivatives from staging.
+# Run after staging thumbnail regeneration: just sync-regenerated-thumbnails-to-production
+sync-regenerated-thumbnails-to-production:
+    bash scripts/sync-regenerated-thumbnails-to-production.sh
+
 # One-off: downscale all upload originals to max 1600px   e.g. just downscale-originals staging
 downscale-originals env:
     bash scripts/downscale-originals.sh {{ env }}
