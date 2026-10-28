@@ -106,6 +106,13 @@ localhost {
     @health path /_healthz
     respond @health "ok:dev" 200
 
+    # Same-origin proxy so the browser can poll WP last-change without CORS.
+    # Used by the live-reload script in abcnorio-astro html.astro (dev/staging only).
+    handle /_cms-last-change {
+        rewrite * /wp-json/abcnorio/v1/last-change
+        reverse_proxy abcwpdev:80
+    }
+
     reverse_proxy astro-dev:3033
 }
 
@@ -113,6 +120,13 @@ localhost {
 {$DOMAIN_STAGING} {
     @health path /_healthz
     respond @health "ok:staging" 200
+
+    # Same-origin proxy so the browser can poll WP last-change without CORS.
+    # Used by the live-reload script in abcnorio-astro html.astro (dev/staging only).
+    handle /_cms-last-change {
+        rewrite * /wp-json/abcnorio/v1/last-change
+        reverse_proxy abcwpstaging:80
+    }
 
     reverse_proxy astro-staging:3033
 }

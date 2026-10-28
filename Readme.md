@@ -78,7 +78,7 @@ Networks:
 
 Requires [just](https://github.com/casey/just).
 
-Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo`. It installs host prerequisites (`git`, `rsync`, `composer`, `nodejs`, `npm`, `just`), bootstraps Bedrock inline, sets up rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
+Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo`. It installs host prerequisites (`git`, `rsync`, `composer`, `nodejs`, `npm`, `just`), bootstraps Bedrock inline, sets up a 4G host swapfile, rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
 
 Permissions contract is deterministic and fixed: uploads run as `UID 1000`, shared group `abcnorio` with `GID 2000`, directories `2775`, files `0664`.
 
@@ -127,11 +127,14 @@ just db-shell dev                    # open MariaDB shell
 just build-webcomponents             # build local webcomponents dist
 just update-dev-plugin               # rebuild local webcomponents + refresh WP dev preview assets; no release/deploy
 just release-plugin dev              # version, commit, tag, push, and verify plugin release
-just release-plugin staging minor    # release plugin and update staging Composer dependency
+just release-plugin staging minor    # release plugin and update staging Composer dependency; stops astro-dev/staging during the build, logs to backups/
 just plugin-test                     # run PHP tests in the plugin
 
+just setup-swap                      # 4G host swapfile + vm.swappiness=10 (SWAP_SIZE overrides); idempotent
 just setup-fail2ban                  # install fail2ban on host + deploy SSH/Caddy jails
 ```
+
+Dev and staging auto-reload on CMS changes: the plugin exposes `/wp-json/abcnorio/v1/last-change`, `proxy/Caddyfile` serves it same-origin at `/_cms-last-change`, and `html.astro` polls it every 3 s in live modes. Edits made via WP-CLI don't bump it (APCu object cache is per-process).
 
 For user management: `bash scripts/wp-utils.sh <function> [args]`
 For standalone Bedrock bootstrap fallback: `bash scripts/bedrock-bootstrap.sh`

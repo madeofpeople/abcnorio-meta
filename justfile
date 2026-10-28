@@ -13,6 +13,11 @@ set positional-arguments := true
 setup-rootless-docker:
     bash scripts/setup-rootless-docker.sh
 
+# Host swapfile (4G default, SWAP_SIZE overrides) plus vm.swappiness=10.
+# Safe to re-run.
+setup-swap:
+    bash scripts/setup-swap.sh
+
 # Host fail2ban setup.
 # Deploys the repo SSH and Caddy-backed WP login jails plus any extra filters.
 # Safe to re-run.

@@ -89,6 +89,9 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   exit 1
 fi
 
+mkdir -p "$META_DIR/backups"
+exec > >(tee -a "$META_DIR/backups/release-plugin-$(date +%Y%m%d-%H%M%S).log") 2>&1
+
 if [[ "$ENV" == "staging" ]]; then
   assert_bedrock_write_contract "$META_DIR/wp/staging/bedrock"
 else
@@ -103,6 +106,13 @@ CURRENT_VERSION="$(node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFi
 
 NEXT_VERSION="$(node -e 'const [v,b]=process.argv.slice(1); const m=v.match(/^(\d+)\.(\d+)\.(\d+)$/); if(!m){process.exit(2)} let [_,M,mn,p]=m; M=+M; mn=+mn; p=+p; if(b==="patch") p+=1; else if(b==="minor"){mn+=1;p=0}else if(b==="major"){M+=1;mn=0;p=0}else{process.exit(3)} process.stdout.write(`${M}.${mn}.${p}`);' "$CURRENT_VERSION" "$BUMP")"
 [[ -n "$NEXT_VERSION" ]] || { echo "Failed computing next version" >&2; exit 1; }
+
+# Astro dev servers poll files and compete for RAM with the build; stop them, restart on exit.
+ASTRO_STOPPED="$(docker ps --format '{{.Names}}' | grep -E '^astro-(dev|staging)$' || true)"
+if [[ -n "$ASTRO_STOPPED" ]]; then
+  trap 'echo "Restarting: $ASTRO_STOPPED"; docker start $ASTRO_STOPPED >/dev/null' EXIT
+  docker stop $ASTRO_STOPPED >/dev/null
+fi
 
 echo "[1/6] Verify webcomponents manifest without rebuilding live dist"
 (cd "$WC_DIR" && npm run check:manifest)
@@ -120,7 +130,9 @@ if [[ "$COMMIT_MESSAGE_SET" == true ]]; then
 fi
 
 echo "[2/6] Build and validate candidate artifact before release commit/tag"
-bash "${SCRIPT_DIR}/build-plugin-release.sh" --candidate-version "$NEXT_VERSION"
+NODE_OPTIONS=--max-old-space-size=2048 \
+  systemd-run --user --scope --quiet -p MemoryMax=3G --nice=10 -E NODE_OPTIONS \
+  bash "${SCRIPT_DIR}/build-plugin-release.sh" --candidate-version "$NEXT_VERSION"
 
 echo "[3/6] Bump plugin versions"
 node -e '

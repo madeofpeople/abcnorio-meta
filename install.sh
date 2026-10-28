@@ -180,7 +180,10 @@ bash "$SCRIPT_DIR/scripts/bedrock-bootstrap.sh"
 echo "==> Applying deterministic uploads permissions contract..."
 apply_upload_permissions_contract
 
-# -- 6. Install rootless docker
+# -- 6. Host swap (OOM safety valve for builds)
+bash "$SCRIPT_DIR/scripts/setup-swap.sh"
+
+# -- 6b. Install rootless docker
 bash "$SCRIPT_DIR/scripts/setup-rootless-docker.sh"
 
 # -- 7. Bring stack up
