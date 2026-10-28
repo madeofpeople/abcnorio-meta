@@ -14,7 +14,7 @@ TARGET="${1:?Usage: scripts/trigger-build.sh preview [scope]}"
 SCOPE="${2:-full}"
 
 if [[ "$TARGET" == "production" ]]; then
-  echo "Direct production builds are disabled. Promote the healthy staging deployment with: just deploy-release production" >&2
+  echo "Direct production builds are disabled. Promote the healthy staging deployment with: just deploy production" >&2
   exit 1
 fi
 

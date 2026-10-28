@@ -90,7 +90,7 @@ fi
 
 if [[ -z "$RELEASE_ID" ]]; then
   echo "Usage: scripts/deploy-release.sh <target> <release_id>" >&2
-  echo "Use 'just deploy-release production' to promote the commit currently running on healthy staging." >&2
+  echo "Use 'just deploy production' to promote the commit currently running on healthy staging." >&2
   exit 1
 fi
 

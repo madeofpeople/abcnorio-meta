@@ -93,7 +93,7 @@ services:
           umask 0002
           cd /app
           if [[ ! -f package-lock.json ]]; then
-            echo "[astro-staging] no activated snapshot; run just deploy-staging"
+            echo "[astro-staging] no activated snapshot; run just deploy staging"
             exit 0
           fi
           if [[ ! -x node_modules/.bin/astro ]]; then npm ci; fi

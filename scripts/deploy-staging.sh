@@ -84,7 +84,7 @@ if [ "${FORCE:-0}" != "1" ]; then
         echo "error: webcomponents pin is stale." >&2
         echo "  lock on abcnorio-astro 'staging' branch: ${locked_sha:0:7}" >&2
         echo "  origin/main:    ${remote_sha:0:7}" >&2
-        echo "Run 'just update-webcomponents', commit on main, merge main into staging, then retry (FORCE=1 to skip)." >&2
+        echo "Run 'just wc-pin', commit on main, merge main into staging, then retry (FORCE=1 to skip)." >&2
         exit 1
     fi
 fi
