@@ -74,6 +74,19 @@ Networks:
 - Staging stays Composer-managed (no plugin source bind mount); release flow is bump semver, push, then host-side Composer updates staging Bedrock.
 - Plugin release artifacts must include `resources/vendor/components/dist` so staging runtime does not require in-container builds.
 
+## Frontend Release Flow (webcomponents → production)
+
+Astro deploys install the webcomponents SHA pinned in the committed `abcnorio-astro/site-frontend/package-lock.json`, not `main`. Pushing webcomponents alone changes nothing on staging or production.
+
+1. Commit and push `abcnorio-webcomponents` (`main`).
+2. `just update-webcomponents`, review the SHA change, commit on `abcnorio-astro` `main`.
+3. Merge `main` into `staging` in `abcnorio-astro`. Deploys use the `staging` branch head, not `main`.
+4. `just deploy-staging` (aborts if the `staging` branch pin is stale; `FORCE=1` skips).
+5. Verify staging.
+6. `just deploy-release production`.
+
+Plugin-side changes (editor blocks, REST) go through `just release-plugin staging` instead.
+
 ## Quick Commands
 
 Requires [just](https://github.com/casey/just).
@@ -112,7 +125,8 @@ just composer staging update         # host Composer in staging bedrock
 
 just build preview                   # build and deploy preview
 just build preview events            # scoped build (target scope)
-just deploy-staging                  # deploy current astro staging branch head
+just update-webcomponents            # bump webcomponents pin in abcnorio-astro package-lock.json to origin/main; then commit it
+just deploy-staging                  # deploy astro `staging` branch head; aborts if its webcomponents pin != origin/main (FORCE=1 skips)
 just deploy-release production       # build and promote exact healthy staging SHA
 just rollback-release production     # restore previous production archive
 just docs                            # build + deploy docs site
@@ -124,7 +138,7 @@ just media-staging-to-dev            # copy media uploads staging → dev
 just dump-db staging                 # dump staging DB to backups/mariadb/
 just db-shell dev                    # open MariaDB shell
 
-just build-webcomponents             # build local webcomponents dist
+just build-webcomponents             # build local webcomponents dist (does not affect deploys)
 just update-dev-plugin               # rebuild local webcomponents + refresh WP dev preview assets; no release/deploy
 just release-plugin dev              # version, commit, tag, push, and verify plugin release
 just release-plugin staging minor    # release plugin and update staging Composer dependency; stops astro-dev/staging during the build, logs to backups/

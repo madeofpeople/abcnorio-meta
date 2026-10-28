@@ -103,9 +103,14 @@ rollback-release target release_id="":
 # Push current staging branch head to staging runtime with completion feedback.
 # Script polls orchestrator, temporarily stops astro-staging during cutover,
 # waits for astro-staging health, and verifies staging plugin/editor artifacts.
+# Aborts if the committed webcomponents pin differs from origin/main (FORCE=1 skips).
 # e.g. just deploy-staging
 deploy-staging:
     bash scripts/deploy-staging.sh
+
+# Bump the abcnorio-webcomponents pin in abcnorio-astro's package-lock.json to origin/main (you commit it).
+update-webcomponents:
+    bash scripts/update-webcomponents-pin.sh
 
 # Clear vite cache inside astro containers and restart them
 clear-vite-cache:

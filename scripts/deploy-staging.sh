@@ -72,6 +72,23 @@ if ! command -v docker >/dev/null 2>&1; then
     exit 1
 fi
 
+# Deploys install the webcomponents SHA pinned in the committed lockfile.
+if [ "${FORCE:-0}" != "1" ]; then
+    ASTRO_DIR="../abcnorio-astro"
+    locked_sha="$(git -C "$ASTRO_DIR" show staging:site-frontend/package-lock.json | node -e "
+        const lock = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+        console.log(lock.packages['node_modules/abcnorio-webcomponents'].resolved.split('#')[1]);
+    ")"
+    remote_sha="$(git -C ../abcnorio-webcomponents ls-remote origin refs/heads/main | cut -f1)"
+    if [ "$locked_sha" != "$remote_sha" ]; then
+        echo "error: webcomponents pin is stale." >&2
+        echo "  lock on abcnorio-astro 'staging' branch: ${locked_sha:0:7}" >&2
+        echo "  origin/main:    ${remote_sha:0:7}" >&2
+        echo "Run 'just update-webcomponents', commit on main, merge main into staging, then retry (FORCE=1 to skip)." >&2
+        exit 1
+    fi
+fi
+
 if [ ! -f "$WP_RUNTIME_ENV_FILE" ]; then
     echo "error: $WP_RUNTIME_ENV_FILE not found" >&2
     exit 1
