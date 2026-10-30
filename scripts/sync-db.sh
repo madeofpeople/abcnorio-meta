@@ -6,8 +6,7 @@
 
 set -euo pipefail
 
-META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="$META_DIR/.env"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/orchestrator.sh"
 
 DIRECTION="${1:?Usage: scripts/sync-db.sh <dev-to-staging|staging-to-dev>}"
 
@@ -25,79 +24,10 @@ case "$DIRECTION" in
   *) echo "Unknown direction: $DIRECTION (expected dev-to-staging or staging-to-dev)" >&2; exit 1 ;;
 esac
 
-if [[ -z "${ASTRO_BUILD_TRIGGER_SECRET:-}" ]]; then
-  if [[ ! -f "$ENV_FILE" ]]; then
-    echo "ERROR: Missing required env file: $ENV_FILE" >&2
-    exit 1
-  fi
-  # shellcheck source=/dev/null
-  source "$ENV_FILE"
-fi
+orchestrator_init
 
-: "${ASTRO_BUILD_TRIGGER_SECRET:?ASTRO_BUILD_TRIGGER_SECRET not set}"
-
-ORCHESTRATOR_PORT="${ORCHESTRATOR_PORT:-4011}"
-
-echo "Syncing DB: $DIRECTION (also syncs media uploads)..."
 echo "Note: this command validates data/media sync only. It does not validate frontend deployment state."
-curl -sf \
-  -X POST "http://localhost:${ORCHESTRATOR_PORT}${ENDPOINT}" \
-  -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
-  | cat
-echo
-
-echo "Waiting for dev-tools operation: ${STATUS_KEY}"
-deadline=$((SECONDS + 600))
-
-while (( SECONDS < deadline )); do
-  status_json="$(curl -sf \
-    -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
-    "http://localhost:${ORCHESTRATOR_PORT}/dev-tools/status")"
-
-  op_status="$(printf '%s' "$status_json" | node -e '
-let data = "";
-process.stdin.on("data", (c) => (data += c));
-process.stdin.on("end", () => {
-  try {
-    const parsed = JSON.parse(data);
-    const root = parsed?.data ?? parsed;
-    const value = root?.[process.argv[1]]?.status;
-    if (!value) {
-      process.stdout.write("");
-      return;
-    }
-    process.stdout.write(String(value));
-  } catch {
-    process.stdout.write("");
-  }
-});
-' "$STATUS_KEY")"
-
-  case "$op_status" in
-    done)
-      echo "Sync completed (data/media scope only)."
-      break
-      ;;
-    failed)
-      echo "Sync failed for ${STATUS_KEY}." >&2
-      echo "$status_json" >&2
-      exit 1
-      ;;
-    running|idle|"")
-      :
-      ;;
-    *)
-      echo "Unexpected status for ${STATUS_KEY}: ${op_status}" >&2
-      echo "$status_json" >&2
-      exit 1
-      ;;
-  esac
-done
-
-if (( SECONDS >= deadline )); then
-  echo "Timed out waiting for ${STATUS_KEY} to complete." >&2
-  exit 1
-fi
+run_dev_tool "$ENDPOINT" "$STATUS_KEY" "Sync DB ($DIRECTION, also syncs media uploads)"
 
 echo "Resetting WP runtime cache in ${WP_CONTAINER} (no container restart)..."
 docker exec "${WP_CONTAINER}" sh -lc '
