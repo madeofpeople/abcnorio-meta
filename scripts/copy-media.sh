@@ -12,8 +12,8 @@ ENV_FILE="$META_DIR/.env"
 DIRECTION="${1:?Usage: scripts/copy-media.sh <dev-to-staging|staging-to-dev>}"
 
 case "$DIRECTION" in
-  dev-to-staging) ENDPOINT="/dev-tools/copy-media-to-staging" ;;
-  staging-to-dev) ENDPOINT="/dev-tools/copy-media-to-dev" ;;
+  dev-to-staging) ENDPOINT="/dev-tools/copy-media-to-staging"; STATUS_KEY="copyMediaToStagingFromDev" ;;
+  staging-to-dev) ENDPOINT="/dev-tools/copy-media-to-dev"; STATUS_KEY="copyMediaFromStagingToDev" ;;
   *) echo "Unknown direction: $DIRECTION (expected dev-to-staging or staging-to-dev)" >&2; exit 1 ;;
 esac
 
@@ -30,8 +30,36 @@ fi
 
 ORCHESTRATOR_PORT="${ORCHESTRATOR_PORT:-4011}"
 
-curl -sf \
-  -X POST "http://localhost:${ORCHESTRATOR_PORT}${ENDPOINT}" \
-  -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
-  | cat
+BASE="http://localhost:${ORCHESTRATOR_PORT}"
+AUTH="Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}"
+
+# Prints "<status>|<started>|<message>" for this job.
+job_status() {
+  curl -sf -H "$AUTH" "$BASE/dev-tools/status" | node -e '
+    const j = JSON.parse(require("fs").readFileSync(0, "utf8")).data[process.argv[1]];
+    console.log(`${j.status}|${j.started}|${j.message ?? ""}`);
+  ' "$STATUS_KEY"
+}
+
+previous_started="$(job_status | cut -d'|' -f2)"
+
+curl -sf -X POST -H "$AUTH" "$BASE$ENDPOINT" | cat
 echo
+echo "waiting for copy to finish..."
+
+begin="$(date +%s)"
+while true; do
+  IFS='|' read -r status started message <<< "$(job_status)"
+  elapsed="$(( $(date +%s) - begin ))"
+
+  # Ignore the previous run's result until this run registers.
+  if [[ "$started" != "$previous_started" ]]; then
+    case "$status" in
+      done)   echo "done (${elapsed}s): $message"; exit 0 ;;
+      failed) echo "failed (${elapsed}s): $message" >&2; exit 1 ;;
+    esac
+  fi
+
+  echo "running (${elapsed}s)"
+  sleep 2
+done
