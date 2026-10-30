@@ -91,8 +91,8 @@ Plugin-side changes (editor blocks, REST) go through `just plugin-release stagin
 
 | Change | Run |
 |---|---|
-| Webcomponent markup/SCSS, check in WP editor (dev) | `just plugin-dev-assets` |
-| Webcomponent change, ship to Astro | push webcomponents `main`, `just wc-pin`, commit, merge to `staging`, `just deploy staging`, verify, `just deploy production` |
+| Webcomponent markup/SCSS, see it in the WP block editor (dev) | `just plugin-dev-assets` (Astro dev loads mounts the source live) |
+| Webcomponent change, ship to Staging Frontend| push webcomponents `main`, `just wc-pin`, commit, merge to `staging`, `just deploy staging`, verify, `just deploy production` |
 | Plugin change (editor blocks, REST, PHP) | `just plugin-release dev` or `just plugin-release staging [bump]` |
 | Webcomponent change that also affects plugin blocks | plugin release first, then the Astro flow above |
 | Astro-only change (pages, layouts) | merge to `staging`, `just deploy staging`, verify, `just deploy production` |
