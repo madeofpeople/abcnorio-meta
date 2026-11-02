@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "066eeb49f5b2d50c5d45c36c43518e0c",
+    "content-hash": "0a6d90ef7826307cbc76db14d93bc7d7",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -1370,37 +1370,6 @@
                 "source": "https://plugins.svn.wordpress.org/advanced-custom-fields"
             },
             "time": "2026-09-10T17:31:40+00:00"
-        },
-        {
-            "name": "wp-plugin/autodescription",
-            "version": "5.2.0",
-            "source": {
-                "type": "svn",
-                "url": "https://plugins.svn.wordpress.org/autodescription/",
-                "reference": "tags/5.2.0"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/autodescription.5.2.0.zip"
-            },
-            "require": {
-                "composer/installers": "~1.0|~2.0"
-            },
-            "type": "wordpress-plugin",
-            "notification-url": "https://wp-packages.org/downloads",
-            "authors": [
-                {
-                    "name": "Sybre Waaijer"
-                }
-            ],
-            "description": "The fastest feature-complete SEO plugin for professional WordPress websites. Secure, fast, unbranded, and automated SEO. Do less; get better results.",
-            "homepage": "https://theseoframework.com/",
-            "support": {
-                "changelog": "https://wordpress.org/plugins/autodescription/#developers",
-                "issues": "https://wordpress.org/support/plugin/autodescription",
-                "source": "https://plugins.svn.wordpress.org/autodescription"
-            },
-            "time": "2026-10-14T12:07:30+00:00"
         },
         {
             "name": "wp-plugin/fluent-smtp",
