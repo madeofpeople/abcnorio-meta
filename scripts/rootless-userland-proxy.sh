@@ -43,7 +43,11 @@ rollback() {
 }
 
 status() {
-    echo "userland proxy: $(docker info 2>/dev/null | grep -i EnableUserlandProxy || echo 'docker not reachable')"
+    if docker info 2>/dev/null | grep -q 'EnableUserlandProxy: true'; then
+        echo "userland proxy: on"
+    else
+        echo "userland proxy: off (or docker not reachable)"
+    fi
     echo "daemon.json:    $([[ -f "$DAEMON_JSON" ]] && cat "$DAEMON_JSON" || echo absent)"
     echo "override:       $([[ -f "$OVERRIDE" ]] && echo present || echo absent)"
     echo "running:        $(docker ps --format '{{.Names}}' 2>/dev/null | tr '\n' ' ')"
@@ -70,7 +74,8 @@ apply() {
         exit 1
     fi
 
-    if ! docker info 2>/dev/null | grep -q 'EnableUserlandProxy: false'; then
+    # docker info prints EnableUserlandProxy only when it is true
+    if docker info 2>/dev/null | grep -q 'EnableUserlandProxy: true'; then
         echo "==> Setting did not take effect" >&2
         rollback
         exit 1
