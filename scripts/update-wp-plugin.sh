@@ -186,7 +186,8 @@ if [[ "$INSTALLED_VERSION" != "$NEXT_VERSION" ]]; then
   exit 1
 fi
 
-docker exec "$CONTAINER" wp --allow-root --path=/app/web/wp cache flush
+# APCu object cache lives in the web workers; CLI cache flush cannot clear it.
+docker restart "$CONTAINER"
 
 echo "[6/6] Sync Bedrock seed composer files"
 cp "${META_DIR}/wp/${ENV}/bedrock/composer.json" "${META_DIR}/wp/bootstrap/${ENV}/bedrock.composer.json"

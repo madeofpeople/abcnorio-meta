@@ -80,8 +80,9 @@ wp-eval env code:
 # Flush WP object cache + DB transients for an env.
 # Usage: just flush-wp-caches dev
 flush-wp-caches ENV:
-    bash scripts/wp.sh {{ ENV }} cache flush
     bash scripts/wp.sh {{ ENV }} transient delete --all
+    # APCu object cache lives in the web workers; CLI cache flush cannot clear it.
+    docker restart abcwp{{ ENV }}
 
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
