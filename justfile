@@ -187,6 +187,36 @@ bedrock-snapshot env="dev":
         cp "wp/{{ env }}/bedrock/composer.lock" "wp/bootstrap/{{ env }}/bedrock.composer.lock"
         echo "synced {{ env }} bedrock composer files back to seed"
 
+# Update wpackagist plugins (wp-plugin/*) and reseed the bootstrap composer files.
+# Excludes abcnorio-func (use plugin-release) and vip-block-data-api (dev-trunk VCS repo; update by hand).   e.g. just plugins-update dev
+plugins-update env="dev":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{ env }}" in
+        dev|staging) ;;
+        *) echo "Unknown env: {{ env }} (expected dev or staging)" >&2; exit 1 ;;
+    esac
+    (cd "wp/{{ env }}/bedrock" && composer update "wp-plugin/*" --with-dependencies)
+    just bedrock-snapshot {{ env }}
+    # APCu object cache lives in the web workers; CLI cache flush cannot clear it.
+    docker restart abcwp{{ env }}
+    echo "Review wp/bootstrap/{{ env }}/bedrock.composer.lock, then commit."
+
+# Update WordPress core to a version and reseed the bootstrap composer files.   e.g. just wp-core-update dev 6.9.5
+wp-core-update env version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{ env }}" in
+        dev|staging) ;;
+        *) echo "Unknown env: {{ env }} (expected dev or staging)" >&2; exit 1 ;;
+    esac
+    (cd "wp/{{ env }}/bedrock" && composer require "roots/wordpress:{{ version }}" --update-with-dependencies)
+    just bedrock-snapshot {{ env }}
+    bash scripts/wp.sh {{ env }} core update-db
+    # APCu object cache lives in the web workers; CLI cache flush cannot clear it.
+    docker restart abcwp{{ env }}
+    echo "Review wp/bootstrap/{{ env }}/bedrock.composer.lock, then commit."
+
 # ── Plugin ─────────────────────────────────────────────────────────────────────
 
 # Build and deploy the docs site to web/static/docs

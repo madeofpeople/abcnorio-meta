@@ -246,6 +246,7 @@ services:
       DEV_DB_NAME: ${DEV_DB_NAME}
       DEV_DB_USER: ${DEV_DB_USER}
       DEV_DB_PASSWORD: ${DEV_DB_PASSWORD}
+      DB_PREFIX: ${DB_PREFIX}
     command: >
       bash -lc "umask 0002 && mkdir -p /shared/static/prod /shared/static/prod/.ssr /shared/static/preview /shared/static/uploads /astro-build/site-frontend /astro-build/staging-site-frontend /astro-build/staging-releases /astro-build/build-archives /astro-build/build-archives/media /astro-build/build-archives/static-backup && cd /orchestrator && node index.mjs"
     volumes:
@@ -291,6 +292,7 @@ services:
       - ./wp/runtime.env
       - ./wp/staging.env
     environment:
+      DB_PREFIX: ${DB_PREFIX}
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       HEADLESS_FRONTEND_URL: https://${DOMAIN_STAGING}/
       PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
@@ -353,6 +355,7 @@ services:
       - ./wp/runtime.env
       - ./wp/dev.env
     environment:
+      DB_PREFIX: ${DB_PREFIX}
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       HEADLESS_FRONTEND_URL: https://${DOMAIN_DEV}/
       PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
