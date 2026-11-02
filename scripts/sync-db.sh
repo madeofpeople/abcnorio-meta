@@ -29,10 +29,10 @@ orchestrator_init
 echo "Note: this command validates data/media sync only. It does not validate frontend deployment state."
 run_dev_tool "$ENDPOINT" "$STATUS_KEY" "Sync DB ($DIRECTION, also syncs media uploads)"
 
-echo "Resetting WP runtime cache in ${WP_CONTAINER} (no container restart)..."
+echo "Resetting WP runtime cache in ${WP_CONTAINER}..."
 docker exec "${WP_CONTAINER}" sh -lc '
-  wp --allow-root --path=/app/web/wp cache flush >/dev/null
   wp --allow-root --path=/app/web/wp transient delete --all >/dev/null || true
-  curl -sf -X POST http://127.0.0.1:2019/frankenphp/workers/restart >/dev/null
 '
-echo "Cache reset complete (object cache flushed, transients purge requested, workers refreshed)."
+# The APCu object cache lives in the web workers; WP-CLI and a worker restart don't clear it.
+docker restart "${WP_CONTAINER}" >/dev/null
+echo "Cache reset complete (transients purged, ${WP_CONTAINER} restarted)."
