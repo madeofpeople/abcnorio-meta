@@ -82,7 +82,7 @@ fi
 
 # --- 8. Create external networks ---
 echo "==> Ensuring external networks exist..."
-docker network inspect abcnorio_net_internal &>/dev/null || docker network create abcnorio_net_internal
+docker network inspect abcnorio_net_proxy &>/dev/null || docker network create abcnorio_net_proxy
 docker network inspect abcnorio_net_web &>/dev/null      || docker network create abcnorio_net_web
 
 echo ""
