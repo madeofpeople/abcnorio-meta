@@ -46,6 +46,7 @@ services:
     environment:
       DEV_CMS: ${DOMAIN_DEV_CMS}
       DEV_CMS_FETCH: http://abcwpdev/
+      ALLOWED_HOSTS: astro-dev
       STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${DEV_MODE:-development}
       ASTRO_RUNTIME_CONTAINER: '1'
@@ -75,6 +76,7 @@ services:
       - ${ASTRO_WEBCOMPONENTS_DIR}:/app/node_modules/abcnorio-webcomponents
     networks:
       - abcnorio_net_proxy
+      - abcnorio_net_orchestrator
   astro-staging:
       build:
         context: ${ASTRO_HOST_ROOT}
@@ -236,6 +238,8 @@ services:
       PREVIEW_BUILD_PATH: /shared/static/preview
       STAGING_UPLOADS_DIR: /staging-uploads
       DEV_UPLOADS_DIR: /dev-uploads
+      DEV_HEALTH_URL: http://abcwpdev/wp-json/
+      DEV_FRONTEND_HEALTH_URL: http://astro-dev:3033/robots.txt
       STAGING_HEALTH_URL: http://abcwpstaging/wp-json/
       STAGING_FRONTEND_HEALTH_URL: http://astro-staging:3033/robots.txt
       STAGING_PLUGIN_VERSION_URL: http://abcwpstaging/wp-json/abcnorio/v1/deployment/version
