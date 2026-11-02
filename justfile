@@ -165,6 +165,32 @@ db-shell env="staging":
       *) echo "Unknown env: {{ env }} (expected dev or staging)"; exit 1 ;;
     esac
 
+# e.g. just local-db-import ~/Downloads/staging-20261102.sql.gz
+# Import a SQL dump (.sql or .sql.gz) into the local dev DB, then restart abcwpdev (APCu).
+local-db-import file:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source .env
+    if [[ "{{ file }}" == *.gz ]]; then reader="gunzip -c"; else reader="cat"; fi
+    $reader "{{ file }}" | docker exec -i mariadb mariadb -u"$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME"
+    docker restart abcwpdev
+    echo "Imported. Set WP_HOME/WP_SITEURL in wp/dev.env to http://localhost:8101 and disable FluentSMTP/Mailchimp locally."
+
+# Needs .env.development.local in the Astro site dir; see .env.sample there.
+# Static build + local preview without proxy, orchestrator, or hostnames (http://localhost:4321).
+preview-local:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source .env
+    cd "$ASTRO_SITE_DIR"
+    # astro build runs in Vite's production mode, which skips .env.development*; load them into the shell.
+    set -a
+    source .env.development
+    source .env.development.local
+    set +a
+    npm run build:dev
+    npm run preview
+
 # ── Composer ───────────────────────────────────────────────────────────────────
 
 # Run host Composer in a Bedrock dir (env: dev or staging)
