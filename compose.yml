@@ -66,7 +66,7 @@ services:
       FORMS_SUBMIT_ENDPOINT: ${DOMAIN_DEV_CMS}wp-json/abcnorio/v1/forms/submit
       FORMS_MIN_SUBMIT_MS: ${FORMS_MIN_SUBMIT_MS:-2500}
     ports: 
-      - 127.0.0.1:${DEV_ASTRO_PORT:-3033}:3033
+      - 127.0.0.1:3033:3033
     volumes:
       - ${ASTRO_SITE_DIR}:/app/
       # Canonical live-source bind mount: the app runtime must see the webcomponents repo here.
@@ -356,7 +356,7 @@ services:
       retries: 3
       start_period: 30s
     ports:
-      - 127.0.0.1:${DEV_WP_PORT:-8101}:80
+      - 127.0.0.1:8101:80
     env_file:
       - ./wp/runtime.env
       - ./wp/dev.env
