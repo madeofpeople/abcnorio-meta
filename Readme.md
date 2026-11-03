@@ -60,10 +60,12 @@ Host:
 Networks:
 - `abcnorio_net_web` (external): 
   - `proxy`, `web`
-- `abcnorio_net_internal` (external): 
-   - `proxy`, `astro`, `astro-staging`, `deploy-orchestrator`, `abcwpdev`, `abcwpstaging`, `mariadb`
-- `abcnorio_net_orchestrator` (internal):
-  - `deploy-orchestrator` ↔ `astro`, `astro-staging`
+- `abcnorio_net_proxy` (external):
+  - `proxy`, `astro-dev`, `astro-staging`, `astro-prod`, `abcwpdev`, `abcwpstaging`
+- `abcnorio_net_orchestrator` (managed by compose):
+  - `deploy-orchestrator`, `astro-dev`, `astro-staging`, `abcwpdev`, `abcwpstaging`
+- `abcnorio_net_db` (managed by compose): database clients only
+  - `mariadb`, `abcwpdev`, `abcwpstaging`, `deploy-orchestrator`
 
 ## Plugin Development Model
 

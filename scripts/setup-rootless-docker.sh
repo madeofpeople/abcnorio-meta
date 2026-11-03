@@ -80,7 +80,15 @@ else
     echo "==> DOCKER_HOST already in ~/.bashrc."
 fi
 
-# --- 8. Create external networks ---
+# --- 8. Turn the userland proxy off so Caddy logs real client IPs (needed by fail2ban) ---
+if docker info 2>/dev/null | grep -q 'EnableUserlandProxy: true'; then
+    echo "==> Disabling the userland proxy..."
+    bash "$META_DIR/scripts/rootless-userland-proxy.sh" apply
+else
+    echo "==> Userland proxy already off."
+fi
+
+# --- 9. Create external networks ---
 echo "==> Ensuring external networks exist..."
 docker network inspect abcnorio_net_proxy &>/dev/null || docker network create abcnorio_net_proxy
 docker network inspect abcnorio_net_web &>/dev/null      || docker network create abcnorio_net_web

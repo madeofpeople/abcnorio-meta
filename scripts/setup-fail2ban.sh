@@ -10,11 +10,13 @@ REPO_F2B_FILTER_DIR="$META_DIR/f2b/fail2ban/filter.d"
 SYSTEM_JAIL_LOCAL="/etc/fail2ban/jail.local"
 ENV_FILE="$META_DIR/.env"
 PROXY_LOG_DIR="./proxy/logs"
+F2B_IGNORE_IPS=""
 
 if [[ -f "$ENV_FILE" ]]; then
     # shellcheck source=/dev/null
     source "$ENV_FILE"
     PROXY_LOG_DIR="${PROXY_LOG_DIR:-./proxy/logs}"
+    F2B_IGNORE_IPS="${F2B_IGNORE_IPS:-}"
 fi
 
 if [[ "$PROXY_LOG_DIR" != /* ]]; then
@@ -38,7 +40,7 @@ fi
 
 RENDERED_JAIL_LOCAL="$(mktemp)"
 trap 'rm -f "$RENDERED_JAIL_LOCAL"' EXIT
-sed "s|__PROXY_LOG_DIR__|$PROXY_LOG_DIR|g" "$REPO_F2B_CONF" > "$RENDERED_JAIL_LOCAL"
+sed -e "s|__PROXY_LOG_DIR__|$PROXY_LOG_DIR|g" -e "s|__F2B_IGNORE_IPS__|$F2B_IGNORE_IPS|g" "$REPO_F2B_CONF" > "$RENDERED_JAIL_LOCAL"
 
 if [[ -f "$SYSTEM_JAIL_LOCAL" ]]; then
     if diff -q "$RENDERED_JAIL_LOCAL" "$SYSTEM_JAIL_LOCAL" &>/dev/null; then

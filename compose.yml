@@ -271,6 +271,7 @@ services:
         condition: service_healthy
     networks:
       - abcnorio_net_orchestrator
+      - abcnorio_net_db
   abcwpstaging:
     build: 
       context: ${STAGING_HOST_ROOT}
@@ -332,6 +333,7 @@ services:
     networks:
       - abcnorio_net_orchestrator
       - abcnorio_net_proxy
+      - abcnorio_net_db
   abcwpdev:
     profiles:
       - dev
@@ -397,6 +399,7 @@ services:
     networks:
       - abcnorio_net_orchestrator
       - abcnorio_net_proxy
+      - abcnorio_net_db
   mariadb:
     image: mariadb:11.4
     container_name: mariadb
@@ -428,8 +431,7 @@ services:
       - ${STAGING_HOST_ROOT}mariadb.cnf:/etc/mysql/conf.d/custom.cnf:ro
       - ${WP_SQL_INIT_SCRIPT:-./wp/sql/001-dev-staging-dbs.sh}:/docker-entrypoint-initdb.d/001-dev-staging-dbs.sh:ro
     networks:
-      - abcnorio_net_proxy
-      - abcnorio_net_orchestrator
+      - abcnorio_net_db
 volumes:
   abcwp_mardiadb_vol: {}
   proxy_data: {}
@@ -437,6 +439,9 @@ volumes:
   web_data: {}
   web_config: {}
 networks:
+  # Database clients only: both WP containers and the orchestrator.
+  abcnorio_net_db:
+    name: abcnorio_net_db
   abcnorio_net_orchestrator:
     name: abcnorio_net_orchestrator
   abcnorio_net_proxy:

@@ -1,4 +1,5 @@
 [DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 __F2B_IGNORE_IPS__
 banaction = iptables-multiport
 banaction_allports = iptables-allports
 
@@ -11,6 +12,6 @@ enabled  = true
 filter   = caddy-wp
 logpath  = __PROXY_LOG_DIR__/wp-staging-access.log
 		   __PROXY_LOG_DIR__/wp-dev-access.log
-maxretry = 5
+maxretry = 10
 findtime = 600
 bantime  = 3600

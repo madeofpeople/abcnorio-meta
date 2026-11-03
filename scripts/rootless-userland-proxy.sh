@@ -58,6 +58,8 @@ apply() {
         echo "==> $DAEMON_JSON already exists; merge userland-proxy=false by hand first." >&2
         exit 1
     fi
+    had_proxy=false
+    docker inspect proxy >/dev/null 2>&1 && had_proxy=true
     echo "==> Running before:"; docker ps --format '{{.Names}}' | sort | tr '\n' ' '; echo
     mkdir -p "$BACKUP_DIR" "$(dirname "$DAEMON_JSON")" "$OVERRIDE_DIR"
     [[ -f "$DAEMON_JSON" ]] && cp "$DAEMON_JSON" "$BACKUP_DIR/daemon.json"
@@ -81,15 +83,17 @@ apply() {
         exit 1
     fi
 
-    echo "==> Waiting for proxy container"
-    for _ in $(seq 1 30); do
-        [[ "$(docker inspect -f '{{.State.Running}}' proxy 2>/dev/null)" == "true" ]] && break
-        sleep 2
-    done
-    if [[ "$(docker inspect -f '{{.State.Running}}' proxy 2>/dev/null)" != "true" ]]; then
-        echo "==> proxy did not start" >&2
-        rollback
-        exit 1
+    if [[ "$had_proxy" == "true" ]]; then
+        echo "==> Waiting for proxy container"
+        for _ in $(seq 1 30); do
+            [[ "$(docker inspect -f '{{.State.Running}}' proxy 2>/dev/null)" == "true" ]] && break
+            sleep 2
+        done
+        if [[ "$(docker inspect -f '{{.State.Running}}' proxy 2>/dev/null)" != "true" ]]; then
+            echo "==> proxy did not start" >&2
+            rollback
+            exit 1
+        fi
     fi
 
     echo "==> Running after:"; docker ps --format '{{.Names}}' | sort | tr '\n' ' '; echo
