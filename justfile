@@ -177,21 +177,6 @@ local-db-import file:
     docker restart abcwpdev
     echo "Imported. Set WP_HOME/WP_SITEURL in wp/dev.env to your local WP URL (see DEV_WP_PORT in .env) and disable FluentSMTP/Mailchimp locally."
 
-# Needs .env.development.local in the Astro site dir; see .env.sample there.
-# Static build + local preview without proxy, orchestrator, or hostnames (http://localhost:4321).
-preview-local:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    source .env
-    cd "$ASTRO_SITE_DIR"
-    # astro build runs in Vite's production mode, which skips .env.development*; load them into the shell.
-    set -a
-    source .env.development
-    source .env.development.local
-    set +a
-    npm run build:dev
-    npm run preview
-
 # ── Composer ───────────────────────────────────────────────────────────────────
 
 # Run host Composer in a Bedrock dir (env: dev or staging)
