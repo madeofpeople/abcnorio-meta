@@ -178,7 +178,7 @@ local-db-import file:
     if [[ "{{ file }}" == *.gz ]]; then reader="gunzip -c"; else reader="cat"; fi
     $reader "{{ file }}" | docker exec -i mariadb mariadb -u"$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME"
     docker restart abcwpdev
-    echo "Imported. Set WP_HOME/WP_SITEURL in wp/dev.env to http://localhost:8101 and disable FluentSMTP/Mailchimp locally."
+    echo "Imported. Set WP_HOME/WP_SITEURL in wp/dev.env to http://localhost:8201 and disable FluentSMTP/Mailchimp locally."
 
 # Needs .env.development.local in the Astro site dir; see .env.sample there.
 # Static build + local preview without proxy, orchestrator, or hostnames (http://localhost:4321).

@@ -77,7 +77,9 @@ set_env "$META_DIR/.env" ASTRO_BUILD_ARCHIVE_HOST_DIR "$META_DIR/build/astro/bui
 set_env "$META_DIR/.env" ASTRO_WEBCOMPONENTS_DIR "$WORKSPACE_ROOT/abcnorio-webcomponents"
 set_env "$META_DIR/.env" ORCHESTRATOR_HOST_DIR "$WORKSPACE_ROOT/abcnorio-orchestrator"
 set_env "$META_DIR/.env" ABCNORIO_FUNC_HOST_DIR "$WORKSPACE_ROOT/abcnorio-func"
-set_env "$META_DIR/.env" DOMAIN_DEV_CMS "http://localhost:8101/"
+set_env "$META_DIR/.env" DEV_WP_PORT 8201
+set_env "$META_DIR/.env" DEV_ASTRO_PORT 3133
+set_env "$META_DIR/.env" DOMAIN_DEV_CMS "http://localhost:8201/"
 
 echo "==> Scaffolding dev Bedrock..."
 bash "$META_DIR/scripts/bedrock-bootstrap.sh" dev
