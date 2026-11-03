@@ -157,6 +157,9 @@ echo "==> Cloning sibling repos..."
 
 ensure_webcomponents_artifacts
 
+echo "==> Generating abcnorio-func Composer autoloader..."
+(cd "$WORKSPACE_ROOT/abcnorio-func" && composer install --no-dev --optimize-autoloader)
+
 echo "==> Building abcnorio-func assets (block editor and scheduler calendar)..."
 (cd "$WORKSPACE_ROOT/abcnorio-func" && npm ci && ABCNORIO_COMPONENTS_DIST_SOURCE="$WORKSPACE_ROOT/abcnorio-webcomponents/dist" npm run build)
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Bootstrap dev and staging Bedrock directories.
 # Run once from abcnorio-meta/ before `docker compose up`.
-# Requires: composer
+# Usage: bootstrap.sh [dev] [staging]   (default: both)
+# Requires: composer, or docker (falls back to the composer image)
 
 set -euo pipefail
 
@@ -9,6 +10,12 @@ META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKER_SOURCE="${META_DIR}/wp/bootstrap/worker.php"
 HEADLESS_THEME_SOURCE_DIR="${META_DIR}/wp/bootstrap/headless-theme"
 BEDROCK_VERSION="1.31.0"
+
+if ! command -v composer >/dev/null; then
+    composer() {
+        docker run --rm -v "$META_DIR":"$META_DIR" -w "$PWD" composer:2 "$@"
+    }
+fi
 
 seed_headless_theme() {
     local env="$1"
@@ -71,8 +78,10 @@ bootstrap_bedrock() {
     echo "[${env}] done"
 }
 
-bootstrap_bedrock dev
-bootstrap_bedrock staging
+ENVS=("$@")
+[ "${#ENVS[@]}" -gt 0 ] || ENVS=(dev staging)
 
-seed_headless_theme dev
-seed_headless_theme staging
+for env in "${ENVS[@]}"; do
+    bootstrap_bedrock "$env"
+    seed_headless_theme "$env"
+done
