@@ -18,13 +18,15 @@ for tool in docker git just; do
     command -v "$tool" >/dev/null || { echo "Missing required tool: $tool" >&2; exit 1; }
 done
 
+docker info >/dev/null 2>&1 || { echo "Docker daemon not reachable. Start Docker Desktop or OrbStack and rerun." >&2; exit 1; }
+
 clone() {
     [ -d "$WORKSPACE_ROOT/$1" ] || git clone "$REPO_BASE/$1.git" "$WORKSPACE_ROOT/$1"
 }
 
 # Runs a command in a throwaway Linux container with the workspace mounted at the same path.
 in_node() {
-    docker run --rm -v "$WORKSPACE_ROOT":"$WORKSPACE_ROOT" -w "$1" -e ABCNORIO_COMPONENTS_DIST_SOURCE="${ABCNORIO_COMPONENTS_DIST_SOURCE:-}" "$NODE_IMAGE" bash -c "$2"
+    docker run --rm -v "$WORKSPACE_ROOT":"$WORKSPACE_ROOT" -w "$1" "$NODE_IMAGE" bash -c "$2"
 }
 
 copy_env() {
@@ -46,8 +48,8 @@ in_node "$WORKSPACE_ROOT/abcnorio-webcomponents" "npm install && npm run build &
 
 echo "==> Installing abcnorio-func autoloader and building its assets..."
 docker run --rm -v "$WORKSPACE_ROOT":"$WORKSPACE_ROOT" -w "$WORKSPACE_ROOT/abcnorio-func" "$COMPOSER_IMAGE" install --no-dev --optimize-autoloader
-ABCNORIO_COMPONENTS_DIST_SOURCE="$WORKSPACE_ROOT/abcnorio-webcomponents/dist" \
-    in_node "$WORKSPACE_ROOT/abcnorio-func" "npm ci && npm run build"
+in_node "$WORKSPACE_ROOT/abcnorio-func" "npm ci && ABCNORIO_COMPONENTS_DIST_SOURCE=$WORKSPACE_ROOT/abcnorio-webcomponents/dist npm run build"
+[ -d "$WORKSPACE_ROOT/abcnorio-func/build/calendar" ] || { echo "abcnorio-func/build/calendar missing: pull the latest abcnorio-func (its build script must include copy:calendar) and rerun." >&2; exit 1; }
 
 echo "==> Creating external Docker networks..."
 for net in abcnorio_net_proxy abcnorio_net_web; do
@@ -79,6 +81,12 @@ set_env "$META_DIR/.env" DOMAIN_DEV_CMS "http://localhost:8101/"
 
 echo "==> Scaffolding dev Bedrock..."
 bash "$META_DIR/scripts/bedrock-bootstrap.sh" dev
+
+echo "==> Applying uploads permissions contract (setgid, project uid:gid)..."
+PROJECT_UID="$(sed -n 's/^PROJECT_UID=//p' "$META_DIR/.env")"
+PROJECT_GID="$(sed -n 's/^PROJECT_GID=//p' "$META_DIR/.env")"
+mkdir -p "$META_DIR/wp/dev/bedrock/web/app/uploads"
+docker run --rm -v "$META_DIR/wp/dev/bedrock/web/app/uploads":/u alpine sh -c "chown $PROJECT_UID:$PROJECT_GID /u && chmod 2775 /u"
 
 echo ""
 echo "Local setup done. Next:"

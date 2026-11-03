@@ -30,7 +30,10 @@ setup-fail2ban:
 up env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        [[ -d ../abcnorio-func/build/calendar ]] || just plugin-dev-assets
+        if [[ ! -d ../abcnorio-func/build/calendar ]]; then
+            echo "Plugin build/calendar missing. Run 'bash scripts/local-setup.sh' (local machine) or 'just plugin-dev-assets' (server with host node)." >&2
+            exit 1
+        fi
         docker compose --profile dev up -d astro-dev abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
         docker compose up -d deploy-orchestrator abcwpstaging
