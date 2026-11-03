@@ -30,10 +30,7 @@ setup-fail2ban:
 up env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        if [[ ! -d ../abcnorio-func/build/calendar ]]; then
-            echo "Plugin build/calendar missing. Run 'bash scripts/local-setup.sh' (local machine) or 'just plugin-dev-assets' (server with host node)." >&2
-            exit 1
-        fi
+        [[ -d ../abcnorio-func/build/calendar ]] || just plugin-dev-assets
         docker compose --profile dev up -d astro-dev abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
         docker compose up -d deploy-orchestrator abcwpstaging
@@ -178,7 +175,7 @@ local-db-import file:
     if [[ "{{ file }}" == *.gz ]]; then reader="gunzip -c"; else reader="cat"; fi
     $reader "{{ file }}" | docker exec -i mariadb mariadb -u"$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME"
     docker restart abcwpdev
-    echo "Imported. Set WP_HOME/WP_SITEURL in wp/dev.env to http://localhost:8201 and disable FluentSMTP/Mailchimp locally."
+    echo "Imported. Set WP_HOME/WP_SITEURL in wp/dev.env to your local WP URL (see DEV_WP_PORT in .env) and disable FluentSMTP/Mailchimp locally."
 
 # Needs .env.development.local in the Astro site dir; see .env.sample there.
 # Static build + local preview without proxy, orchestrator, or hostnames (http://localhost:4321).
