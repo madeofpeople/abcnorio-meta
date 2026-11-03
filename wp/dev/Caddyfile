@@ -1,9 +1,8 @@
-
 :80 {
 	encode zstd br gzip
 	try_files {path} {path}/index.php index.php
 	root * {$CADDY_ROOT}
-  	{$CADDY_SERVER_EXTRA_DIRECTIVES}
+	{$CADDY_SERVER_EXTRA_DIRECTIVES}
 	@wp_api path /wp-json*
 	header @wp_api {
 		Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
