@@ -50,8 +50,7 @@ deploy-orchestrator (:4011) ◀── trigger (bearer) -────┘
    │       └── web/static/prod/.ssr (prod SSR runtime mounted by astro-prod)
    │
 abcwpdev / abcwpstaging
-   ├── MariaDB (shared container, separate DBs)
-   └── APCu object cache (in-process, per-container)
+   └── MariaDB (shared container, separate DBs)
 
 Host:
    └── fail2ban (systemd) — protects SSH and watches host-mounted Caddy access logs for repeated WP login failures
@@ -166,7 +165,7 @@ just setup-swap                      # 4G host swapfile + vm.swappiness=10 (SWAP
 just setup-fail2ban                  # install fail2ban on host + deploy SSH/Caddy jails
 ```
 
-Dev and staging auto-reload on CMS changes: the plugin exposes `/wp-json/abcnorio/v1/last-change`, `proxy/Caddyfile` serves it same-origin at `/_cms-last-change`, and `html.astro` polls it every 3 s in live modes. Edits made via WP-CLI don't bump it (APCu object cache is per-process).
+Dev and staging auto-reload on CMS changes: the plugin exposes `/wp-json/abcnorio/v1/last-change`, `proxy/Caddyfile` serves it same-origin at `/_cms-last-change`, and `html.astro` polls it every 3 s in live modes. Edits made via WP-CLI don't bump it (it only changes on saves through the plugin's hooks).
 
 For user management: `bash scripts/wp-utils.sh <function> [args]`
 For standalone Bedrock bootstrap fallback: `bash scripts/bedrock-bootstrap.sh`

@@ -3,7 +3,7 @@ services:
     image: caddy:2.11.2-alpine
     container_name: proxy
     restart: always
-    mem_limit: 128m
+    mem_limit: 96m
     ports:
       - 80:80
       - 443:443
@@ -146,7 +146,7 @@ services:
     container_name: astro-prod
     user: node
     restart: always
-    mem_limit: 256m
+    mem_limit: 192m
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- 'http://127.0.0.1:3033/search/api?q=health' >/dev/null 2>&1"]
       interval: 30s
@@ -167,7 +167,7 @@ services:
     image: caddy:2.11-alpine
     container_name: web
     restart: always
-    mem_limit: 128m
+    mem_limit: 96m
     environment:
       DOMAIN_PRODUCTION: ${DOMAIN_PRODUCTION}
       DOMAIN_WP_STAGING: ${DOMAIN_WP_STAGING}
@@ -328,7 +328,6 @@ services:
     volumes:
       - ${STAGING_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile:ro
       - ${STAGING_HOST_ROOT}bedrock:/app
-      - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/app/backups:ro
     networks:
       - abcnorio_net_orchestrator
@@ -393,7 +392,6 @@ services:
     volumes:
       - ${DEV_HOST_ROOT}Caddyfile:/etc/caddy/Caddyfile:ro
       - ${DEV_HOST_ROOT}bedrock:/app
-      - ./wp/object-cache.php:/app/web/app/object-cache.php:ro
       - ${ABCNORIO_FUNC_HOST_DIR}:/app/web/app/plugins/abcnorio-func
       - ${ASTRO_BUILD_ARCHIVE_HOST_DIR}:/app/backups:ro
     networks:
@@ -404,7 +402,7 @@ services:
     image: mariadb:11.4
     container_name: mariadb
     restart: always
-    mem_limit: 384m
+    mem_limit: 256m
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -416,7 +414,7 @@ services:
     environment:
       # MARIADB_DATABASE, MARIADB_USER, and MARIADB_PASSWORD are required.
       # So on first run, mariadb creates the proper users / passwords etc.
-      MARIADB_ROOT_PASSWORD: ${STAGING_DB_ROOT_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MARIADB_DATABASE: ${STAGING_DB_NAME}
       MARIADB_USER: ${STAGING_DB_USER}
       MARIADB_PASSWORD: ${STAGING_DB_PASSWORD}

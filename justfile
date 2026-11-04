@@ -53,11 +53,11 @@ down env="":
 restart env="":
     docker compose restart {{env}}
 
-# Rebuild and restart specific services (space-separated)
+# Rebuild from Dockerfiles with fresh base images (PHP, node), then recreate. See Deployment docs for when to use it.   e.g. just rebuild abcwpstaging
 rebuild *services:
-    docker compose up -d --build {{ services }}
+    docker compose build --pull {{ services }} && docker compose up -d {{ services }}
 
-# Pull latest images and restart
+# Pull the pinned image: services only (mariadb, caddy) and restart; does not touch built services
 pull:
     docker compose pull && docker compose up -d
 
@@ -78,12 +78,10 @@ wp env *args:
 wp-eval env code:
     bash scripts/wp.sh {{ env }} eval '{{ code }}'
 
-# Flush WP object cache + DB transients for an env.
+# Delete DB transients for an env.
 # Usage: just flush-wp-caches dev
 flush-wp-caches ENV:
     bash scripts/wp.sh {{ ENV }} transient delete --all
-    # APCu object cache lives in the web workers; CLI cache flush cannot clear it.
-    docker restart abcwp{{ ENV }}
 
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
@@ -167,14 +165,13 @@ db-shell env="staging":
     esac
 
 # e.g. just local-db-import ~/Downloads/staging-20261102.sql.gz
-# Import a SQL dump (.sql or .sql.gz) into the local dev DB, then restart abcwpdev (APCu).
+# Import a SQL dump (.sql or .sql.gz) into the local dev DB.
 local-db-import file:
     #!/usr/bin/env bash
     set -euo pipefail
     source .env
     if [[ "{{ file }}" == *.gz ]]; then reader="gunzip -c"; else reader="cat"; fi
     $reader "{{ file }}" | docker exec -i mariadb mariadb -u"$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME"
-    docker restart abcwpdev
     echo "Imported. Set WP_HOME/WP_SITEURL in wp/dev.env to your local WP URL (see DEV_WP_PORT in .env) and disable FluentSMTP/Mailchimp locally."
 
 # ── Composer ───────────────────────────────────────────────────────────────────
@@ -211,7 +208,7 @@ plugins-update env="dev":
     esac
     (cd "wp/{{ env }}/bedrock" && composer update "wp-plugin/*" --with-dependencies)
     just bedrock-snapshot {{ env }}
-    # APCu object cache lives in the web workers; CLI cache flush cannot clear it.
+    # Workers keep WordPress code in memory (OPcache on staging); restart to load the new code.
     docker restart abcwp{{ env }}
     echo "Review wp/bootstrap/{{ env }}/bedrock.composer.lock, then commit."
 
@@ -226,7 +223,7 @@ wp-core-update env version:
     (cd "wp/{{ env }}/bedrock" && composer require "roots/wordpress:{{ version }}" --update-with-dependencies)
     just bedrock-snapshot {{ env }}
     bash scripts/wp.sh {{ env }} core update-db
-    # APCu object cache lives in the web workers; CLI cache flush cannot clear it.
+    # Workers keep WordPress code in memory (OPcache on staging); restart to load the new code.
     docker restart abcwp{{ env }}
     echo "Review wp/bootstrap/{{ env }}/bedrock.composer.lock, then commit."
 

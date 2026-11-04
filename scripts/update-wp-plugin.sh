@@ -186,7 +186,7 @@ if [[ "$INSTALLED_VERSION" != "$NEXT_VERSION" ]]; then
   exit 1
 fi
 
-# APCu object cache lives in the web workers; CLI cache flush cannot clear it.
+# Workers keep plugin code in memory (OPcache on staging); restart to load the new version.
 docker restart "$CONTAINER"
 
 echo "[6/6] Sync Bedrock seed composer files"

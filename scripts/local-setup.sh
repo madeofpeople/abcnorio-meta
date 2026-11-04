@@ -100,7 +100,7 @@ fill "$ENV" DEV_DB_NAME abc_dev
 fill "$ENV" STAGING_DB_USER abcstaging
 fill "$ENV" STAGING_DB_PASSWORD "$(rand 24)"
 fill "$ENV" STAGING_DB_NAME abc_staging
-fill "$ENV" STAGING_DB_ROOT_PASSWORD "$(rand 24)"
+fill "$ENV" DB_ROOT_PASSWORD "$(rand 24)"
 set_env "$ENV" LOCAL_DB_PORT 3309
 
 # Read back what is actually in .env so wp/*.env always match it, including on reruns.

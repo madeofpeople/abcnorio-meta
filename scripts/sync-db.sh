@@ -33,6 +33,4 @@ echo "Resetting WP runtime cache in ${WP_CONTAINER}..."
 docker exec "${WP_CONTAINER}" sh -lc '
   wp --allow-root --path=/app/web/wp transient delete --all >/dev/null || true
 '
-# The APCu object cache lives in the web workers; WP-CLI and a worker restart don't clear it.
-docker restart "${WP_CONTAINER}" >/dev/null
-echo "Cache reset complete (transients purged, ${WP_CONTAINER} restarted)."
+echo "Cache reset complete (transients purged)."
