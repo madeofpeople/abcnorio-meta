@@ -133,10 +133,16 @@ db-dev-to-staging:
 db-staging-to-dev:
     bash scripts/sync-db.sh staging-to-dev
 
-# Rewrite other environments' hosts in <env> content. Dry run unless "apply" is passed.
-# Examples: just rewrite-hosts staging   |   just rewrite-hosts staging apply
+# Rewrite other environments' hosts in <env> content. Mode is required: dry | apply
+# Examples: just rewrite-hosts staging dry   |   just rewrite-hosts staging apply
 rewrite-hosts env mode="":
-    bash scripts/wp.sh {{env}} abcnorio normalize-urls {{ if mode == "apply" { "--apply" } else { "" } }}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{mode}}" in
+      dry)   bash scripts/wp.sh {{env}} abcnorio normalize-urls ;;
+      apply) bash scripts/wp.sh {{env}} abcnorio normalize-urls --apply ;;
+      *)     echo "For data sanctity, please run with either 'dry' or 'apply'" >&2; exit 1 ;;
+    esac
 
 # Integration test of URL rewriting on a throwaway DB copy. TARGET=dev|staging (default dev)
 test-url-rewrite:
