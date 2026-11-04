@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a4ad34891c4567cd02ef4eda1d4dda1d",
+    "content-hash": "b92b4396b84fe398366ecee7ed06428c",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,11 +270,11 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "0.44.0",
+            "version": "0.45.0",
             "dist": {
                 "type": "tar",
-                "url": "../../plugin-artifacts/abcnorio-func-0.44.0.tar.gz",
-                "shasum": "6ed6985405d241e10753cf9aeae33d3fa4561d66"
+                "url": "../../plugin-artifacts/abcnorio-func-0.45.0.tar.gz",
+                "shasum": "b598898584fb2ab5e09aaaeea78a547156a96151"
             },
             "require": {
                 "php": "^8.3"
