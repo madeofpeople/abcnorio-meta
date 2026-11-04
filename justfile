@@ -133,6 +133,15 @@ db-dev-to-staging:
 db-staging-to-dev:
     bash scripts/sync-db.sh staging-to-dev
 
+# Rewrite other environments' hosts in <env> content. Dry run unless "apply" is passed.
+# Examples: just rewrite-hosts staging   |   just rewrite-hosts staging apply
+rewrite-hosts env mode="":
+    bash scripts/wp.sh {{env}} abcnorio normalize-urls {{ if mode == "apply" { "--apply" } else { "" } }}
+
+# Integration test of URL rewriting on a throwaway DB copy. TARGET=dev|staging (default dev)
+test-url-rewrite:
+    bash scripts/test-url-rewrite.sh
+
 # ── Media ──────────────────────────────────────────────────────────────────────
 
 # Regenerate thumbnails   e.g. just regen-thumbs dev
