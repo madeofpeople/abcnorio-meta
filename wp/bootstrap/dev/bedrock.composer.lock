@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b6197d4dab5d7ecd0b369af24252db6a",
+    "content-hash": "ccdde248f8a6b44f3d1d56356f9db5bb",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -1426,6 +1426,37 @@
                 "source": "https://plugins.svn.wordpress.org/mailchimp"
             },
             "time": "2026-09-29T13:03:58+00:00"
+        },
+        {
+            "name": "wp-plugin/quiet-link-checker",
+            "version": "1.0.0",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/quiet-link-checker/",
+                "reference": "tags/1.0.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/quiet-link-checker.1.0.0.zip"
+            },
+            "require": {
+                "composer/installers": "~1.0|~2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://wp-packages.org/downloads",
+            "authors": [
+                {
+                    "name": "andres0547"
+                }
+            ],
+            "description": "Lightweight broken link checker that runs 100% on your own server. No account, no cloud, no tracking, and it won't slow your site down.",
+            "homepage": "https://wordpress.org/plugins/quiet-link-checker/",
+            "support": {
+                "changelog": "https://wordpress.org/plugins/quiet-link-checker/#developers",
+                "issues": "https://wordpress.org/support/plugin/quiet-link-checker",
+                "source": "https://plugins.svn.wordpress.org/quiet-link-checker"
+            },
+            "time": "2026-10-27T17:05:11+00:00"
         }
     ],
     "packages-dev": [
