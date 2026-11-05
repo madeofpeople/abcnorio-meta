@@ -32,5 +32,6 @@ run_dev_tool "$ENDPOINT" "$STATUS_KEY" "Sync DB ($DIRECTION, also syncs media up
 echo "Resetting WP runtime cache in ${WP_CONTAINER}..."
 docker exec "${WP_CONTAINER}" sh -lc '
   wp --allow-root --path=/app/web/wp transient delete --all >/dev/null || true
+  wp --allow-root --path=/app/web/wp rewrite flush >/dev/null || true
 '
-echo "Cache reset complete (transients purged)."
+echo "Cache reset complete (transients purged, rewrite rules flushed)."

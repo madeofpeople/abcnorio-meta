@@ -186,6 +186,9 @@ if [[ "$INSTALLED_VERSION" != "$NEXT_VERSION" ]]; then
   exit 1
 fi
 
+# The plugin registers CPT/taxonomy slugs; flush so new or changed slugs route.
+docker exec "$CONTAINER" wp --allow-root --path=/app/web/wp rewrite flush
+
 # Workers keep plugin code in memory (OPcache on staging); restart to load the new version.
 docker restart "$CONTAINER"
 
