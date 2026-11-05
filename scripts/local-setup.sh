@@ -74,7 +74,6 @@ echo "==> Copying env samples..."
 copy_env "$META_DIR/.env.sample" "$META_DIR/.env"
 copy_env "$META_DIR/wp/runtime.env.sample" "$META_DIR/wp/runtime.env"
 copy_env "$META_DIR/wp/dev.env.sample" "$META_DIR/wp/dev.env"
-copy_env "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.sample" "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.development"
 mkdir -p "$META_DIR/build/astro/build-archives"
 
 echo "==> Setting workspace paths and local URLs in .env..."

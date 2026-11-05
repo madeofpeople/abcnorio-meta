@@ -171,8 +171,6 @@ echo "==> Copying env samples..."
 [ -f "$SCRIPT_DIR/wp/runtime.env" ] || { cp "$SCRIPT_DIR/wp/runtime.env.sample" "$SCRIPT_DIR/wp/runtime.env"; echo "    created: $SCRIPT_DIR/wp/runtime.env"; }
 [ -f "$SCRIPT_DIR/wp/dev.env" ] || { cp "$SCRIPT_DIR/wp/dev.env.sample" "$SCRIPT_DIR/wp/dev.env"; echo "    created: $SCRIPT_DIR/wp/dev.env"; }
 [ -f "$SCRIPT_DIR/wp/staging.env" ] || { cp "$SCRIPT_DIR/wp/staging.env.sample" "$SCRIPT_DIR/wp/staging.env"; echo "    created: $SCRIPT_DIR/wp/staging.env"; }
-[ -f "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.development" ] || { cp "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.sample" "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.development"; echo "    created: $WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.development"; }
-[ -f "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.staging" ] || { cp "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.sample" "$WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.staging"; echo "    created: $WORKSPACE_ROOT/abcnorio-astro/site-frontend/.env.staging"; }
 [ -f "$WORKSPACE_ROOT/abcnorio-orchestrator/.env" ] || { cp "$WORKSPACE_ROOT/abcnorio-orchestrator/.env.sample" "$WORKSPACE_ROOT/abcnorio-orchestrator/.env"; echo "    created: $WORKSPACE_ROOT/abcnorio-orchestrator/.env"; }
 mkdir -p "$SCRIPT_DIR/build/astro/build-archives"
 
@@ -226,8 +224,6 @@ echo "  - abcnorio-meta/wp/dev.env"
 echo "  - abcnorio-meta/wp/staging.env"
 echo "  - abcnorio-meta/wp/dev/bedrock/.env"
 echo "  - abcnorio-meta/wp/staging/bedrock/.env"
-echo "  - abcnorio-astro/site-frontend/.env.development"
-echo "  - abcnorio-astro/site-frontend/.env.staging"
 echo "  - abcnorio-orchestrator/.env"
 echo ""
 echo "Then run:"

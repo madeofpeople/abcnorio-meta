@@ -1,3 +1,17 @@
+# Shared env, merged into services with `<<:`. Per-service keys listed after the merge win.
+# Frontend URLs: every service that needs to know the public hosts (astro, orchestrator, WP).
+x-frontend-urls: &frontend-urls
+  DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
+  STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
+  PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
+  PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
+
+# Astro app config, shared by astro-dev, astro-staging and the orchestrator (which runs the preview/production builds).
+x-astro-env: &astro-env
+  DEV_CMS: ${DOMAIN_DEV_CMS}
+  STAGING_CMS: ${DOMAIN_STAGING_CMS}
+  FORMS_MIN_SUBMIT_MS: ${FORMS_MIN_SUBMIT_MS:-2500}
+
 services:
   proxy:
     image: caddy:2.11.2-alpine
@@ -44,27 +58,18 @@ services:
       start_period: 15s
     mem_limit: 512m
     environment:
-      DEV_CMS: ${DOMAIN_DEV_CMS}
+      <<: [*frontend-urls, *astro-env]
       DEV_CMS_FETCH: http://abcwpdev/
       ALLOWED_HOSTS: astro-dev
-      STAGING_CMS: ${DOMAIN_STAGING_CMS}
       MODE: ${DEV_MODE:-development}
       ASTRO_RUNTIME_CONTAINER: '1'
       # Runtime contract: the live webcomponents source must be mounted into the container.
       # Package-manager symlinks are local convenience only; the app expects this canonical path.
       ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
       ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
-      MENU_ENDPOINT: ${MENU_ENDPOINT}
-      REST_ENDPOINT: ${REST_ENDPOINT}
-      BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
       DEV_SEARCH_API: ${DEV_SEARCH_API}
       STAGING_SEARCH_API: ${STAGING_SEARCH_API}
-      DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
-      STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
-      PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
-      PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
       FORMS_SUBMIT_ENDPOINT: ${DOMAIN_DEV_CMS}wp-json/abcnorio/v1/forms/submit
-      FORMS_MIN_SUBMIT_MS: ${FORMS_MIN_SUBMIT_MS:-2500}
     ports: 
       - 127.0.0.1:3033:3033
     volumes:
@@ -107,8 +112,7 @@ services:
         retries: 3
         start_period: 10s
       environment:
-        DEV_CMS: ${DOMAIN_DEV_CMS}
-        STAGING_CMS: ${DOMAIN_STAGING_CMS}
+        <<: [*frontend-urls, *astro-env]
         STAGING_CMS_FETCH: http://abcwpstaging/
         MODE: ${STAGING_MODE:-staging}
         ALLOWED_HOSTS: astro-staging
@@ -116,17 +120,9 @@ services:
         # Single-source contract: staging and dev share the same Astro app source; only env/target config changes.
         ASTRO_WEBCOMPONENTS_SOURCE_DIR: /app/node_modules/abcnorio-webcomponents
         ASTRO_DESIGN_TOKENS_DIR: /app/node_modules/abcnorio-webcomponents/src/design-tokens
-        MENU_ENDPOINT: ${MENU_ENDPOINT}
-        REST_ENDPOINT: ${REST_ENDPOINT}
-        BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
         DEV_SEARCH_API: ${DEV_SEARCH_API}
         STAGING_SEARCH_API: ${STAGING_SEARCH_API}
-        DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
-        STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
-        PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
-        PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
         FORMS_SUBMIT_ENDPOINT: ${DOMAIN_STAGING_CMS}wp-json/abcnorio/v1/forms/submit
-        FORMS_MIN_SUBMIT_MS: ${FORMS_MIN_SUBMIT_MS:-2500}
       ports:
         - 127.0.0.1:3034:3033
       volumes:
@@ -156,9 +152,6 @@ services:
     environment:
       MODE: production
       PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
-      REST_ENDPOINT: ${REST_ENDPOINT}
-      MENU_ENDPOINT: ${MENU_ENDPOINT}
-      BLOCKS_ENDPOINT: ${BLOCKS_ENDPOINT}
     volumes:
       - ${STATIC_SERVER_SITE_DIR}/prod/.ssr:/app/
     networks:
@@ -214,10 +207,10 @@ services:
       retries: 3
       start_period: 20s
     env_file:
-      - ${ASTRO_SITE_DIR}/.env.development
-      - ${ASTRO_SITE_DIR}/.env.staging
       - ${ORCHESTRATOR_HOST_DIR}/.env
     environment:
+      <<: [*frontend-urls, *astro-env]
+      FORMS_SUBMIT_ENDPOINT: ${DOMAIN_STAGING_CMS}wp-json/abcnorio/v1/forms/submit
       ASTRO_SITE_ROOT: /astro-source
       ASTRO_SITE_GIT_ROOT: /astro-repo
       ASTRO_SITE_GIT_SUBDIR: site-frontend
@@ -229,8 +222,10 @@ services:
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
       PRODUCTION_HOST: https://${DOMAIN_PRODUCTION}
       PREVIEW_HOST: https://${DOMAIN_PREVIEW}
-      ENV_LEAK_HOSTS: ${DOMAIN_WP_DEV},${DOMAIN_DEV}
-      UPLOADS_LEAK_HOST: ${DOMAIN_WP_STAGING}
+      # Leak scan: dev hosts and the staging WP host must not appear in public output.
+      DOMAIN_WP_DEV: ${DOMAIN_WP_DEV}
+      DOMAIN_DEV: ${DOMAIN_DEV}
+      DOMAIN_WP_STAGING: ${DOMAIN_WP_STAGING}
       # Use the live mounted source, not a build-workdir copy.
       ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
       ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
@@ -301,13 +296,10 @@ services:
     environment:
       DB_PREFIX: ${DB_PREFIX}
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      <<: *frontend-urls
       HEADLESS_FRONTEND_URL: https://${DOMAIN_STAGING}/
       DEV_WP_URL: https://${DOMAIN_WP_DEV}
       STAGING_WP_URL: https://${DOMAIN_WP_STAGING}
-      PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
-      PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
-      DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
-      STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
       STAGING_PLUGIN_VERSION_URL: http://abcwpstaging/wp-json/abcnorio/v1/deployment/version
       PROJECT_UID: ${PROJECT_UID}
       PROJECT_GID: ${PROJECT_GID}
@@ -366,13 +358,10 @@ services:
     environment:
       DB_PREFIX: ${DB_PREFIX}
       ASTRO_BUILD_TRIGGER_SECRET: ${ASTRO_BUILD_TRIGGER_SECRET}
+      <<: *frontend-urls
       HEADLESS_FRONTEND_URL: https://${DOMAIN_DEV}/
       DEV_WP_URL: https://${DOMAIN_WP_DEV}
       STAGING_WP_URL: https://${DOMAIN_WP_STAGING}
-      PREVIEW_FRONTEND_URL: https://${DOMAIN_PREVIEW}/
-      PRODUCTION_FRONTEND_URL: https://${DOMAIN_PRODUCTION}/
-      DEV_FRONTEND_URL: https://${DOMAIN_DEV}/
-      STAGING_FRONTEND_URL: https://${DOMAIN_STAGING}/
       STAGING_PLUGIN_VERSION_URL: http://abcwpstaging/wp-json/abcnorio/v1/deployment/version
       PROJECT_UID: ${PROJECT_UID}
       PROJECT_GID: ${PROJECT_GID}
