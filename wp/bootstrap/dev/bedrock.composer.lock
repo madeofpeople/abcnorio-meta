@@ -1305,15 +1305,15 @@
         },
         {
             "name": "wp-plugin/advanced-custom-fields",
-            "version": "6.8.10",
+            "version": "6.8.11",
             "source": {
                 "type": "svn",
                 "url": "https://plugins.svn.wordpress.org/advanced-custom-fields/",
-                "reference": "tags/6.8.10"
+                "reference": "tags/6.8.11"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/advanced-custom-fields.6.8.10.zip"
+                "url": "https://downloads.wordpress.org/plugin/advanced-custom-fields.6.8.11.zip"
             },
             "require": {
                 "composer/installers": "~1.0|~2.0"
@@ -1332,19 +1332,19 @@
                 "issues": "https://wordpress.org/support/plugin/advanced-custom-fields",
                 "source": "https://plugins.svn.wordpress.org/advanced-custom-fields"
             },
-            "time": "2026-09-29T13:03:58+00:00"
+            "time": "2026-11-02T17:51:52+00:00"
         },
         {
             "name": "wp-plugin/fluent-smtp",
-            "version": "2.4.1",
+            "version": "2.4.5",
             "source": {
                 "type": "svn",
                 "url": "https://plugins.svn.wordpress.org/fluent-smtp/",
-                "reference": "tags/2.4.1"
+                "reference": "tags/2.4.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/fluent-smtp.2.4.1.zip"
+                "url": "https://downloads.wordpress.org/plugin/fluent-smtp.2.4.5.zip"
             },
             "require": {
                 "composer/installers": "~1.0|~2.0"
@@ -1363,7 +1363,7 @@
                 "issues": "https://wordpress.org/support/plugin/fluent-smtp",
                 "source": "https://plugins.svn.wordpress.org/fluent-smtp"
             },
-            "time": "2026-09-29T13:03:58+00:00"
+            "time": "2026-11-04T13:15:11+00:00"
         },
         {
             "name": "wp-plugin/login-as-user",
