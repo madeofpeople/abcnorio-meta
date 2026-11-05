@@ -230,6 +230,7 @@ services:
       PRODUCTION_HOST: https://${DOMAIN_PRODUCTION}
       PREVIEW_HOST: https://${DOMAIN_PREVIEW}
       ENV_LEAK_HOSTS: ${DOMAIN_WP_DEV},${DOMAIN_DEV}
+      UPLOADS_LEAK_HOST: ${DOMAIN_WP_STAGING}
       # Use the live mounted source, not a build-workdir copy.
       ASTRO_WEBCOMPONENTS_SOURCE_DIR: /abcnorio-webcomponents
       ASTRO_DESIGN_TOKENS_DIR: /abcnorio-webcomponents/src/design-tokens
