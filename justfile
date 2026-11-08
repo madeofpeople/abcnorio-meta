@@ -284,8 +284,8 @@ wc-create *args:
 
 # Scaffold a wp-block webcomponent wrapper with required block key wiring.
 # Usage:
-#   just wc-create-wp announcement-tout abcnorio/announcement-tout
-#   just wc-create-wp youtube core/embed
+#   just wc-create-wp example-tout abcnorio/example-tout
+#   just wc-create-wp cover core/cover
 wc-create-wp component wp_block:
     bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ component }} --scope wp-blocks --wp-block {{ wp_block }}
 
