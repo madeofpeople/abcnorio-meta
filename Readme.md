@@ -88,6 +88,34 @@ Astro deploys install the webcomponents SHA pinned in the committed `abcnorio-as
 
 Plugin-side changes (editor blocks, REST) go through `just plugin-release staging` instead.
 
+## Plugin releases with webcomponent changes
+
+The plugin has its own webcomponents pin in `abcnorio-func/package-lock.json`.
+`just wc-pin` updates the Astro lockfile only, and `just plugin-dev-assets`
+updates dev preview assets without changing the plugin pin. The plugin release
+build uses the committed plugin lockfile, not the local webcomponents dist.
+
+When plugin PHP needs new or changed component fixtures:
+
+1. Build, commit and push webcomponents, including its generated `dist`.
+2. Update the plugin pin, review the lockfile diff, then commit and push it:
+   ```sh
+   cd ../abcnorio-func
+   npm update abcnorio-webcomponents --package-lock-only --ignore-scripts
+   git diff -- package-lock.json
+   ```
+   Confirm the resolved webcomponents commit is the intended revision.
+3. From `abcnorio-meta`, run `just plugin-release staging minor` (or choose
+   another bump). The recipe builds and installs the release; it does not
+   update the webcomponents pin.
+4. Verify any newly required fixture exists in the installed staging plugin.
+   The release checks the manifest, but does not check every fixture used by PHP.
+   For example:
+   ```sh
+   docker exec abcwpstaging test -f /app/web/app/plugins/abcnorio-func/resources/vendor/components/dist/event-listing/slider.html
+   ```
+5. Retry `just deploy preview` or continue with the frontend release flow.
+
 ## Which recipe do I run?
 
 | Change | Run |
