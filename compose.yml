@@ -195,7 +195,7 @@ services:
         SHARED_GROUP: ${PROJECT_GROUP}
     container_name: deploy-orchestrator
     user: root
-    mem_limit: 1200m
+    mem_limit: 1500m
     stop_grace_period: 120s
     group_add:
       - ${PROJECT_GROUP}
