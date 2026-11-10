@@ -288,14 +288,15 @@ wc-create *args:
 #   just wc-create-wp cover core/cover
 wc-create-wp component wp_block:
     bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh {{ component }} --scope wp-blocks --wp-block {{ wp_block }}
-
+# Build the plugin
+plugin-build:
+    cd /home/madeofpeople/abcnorio.org/abcnorio-func && npm run build
 # Release plugin into selected WP env: build artifact, bump version, commit, tag, push, and verify.
 # Usage:
 #   just plugin-release dev
 #   just plugin-release staging minor
 plugin-release env bump="patch" message="":
     if [ -n "{{ message }}" ]; then bash scripts/update-wp-plugin.sh {{ env }} {{ bump }} "{{ message }}"; else bash scripts/update-wp-plugin.sh {{ env }} {{ bump }}; fi
-
 # Run PHP tests in the plugin (via bedrock dev container)
 plugin-test:
     docker exec abcwpdev composer test --working-dir=/app/web/app/plugins/abcnorio-func
