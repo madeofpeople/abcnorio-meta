@@ -80,7 +80,7 @@ Networks:
 Astro deploys install the webcomponents SHA pinned in the committed `abcnorio-astro/site-frontend/package-lock.json`, not `main`. Pushing webcomponents alone changes nothing on staging or production.
 
 1. Commit and push `abcnorio-webcomponents` (`main`).
-2. `just wc-pin`, review the SHA change, commit on `abcnorio-astro` `main`.
+2. `just wc-pin`, review both consumer lockfiles, and commit the Astro change on `main`.
 3. Merge `main` into `staging` in `abcnorio-astro`. Deploys use the `staging` branch head, not `main`.
 4. `just deploy staging` (aborts if the `staging` branch pin is stale; `FORCE=1` skips).
 5. Verify staging.
@@ -91,20 +91,17 @@ Plugin-side changes (editor blocks, REST) go through `just plugin-release stagin
 ## Plugin releases with webcomponent changes
 
 The plugin has its own webcomponents pin in `abcnorio-func/package-lock.json`.
-`just wc-pin` updates the Astro lockfile only, and `just plugin-dev-assets`
-updates dev preview assets without changing the plugin pin. The plugin release
-build uses the committed plugin lockfile, not the local webcomponents dist.
+`just wc-pin` updates both Astro and plugin lockfiles to the pushed webcomponents
+commit. It requires both lockfiles and refuses to overwrite an uncommitted
+lockfile that needs updating. `just plugin-dev-assets` updates dev preview assets
+without changing either pin. The plugin release build uses the committed plugin
+lockfile, not the local webcomponents dist.
 
 When plugin PHP needs new or changed component fixtures:
 
 1. Build, commit and push webcomponents, including its generated `dist`.
-2. Update the plugin pin, review the lockfile diff, then commit and push it:
-   ```sh
-   cd ../abcnorio-func
-   npm update abcnorio-webcomponents --package-lock-only --ignore-scripts
-   git diff -- package-lock.json
-   ```
-   Confirm the resolved webcomponents commit is the intended revision.
+2. Run `just wc-pin`, review both lockfiles, then commit and push the plugin
+   changes. Confirm both resolved commits are the intended revision.
 3. From `abcnorio-meta`, run `just plugin-release staging minor` (or choose
    another bump). The recipe builds and installs the release; it does not
    update the webcomponents pin.
@@ -174,7 +171,7 @@ just deploy production <release_id>  # restore an archived production release
 just rollback production             # restore previous production archive
 just docs                            # build + deploy docs site
 
-just wc-pin                          # bump webcomponents pin in abcnorio-astro package-lock.json to origin/main; then commit it
+just wc-pin                          # pin Astro and plugin lockfiles to webcomponents origin/main; then commit them
 
 just db-dev-to-staging               # sync DB + media dev → staging
 just db-staging-to-dev               # sync DB + media staging → dev

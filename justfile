@@ -104,7 +104,7 @@ deploy target="" arg="":
 rollback target release_id="":
     bash scripts/rollback-release.sh {{ target }} {{ release_id }}
 
-# Bump the abcnorio-webcomponents pin in abcnorio-astro's package-lock.json to origin/main (you commit it).
+# Pin Astro and plugin lockfiles to webcomponents origin/main (review and commit both).
 wc-pin:
     bash scripts/update-webcomponents-pin.sh
 
