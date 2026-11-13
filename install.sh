@@ -145,7 +145,18 @@ ensure_headless_theme_active() {
 # --- 1. Install host packages ---
 echo "==> Installing host packages..."
 sudo apt-get update
-sudo apt-get install -y git rsync composer nodejs npm just unzip php-zip php-xml php-curl curl
+sudo apt-get install -y git rsync composer just unzip php-zip php-xml php-curl curl ca-certificates gnupg
+
+echo "==> Installing Node.js 22 (minimum 22.23.4)..."
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+    | sudo tee /etc/apt/sources.list.d/nodesource.list >/dev/null
+sudo apt-get update
+sudo apt-get install -y nodejs
+node -e 'const [major, minor, patch] = process.versions.node.split(".").map(Number); if (major !== 22 || minor < 23 || (minor === 23 && patch < 4)) { console.error("Node.js 22 >=22.23.4 required; found " + process.versions.node); process.exit(1); }'
+npm --version
 
 # --- 2. Clone sibling repos ---
 echo "==> Cloning sibling repos..."
@@ -178,6 +189,19 @@ mkdir -p "$SCRIPT_DIR/build/astro/build-archives"
 echo "==> Single-source Astro contract: editable source stays in site-frontend; staging output is generated from that source."
 
 # --- 5. Bootstrap bedrock dirs ---
+echo "==> Building plugin release required by staging Bedrock..."
+STAGING_PLUGIN_VERSION="$(node - "$SCRIPT_DIR/wp/bootstrap/staging/bedrock.composer.lock" <<'NODE'
+const fs = require('fs');
+const lock = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const plugin = lock.packages.find((pkg) => pkg.name === 'madeofpeople/abcnorio-func');
+if (!plugin || !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(plugin.version)) {
+    throw new Error('Staging Composer lock must pin an abcnorio-func release version.');
+}
+process.stdout.write(plugin.version);
+NODE
+)"
+bash "$SCRIPT_DIR/scripts/build-plugin-release.sh" "v$STAGING_PLUGIN_VERSION"
+
 echo "==> Bootstrapping Bedrock..."
 bash "$SCRIPT_DIR/scripts/bedrock-bootstrap.sh"
 

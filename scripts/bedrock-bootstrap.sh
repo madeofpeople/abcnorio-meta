@@ -61,6 +61,28 @@ bootstrap_bedrock() {
         cp "$lock_seed" "$bedrock_dir/composer.lock"
     fi
 
+    if [ "$env" = "staging" ]; then
+        echo "[${env}] matching generated lock checksum to locally built plugin artifact..."
+        (cd "$bedrock_dir" && php <<'PHP'
+<?php
+$lock = json_decode(file_get_contents('composer.lock'), true, 512, JSON_THROW_ON_ERROR);
+foreach ($lock['packages'] as &$package) {
+    if ($package['name'] === 'madeofpeople/abcnorio-func') {
+        $artifact = $package['dist']['url'];
+        if (!is_file($artifact)) {
+            throw new RuntimeException("Missing plugin artifact: $artifact. Build the locked release before bootstrap.");
+        }
+        $package['dist']['shasum'] = hash_file('sha1', $artifact);
+    }
+}
+unset($package);
+if (file_put_contents('composer.lock', json_encode($lock, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") === false) {
+    throw new RuntimeException('Failed to write generated Composer lock.');
+}
+PHP
+        )
+    fi
+
     echo "[${env}] running composer install..."
     (cd "$bedrock_dir" && composer install)
 

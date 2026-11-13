@@ -131,7 +131,16 @@ Recipes are grouped by prefix: `deploy`/`rollback` (Astro frontend), `wc-*` (web
 
 Requires [just](https://github.com/casey/just).
 
-Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo`. It installs host prerequisites (`git`, `rsync`, `composer`, `nodejs`, `npm`, `just`), bootstraps Bedrock inline, sets up a 4G host swapfile, rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
+Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo` and GitHub SSH access already configured. It installs host prerequisites (`git`, `rsync`, `composer`, `just`) and Node.js 22 from NodeSource (including npm; minimum Node version 22.23.4), bootstraps Bedrock inline, sets up a 4G host swapfile, rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
+
+Before Bedrock bootstrap, the installer builds the plugin release tag pinned in
+staging's bootstrap Composer lock into `wp/plugin-artifacts/`, using
+`scripts/build-plugin-release.sh`. This packages the tagged source and its pinned
+dependencies, not the current plugin working tree. The matching `v<version>` tag
+must exist in the cloned plugin repository.
+Bootstrap updates only the generated staging lock's plugin artifact checksum
+to match that local build; all package versions and the committed bootstrap lock
+remain unchanged. No GitHub Release download is needed.
 
 Permissions contract is deterministic and fixed: uploads run as `UID 1000`, shared group `abcnorio` with `GID 2000`, directories `2775`, files `0664`.
 
