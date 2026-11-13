@@ -142,6 +142,37 @@ Bootstrap updates only the generated staging lock's plugin artifact checksum
 to match that local build; all package versions and the committed bootstrap lock
 remain unchanged. No GitHub Release download is needed.
 
+### Optional fresh-install content
+
+Before running `install.sh`, place these files in the Git-ignored `install-seed/`:
+
+- `database.sql` or `database.sql.gz`: a trusted, single WordPress database dump
+  without `CREATE DATABASE` or `USE` statements.
+- `uploads.tar.gz`: an archive containing an `uploads/` directory, with media
+  beneath it (for example `uploads/2026/11/image.webp`). Create it with
+  `tar -czf uploads.tar.gz -C /path/to/web/app uploads`.
+
+The same seed populates dev and staging after the containers start. Configure
+environment files, database credentials, domains and host paths before startup;
+the seed does not replace that configuration. WordPress accounts/settings come
+from the dump, so use an appropriate trusted backup.
+
+The existing MariaDB entrypoint initializer, `wp/sql/001-dev-staging-dbs.sh`,
+still owns database creation, database users and grants on a fresh MariaDB
+volume. Seed restoration runs afterward, using each environment's configured
+database credentials, and waits for database access before checking for tables.
+It does not create databases or database users or change their grants.
+
+Existing databases are skipped without changing their uploads. Empty databases
+with existing uploads are rejected rather than overwritten. New targets receive
+media with project ownership/permissions, the database import, plugin activation,
+and the existing environment URL normalization. Archive links and unsafe paths
+are rejected. Keep archives outside Git; they may contain private content.
+
+To run this step separately after configuring and starting a fresh stack:
+`bash scripts/seed-install.sh`. A failed partial import is not automatically
+overwritten on rerun; inspect it before deliberately clearing that new target.
+
 Permissions contract is deterministic and fixed: uploads run as `UID 1000`, shared group `abcnorio` with `GID 2000`, directories `2775`, files `0664`.
 
 For already-installed machines, run one explicit migration once:

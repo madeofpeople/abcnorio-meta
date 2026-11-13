@@ -7,6 +7,7 @@ tmp
 node_modules/
 vendor/
 backups/
+install-seed/
 build/
 dist/
 # Static site builds to be served via caddy 

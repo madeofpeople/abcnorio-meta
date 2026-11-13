@@ -222,6 +222,8 @@ export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
 echo "==> Validating dev plugin mount contract..."
 (cd "$SCRIPT_DIR" && docker compose exec -T abcwpdev sh -lc 'set -euo pipefail; test -f /app/web/app/plugins/abcnorio-func/custom-func.php')
 
+bash "$SCRIPT_DIR/scripts/seed-install.sh"
+
 if should_activate_plugin dev; then
     echo "==> Activating abcnorio-func in dev..."
     bash "$SCRIPT_DIR/scripts/wp.sh" dev plugin activate abcnorio-func
