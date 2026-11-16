@@ -166,6 +166,12 @@ echo "==> Cloning sibling repos..."
 [ -d "$WORKSPACE_ROOT/abcnorio-docs" ]         || git clone "$REPO_DOCS"         "$WORKSPACE_ROOT/abcnorio-docs"
 [ -d "$WORKSPACE_ROOT/abcnorio-webcomponents" ] || git clone "$REPO_WEBCOMPONENTS" "$WORKSPACE_ROOT/abcnorio-webcomponents"
 
+if ! git -C "$WORKSPACE_ROOT/abcnorio-astro" show-ref --verify --quiet refs/heads/staging; then
+    echo "==> Creating local Astro staging branch from origin/staging..."
+    git -C "$WORKSPACE_ROOT/abcnorio-astro" fetch origin staging:refs/remotes/origin/staging
+    git -C "$WORKSPACE_ROOT/abcnorio-astro" branch --track staging origin/staging
+fi
+
 echo "==> Installing deploy orchestrator dependencies..."
 (cd "$WORKSPACE_ROOT/abcnorio-orchestrator" && npm ci)
 

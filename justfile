@@ -86,7 +86,7 @@ flush-wp-caches ENV:
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
 # deploy preview [scope]: static build from source (scope: full | events | <page-slug>)
-# deploy staging: activate astro `staging` branch head; aborts if webcomponents pin != origin/main (FORCE=1 skips)
+# deploy staging: activate astro `staging` branch head with its locked webcomponents version
 # deploy production [release_id]: promote healthy staging commit, or restore an archived release_id
 # Deploy the Astro frontend: just deploy preview|staging|production
 deploy target="" arg="":

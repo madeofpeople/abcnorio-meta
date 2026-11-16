@@ -70,6 +70,7 @@ Networks:
 
 - Canonical plugin source lives in `/abcnorio-func/`.
 - Dev WordPress bind-mounts `${ABCNORIO_FUNC_HOST_DIR}` directly to `/app/web/app/plugins/abcnorio-func` for live iteration.
+- Astro dev bind-mounts the webcomponents source into its runtime and package path, so source edits are live without updating a pin. WordPress editor previews use built assets; run `just plugin-dev-assets` after component changes.
 - Dev and staging Composer operations run on the host from their Bedrock directories.
 - `abcnorio-webcomponents` is a package dependency for Astro and the plugin, and workshop pages in `abcnorio-astro/site-frontend` are the preview surface.
 - Staging stays Composer-managed (no plugin source bind mount); release flow is bump semver, push, then host-side Composer updates staging Bedrock.
@@ -77,14 +78,16 @@ Networks:
 
 ## Frontend Release Flow (webcomponents → production)
 
-Astro deploys install the webcomponents SHA pinned in the committed `abcnorio-astro/site-frontend/package-lock.json`, not `main`. Pushing webcomponents alone changes nothing on staging or production.
+Astro deploys install the webcomponents SHA pinned in the committed `abcnorio-astro/site-frontend/package-lock.json`. Staging deploys use that pin even if webcomponents `main` is newer. Pushing webcomponents alone changes nothing on staging or production.
+
+To include new webcomponents:
 
 1. Commit and push `abcnorio-webcomponents` (`main`).
-2. `just wc-pin`, review both consumer lockfiles, and commit the Astro change on `main`.
-3. Merge `main` into `staging` in `abcnorio-astro`. Deploys use the `staging` branch head, not `main`.
-4. `just deploy staging` (aborts if the `staging` branch pin is stale; `FORCE=1` skips).
-5. Verify staging.
-6. `just deploy production`.
+2. Run `just wc-pin`, review both consumer lockfiles, and commit the Astro change on `main`.
+3. Merge `main` into `staging` in `abcnorio-astro`. Deploys use the local `staging` branch head.
+4. Run `just deploy staging`, verify staging, then run `just deploy production`.
+
+For Astro-only changes, merge to `staging` and deploy without updating the webcomponents pin. Production promotes the verified staging version.
 
 Plugin-side changes (editor blocks, REST) go through `just plugin-release staging` instead.
 
@@ -117,7 +120,7 @@ When plugin PHP needs new or changed component fixtures:
 
 | Change | Run |
 |---|---|
-| Webcomponent markup/SCSS, see it in the WP block editor (dev) | `just plugin-dev-assets` (Astro dev loads mounts the source live) |
+| Webcomponent markup/SCSS, see it in the WP block editor (dev) | `just plugin-dev-assets` (Astro dev mounts the source live) |
 | Webcomponent change, ship to Staging Frontend| push webcomponents `main`, `just wc-pin`, commit, merge to `staging`, `just deploy staging`, verify, `just deploy production` |
 | Plugin change (editor blocks, REST, PHP) | `just plugin-release dev` or `just plugin-release staging [bump]` |
 | Webcomponent change that also affects plugin blocks | plugin release first, then the Astro flow above |
@@ -134,6 +137,8 @@ Requires [just](https://github.com/casey/just).
 Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo` and GitHub SSH access already configured. It installs host prerequisites (`git`, `rsync`, `composer`, `just`) and Node.js 22 from NodeSource (including npm; minimum Node version 22.23.4), bootstraps Bedrock inline, sets up a 4G host swapfile, rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
 It also installs the deploy orchestrator's locked npm dependencies in its source
 directory, which is mounted read-only by the orchestrator container.
+If the Astro repository has no local `staging` branch, the installer creates one
+tracking `origin/staging`; existing local branches are left unchanged.
 
 Before Bedrock bootstrap, the installer builds the plugin release tag pinned in
 staging's bootstrap Composer lock into `wp/plugin-artifacts/`, using
@@ -207,7 +212,7 @@ just composer staging update         # host Composer in staging bedrock
 
 just deploy preview                  # static preview build from source (full)
 just deploy preview events           # scoped preview build (scope: full | events | <page-slug>)
-just deploy staging                  # deploy astro `staging` branch head; aborts if its webcomponents pin != origin/main (FORCE=1 skips)
+just deploy staging                  # deploy astro `staging` branch head and its locked webcomponents version
 just deploy production               # build and promote exact healthy staging SHA
 just deploy production <release_id>  # restore an archived production release
 just rollback production             # restore previous production archive
