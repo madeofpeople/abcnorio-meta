@@ -175,7 +175,8 @@ database credentials, and waits for database access before checking for tables.
 It does not create databases or database users or change their grants.
 
 Existing databases are skipped without changing their uploads. Empty databases
-with existing uploads are rejected rather than overwritten. New targets receive
+with existing uploads are rejected rather than overwritten; an empty `.gitkeep`
+file at the uploads root is allowed. New targets receive
 media with project ownership/permissions, the database import, plugin activation,
 and the existing environment URL normalization. Archive links and unsafe paths
 are rejected. Keep archives outside Git; they may contain private content.

@@ -84,7 +84,8 @@ for env in "${ENVS[@]}"; do
         exit 1
     fi
     if [[ -d "$uploads" ]]; then
-        contents="$(find "$uploads" -mindepth 1 -print -quit)"
+        contents="$(find "$uploads" -mindepth 1 -maxdepth 1 \
+            ! \( -name .gitkeep -type f -empty \) -print -quit)"
         if [[ -n "$contents" ]]; then
             echo "[$env] uploads is not empty; refusing seed restore." >&2
             exit 1
