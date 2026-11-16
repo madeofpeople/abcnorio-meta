@@ -132,6 +132,8 @@ Recipes are grouped by prefix: `deploy`/`rollback` (Astro frontend), `wc-*` (web
 Requires [just](https://github.com/casey/just).
 
 Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo` and GitHub SSH access already configured. It installs host prerequisites (`git`, `rsync`, `composer`, `just`) and Node.js 22 from NodeSource (including npm; minimum Node version 22.23.4), bootstraps Bedrock inline, sets up a 4G host swapfile, rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
+It also installs the deploy orchestrator's locked npm dependencies in its source
+directory, which is mounted read-only by the orchestrator container.
 
 Before Bedrock bootstrap, the installer builds the plugin release tag pinned in
 staging's bootstrap Composer lock into `wp/plugin-artifacts/`, using

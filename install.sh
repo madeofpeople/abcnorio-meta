@@ -166,6 +166,9 @@ echo "==> Cloning sibling repos..."
 [ -d "$WORKSPACE_ROOT/abcnorio-docs" ]         || git clone "$REPO_DOCS"         "$WORKSPACE_ROOT/abcnorio-docs"
 [ -d "$WORKSPACE_ROOT/abcnorio-webcomponents" ] || git clone "$REPO_WEBCOMPONENTS" "$WORKSPACE_ROOT/abcnorio-webcomponents"
 
+echo "==> Installing deploy orchestrator dependencies..."
+(cd "$WORKSPACE_ROOT/abcnorio-orchestrator" && npm ci)
+
 ensure_webcomponents_artifacts
 
 echo "==> Generating abcnorio-func Composer autoloader..."
