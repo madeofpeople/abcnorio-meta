@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ENVS=(dev staging)
+case "${1:-}" in
+    "") ;;
+    --no-dev) ENVS=(staging) ;;
+    *) echo "Usage: bash scripts/seed-install.sh [--no-dev]" >&2; exit 1 ;;
+esac
+if [[ $# -gt 1 ]]; then
+    echo "Usage: bash scripts/seed-install.sh [--no-dev]" >&2
+    exit 1
+fi
+
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SEED_DIR="$META_DIR/install-seed"
 
@@ -25,7 +36,10 @@ fi
 
 # shellcheck source=/dev/null
 source "$META_DIR/.env"
-: "${DEV_HOST_ROOT:?}" "${STAGING_HOST_ROOT:?}" "${PROJECT_UID:?}" "${PROJECT_GID:?}"
+: "${STAGING_HOST_ROOT:?}" "${PROJECT_UID:?}" "${PROJECT_GID:?}"
+if [[ "${ENVS[0]}" == dev ]]; then
+    : "${DEV_HOST_ROOT:?}"
+fi
 
 if [[ "$SQL_FILE" == *.gz ]]; then
     gzip -t "$SQL_FILE"
@@ -40,9 +54,12 @@ tar -tvzf "$MEDIA_FILE" | awk '
 ' || { echo "Media archive must contain only regular files and directories, not links." >&2; exit 1; }
 
 TARGETS=()
-for env in dev staging; do
-    root="$DEV_HOST_ROOT"
-    [[ "$env" != staging ]] || root="$STAGING_HOST_ROOT"
+for env in "${ENVS[@]}"; do
+    if [[ "$env" == dev ]]; then
+        root="$DEV_HOST_ROOT"
+    else
+        root="$STAGING_HOST_ROOT"
+    fi
     uploads="${root%/}/bedrock/web/app/uploads"
 
     ready=false
@@ -82,8 +99,11 @@ tar -xzf "$MEDIA_FILE" --no-same-owner --no-same-permissions -C "$MEDIA_TMP"
 
 for env in "${TARGETS[@]}"; do
     container="abcwp${env}"
-    root="$DEV_HOST_ROOT"
-    [[ "$env" != staging ]] || root="$STAGING_HOST_ROOT"
+    if [[ "$env" == dev ]]; then
+        root="$DEV_HOST_ROOT"
+    else
+        root="$STAGING_HOST_ROOT"
+    fi
     uploads="${root%/}/bedrock/web/app/uploads"
 
     echo "[$env] restoring install seed..."

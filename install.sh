@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 # Fresh-machine install. Run from abcnorio-meta/.
-# Usage: bash install.sh
+# Usage: bash install.sh [--no-dev] | migrate-permissions-once
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" #where was the script run from
 WORKSPACE_ROOT="$(dirname "$SCRIPT_DIR")"
+
+NO_DEV=false
+case "${1:-}" in
+    "") ;;
+    --no-dev) NO_DEV=true ;;
+    migrate-permissions-once) ;;
+    *) echo "Usage: bash install.sh [--no-dev] | migrate-permissions-once" >&2; exit 1 ;;
+esac
+if [[ $# -gt 1 ]]; then
+    echo "Usage: bash install.sh [--no-dev] | migrate-permissions-once" >&2
+    exit 1
+fi
 
 # Repo URLs. Edit here if this machine should install forks instead.
 REPO_ASTRO="git@github.com:madeofpeople/abcnorio-astro.git"
@@ -59,13 +71,21 @@ ensure_shared_group_contract() {
 apply_upload_permissions_contract() {
     load_compose_env
 
-    local dev_uploads staging_uploads
-    dev_uploads="${DEV_HOST_ROOT%/}/bedrock/web/app/uploads"
-    staging_uploads="${STAGING_HOST_ROOT%/}/bedrock/web/app/uploads"
+    local env root uploads_dir
+    local envs=(dev staging)
+    if [[ "$NO_DEV" == true ]]; then
+        envs=(staging)
+    fi
 
     ensure_shared_group_contract
 
-    for uploads_dir in "$dev_uploads" "$staging_uploads"; do
+    for env in "${envs[@]}"; do
+        if [[ "$env" == dev ]]; then
+            root="$DEV_HOST_ROOT"
+        else
+            root="$STAGING_HOST_ROOT"
+        fi
+        uploads_dir="${root%/}/bedrock/web/app/uploads"
         echo "==> Applying uploads contract to $uploads_dir"
         sudo install -d -o "$SHARED_UID" -g "$SHARED_GID" -m 2775 "$uploads_dir"
         sudo chown -R "$SHARED_UID:$SHARED_GID" "$uploads_dir"
@@ -212,7 +232,11 @@ NODE
 bash "$SCRIPT_DIR/scripts/build-plugin-release.sh" "v$STAGING_PLUGIN_VERSION"
 
 echo "==> Bootstrapping Bedrock..."
-bash "$SCRIPT_DIR/scripts/bedrock-bootstrap.sh"
+if [[ "$NO_DEV" == true ]]; then
+    bash "$SCRIPT_DIR/scripts/bedrock-bootstrap.sh" staging
+else
+    bash "$SCRIPT_DIR/scripts/bedrock-bootstrap.sh"
+fi
 
 echo "==> Applying deterministic uploads permissions contract..."
 apply_upload_permissions_contract
@@ -226,19 +250,22 @@ bash "$SCRIPT_DIR/scripts/setup-rootless-docker.sh"
 # -- 7. Bring stack up
 echo "==> Bringing stack up (full rebuild)..."
 export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
-(cd "$SCRIPT_DIR" && docker compose up -d --build)
+if [[ "$NO_DEV" == true ]]; then
+    (cd "$SCRIPT_DIR" && COMPOSE_PROFILES= docker compose up -d --build)
+    bash "$SCRIPT_DIR/scripts/seed-install.sh" --no-dev
+else
+    (cd "$SCRIPT_DIR" && docker compose up -d --build)
+    (cd "$SCRIPT_DIR" && docker compose up -d --build abcwpdev)
+    echo "==> Validating dev plugin mount contract..."
+    (cd "$SCRIPT_DIR" && docker compose exec -T abcwpdev sh -lc 'set -euo pipefail; test -f /app/web/app/plugins/abcnorio-func/custom-func.php')
+    bash "$SCRIPT_DIR/scripts/seed-install.sh"
 
-echo "==> Validating dev plugin mount contract..."
-(cd "$SCRIPT_DIR" && docker compose exec -T abcwpdev sh -lc 'set -euo pipefail; test -f /app/web/app/plugins/abcnorio-func/custom-func.php')
-
-bash "$SCRIPT_DIR/scripts/seed-install.sh"
-
-if should_activate_plugin dev; then
-    echo "==> Activating abcnorio-func in dev..."
-    bash "$SCRIPT_DIR/scripts/wp.sh" dev plugin activate abcnorio-func
+    if should_activate_plugin dev; then
+        echo "==> Activating abcnorio-func in dev..."
+        bash "$SCRIPT_DIR/scripts/wp.sh" dev plugin activate abcnorio-func
+    fi
+    ensure_headless_theme_active dev
 fi
-
-ensure_headless_theme_active dev
 
 if should_activate_plugin staging; then
     echo "==> Activating abcnorio-func in staging..."
@@ -252,14 +279,16 @@ bash "$SCRIPT_DIR/scripts/setup-fail2ban.sh"
 
 # --- 9. Done ---
 echo ""
-echo "Install complete. Fill in credentials before first real use:"
+echo "Install complete. Verify credentials and environment settings:"
 echo "  - abcnorio-meta/.env"
 echo "  - abcnorio-meta/wp/runtime.env"
-echo "  - abcnorio-meta/wp/dev.env"
 echo "  - abcnorio-meta/wp/staging.env"
-echo "  - abcnorio-meta/wp/dev/bedrock/.env"
 echo "  - abcnorio-meta/wp/staging/bedrock/.env"
 echo "  - abcnorio-orchestrator/.env"
+if [[ "$NO_DEV" != true ]]; then
+    echo "  - abcnorio-meta/wp/dev.env"
+    echo "  - abcnorio-meta/wp/dev/bedrock/.env"
+fi
 echo ""
 echo "Then run:"
 echo "  just up"
@@ -267,9 +296,12 @@ echo "  just --list"
 echo ""
 echo "For fresh WordPress trees, visit each env's /wp/wp-admin/install.php or restore a DB backup."
 echo "After install or restore, activate plugin if needed:"
-echo "  just wp dev plugin activate abcnorio-func"
 echo "  just wp staging plugin activate abcnorio-func"
+if [[ "$NO_DEV" != true ]]; then
+    echo "  just wp dev plugin activate abcnorio-func"
+    echo ""
+    echo "Dev Astro expects active abcnorio-func and real REST content."
+fi
 echo ""
-echo "Dev Astro expects active abcnorio-func and real REST content."
 echo "Staging and production frontend paths remain incomplete until deployments run."
 echo "astro-prod restarting before first deployment is expected."

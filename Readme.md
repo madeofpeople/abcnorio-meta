@@ -134,7 +134,10 @@ Recipes are grouped by prefix: `deploy`/`rollback` (Astro frontend), `wc-*` (web
 
 Requires [just](https://github.com/casey/just).
 
-Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo` and GitHub SSH access already configured. It installs host prerequisites (`git`, `rsync`, `composer`, `just`) and Node.js 22 from NodeSource (including npm; minimum Node version 22.23.4), bootstraps Bedrock inline, sets up a 4G host swapfile, rootless Docker + fail2ban, and copies the sample env files you still need to fill with real values.
+Fresh machine: run `bash install.sh` on a Debian/Ubuntu host with `sudo` and GitHub SSH access already configured. It installs host prerequisites (`git`, `rsync`, `composer`, `just`) and Node.js 22 from NodeSource (including npm; minimum Node version 22.23.4), bootstraps Bedrock inline, sets up a 4G host swapfile, rootless Docker + fail2ban, and copies missing sample env files. Configure env files before startup, especially database credentials: MariaDB initializes its users only on a fresh volume.
+For a staging-only host, run `bash install.sh --no-dev`. It skips dev Bedrock,
+uploads setup, WordPress startup, and seed restore. Dev services already running
+are not stopped. MariaDB still provisions both databases and users.
 It also installs the deploy orchestrator's locked npm dependencies in its source
 directory, which is mounted read-only by the orchestrator container.
 If the Astro repository has no local `staging` branch, the installer creates one
@@ -159,7 +162,8 @@ Before running `install.sh`, place these files in the Git-ignored `install-seed/
   beneath it (for example `uploads/2026/11/image.webp`). Create it with
   `tar -czf uploads.tar.gz -C /path/to/web/app uploads`.
 
-The same seed populates dev and staging after the containers start. Configure
+By default, the same seed populates dev and staging after the containers start;
+`--no-dev` restores staging only. Configure
 environment files, database credentials, domains and host paths before startup;
 the seed does not replace that configuration. WordPress accounts/settings come
 from the dump, so use an appropriate trusted backup.
@@ -177,7 +181,8 @@ and the existing environment URL normalization. Archive links and unsafe paths
 are rejected. Keep archives outside Git; they may contain private content.
 
 To run this step separately after configuring and starting a fresh stack:
-`bash scripts/seed-install.sh`. A failed partial import is not automatically
+`bash scripts/seed-install.sh` (or `bash scripts/seed-install.sh --no-dev` for
+staging only). A failed partial import is not automatically
 overwritten on rerun; inspect it before deliberately clearing that new target.
 
 Permissions contract is deterministic and fixed: uploads run as `UID 1000`, shared group `abcnorio` with `GID 2000`, directories `2775`, files `0664`.
@@ -190,7 +195,7 @@ bash install.sh migrate-permissions-once
 
 After migration, runtime services only validate this contract and fail on mismatch; they do not auto-repair permissions.
 
-If dev or staging WordPress is already installed when the stack comes up, `install.sh` activates `abcnorio-func` with WP-CLI. If not, install or restore WordPress first, then run `just wp dev plugin activate abcnorio-func` and `just wp staging plugin activate abcnorio-func` as needed.
+If WordPress is already installed when the stack comes up, `install.sh` activates `abcnorio-func` with WP-CLI for each selected environment. If not, install or restore WordPress first, then run `just wp dev plugin activate abcnorio-func` or `just wp staging plugin activate abcnorio-func` as needed.
 
 Dev Astro expects active `abcnorio-func` plus real REST content. A fresh empty WordPress tree will answer many frontend requests with `404` until content exists. `astro-prod` restarting before the first production deploy is expected, and staging or production frontend paths remain incomplete until the deploy flow runs.
 
