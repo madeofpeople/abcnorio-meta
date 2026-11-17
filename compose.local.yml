@@ -6,6 +6,8 @@ services:
       - 127.0.0.1:${DEV_ASTRO_PORT}:3033
 
   abcwpdev:
+    environment:
+      DEV_FRONTEND_URL: http://localhost:${DEV_ASTRO_PORT}/
     ports: !override
       - 127.0.0.1:${DEV_WP_PORT}:80
 

@@ -8,6 +8,10 @@ node_modules/
 vendor/
 backups/
 install-seed/
+# Local database/media exports, including files placed outside install-seed.
+abcnorio-database-*.sql
+abcnorio-database-*.sql.gz
+abcnorio-media-*.zip
 build/
 dist/
 # Static site builds to be served via caddy 

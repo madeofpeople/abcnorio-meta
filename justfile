@@ -30,7 +30,7 @@ setup-fail2ban:
 up env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        [[ -d ../abcnorio-func/build/calendar ]] || just plugin-dev-assets
+        [[ -d ../abcnorio-func/build/calendar && -f ../abcnorio-func/build/index.js && -f ../abcnorio-func/resources/vendor/components/dist/manifest.json ]] || just plugin-dev-assets
         docker compose --profile dev up -d astro-dev abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
         docker compose up -d deploy-orchestrator abcwpstaging
