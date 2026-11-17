@@ -101,7 +101,7 @@ if [[ "${1:-}" == "migrate-permissions-once" ]]; then
     exit 0
 fi
 
-ensure_webcomponents_artifacts() {
+install_webcomponents_dependencies() {
     local webcomponents_dir="$WORKSPACE_ROOT/abcnorio-webcomponents"
 
     if [ ! -d "$webcomponents_dir" ]; then
@@ -110,18 +110,7 @@ ensure_webcomponents_artifacts() {
     fi
 
     echo "==> Installing abcnorio-webcomponents dependencies..."
-    (cd "$webcomponents_dir" && npm install)
-
-    echo "==> Building abcnorio-webcomponents library artifacts for site-frontend workshop and WP ingestion..."
-    (cd "$webcomponents_dir" && npm run build)
-
-    echo "==> Validating abcnorio-webcomponents manifest contract..."
-    (cd "$webcomponents_dir" && npm run check:manifest)
-
-    if [ ! -f "$webcomponents_dir/dist/manifest.json" ]; then
-        echo "==> Missing manifest.json after webcomponents build" >&2
-        exit 1
-    fi
+    (cd "$webcomponents_dir" && npm ci)
 }
 
 should_activate_plugin() {
@@ -195,7 +184,7 @@ fi
 echo "==> Installing deploy orchestrator dependencies..."
 (cd "$WORKSPACE_ROOT/abcnorio-orchestrator" && npm ci)
 
-ensure_webcomponents_artifacts
+install_webcomponents_dependencies
 
 echo "==> Generating abcnorio-func Composer autoloader..."
 (cd "$WORKSPACE_ROOT/abcnorio-func" && composer install --no-dev --optimize-autoloader)

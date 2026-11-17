@@ -57,8 +57,8 @@ for repo in abcnorio-astro abcnorio-webcomponents abcnorio-orchestrator; do
     clone "$repo"
 done
 
-echo "==> Building abcnorio-webcomponents..."
-in_node "$WORKSPACE_ROOT/abcnorio-webcomponents" "npm install && npm run build && npm run check:manifest"
+echo "==> Installing abcnorio-webcomponents dependencies..."
+in_node "$WORKSPACE_ROOT/abcnorio-webcomponents" "npm ci"
 
 echo "==> Installing abcnorio-func autoloader and building its assets..."
 docker run --rm -v "$WORKSPACE_ROOT":"$WORKSPACE_ROOT" -w "$WORKSPACE_ROOT/abcnorio-func" "$COMPOSER_IMAGE" install --no-dev --optimize-autoloader

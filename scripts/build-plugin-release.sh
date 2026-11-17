@@ -103,7 +103,7 @@ if [[ "$npm_ci_status" -ne 0 ]]; then
   exit "$npm_ci_status"
 fi
 
-(cd "$SCRATCH_DIR" && npm run build)
+(cd "$SCRATCH_DIR" && env -u ABCNORIO_COMPONENTS_DIST_SOURCE npm run build)
 
 for required_file in \
   "build/index.js" \

@@ -254,7 +254,6 @@ plugin-dev-assets:
     #!/usr/bin/env bash
     set -euo pipefail
     WEBCOMPONENTS_DIST="$(cd ../abcnorio-webcomponents && pwd)/dist"
-    (cd ../abcnorio-webcomponents && npm run build)
     (cd ../abcnorio-func && ABCNORIO_COMPONENTS_DIST_SOURCE="$WEBCOMPONENTS_DIST" npm run build)
 
 # Build a clean-room release zip for an abcnorio-func tag (defaults to current composer.json version).

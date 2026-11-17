@@ -114,8 +114,7 @@ if [[ -n "$ASTRO_STOPPED" ]]; then
   docker stop $ASTRO_STOPPED >/dev/null
 fi
 
-echo "[1/6] Verify webcomponents manifest without rebuilding live dist"
-(cd "$WC_DIR" && npm run check:manifest)
+echo "[1/6] Verify clean source checkouts; candidate build generates components from the plugin lockfile"
 
 require_clean_repo "$WC_DIR" "Build changed $WC_DIR. Commit/stash those changes before release."
 require_clean_repo "$FUNC_DIR" "Build changed $FUNC_DIR. Commit/stash those changes before release."
