@@ -117,7 +117,7 @@ should_activate_plugin() {
     local env="$1"
 
     if ! bash "$SCRIPT_DIR/scripts/wp.sh" "$env" core is-installed >/dev/null 2>&1; then
-        echo "==> $env WordPress not installed yet; after install or DB restore run: just wp $env plugin activate abcnorio-func"
+        echo "==> $env WordPress not installed yet; after install or DB restore run: just wp cli $env plugin activate abcnorio-func"
         return 1
     fi
 
@@ -280,14 +280,14 @@ if [[ "$NO_DEV" != true ]]; then
 fi
 echo ""
 echo "Then run:"
-echo "  just up"
+echo "  just stack up"
 echo "  just --list"
 echo ""
 echo "For fresh WordPress trees, visit each env's /wp/wp-admin/install.php or restore a DB backup."
 echo "After install or restore, activate plugin if needed:"
-echo "  just wp staging plugin activate abcnorio-func"
+echo "  just wp cli staging plugin activate abcnorio-func"
 if [[ "$NO_DEV" != true ]]; then
-    echo "  just wp dev plugin activate abcnorio-func"
+    echo "  just wp cli dev plugin activate abcnorio-func"
     echo ""
     echo "Dev Astro expects active abcnorio-func and real REST content."
 fi

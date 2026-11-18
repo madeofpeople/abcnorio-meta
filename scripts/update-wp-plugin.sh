@@ -17,8 +17,8 @@ require_clean_repo() {
 }
 
 case "$ENV" in
-  dev|staging) ;;
-  *) echo "Unknown env: $ENV (expected dev or staging)" >&2; exit 1 ;;
+  staging) ;;
+  *) echo "Plugin releases target staging only; use just dev-local for development." >&2; exit 1 ;;
 esac
 
 case "$BUMP" in
@@ -85,7 +85,7 @@ assert_bedrock_write_contract() {
 }
 
 if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
-  echo "Container not running: $CONTAINER. Start it with: just up $ENV" >&2
+  echo "Container not running: $CONTAINER. Start it with: just stack up $ENV" >&2
   exit 1
 fi
 

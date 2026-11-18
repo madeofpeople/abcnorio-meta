@@ -14,7 +14,7 @@ TARGET="${1:?Usage: scripts/trigger-build.sh preview [scope]}"
 SCOPE="${2:-full}"
 
 if [[ "$TARGET" == "production" ]]; then
-  echo "Direct production builds are disabled. Promote the healthy staging deployment with: just deploy production" >&2
+  echo "Direct production builds are disabled. Promote the healthy staging deployment with: just frontend deploy production" >&2
   exit 1
 fi
 
@@ -101,8 +101,12 @@ pre_status="$(read_runtime_status_field "$pre_status_json" status)"
 pre_target="$(read_runtime_status_field "$pre_status_json" target)"
 pre_started="$(read_runtime_status_field "$pre_status_json" started)"
 
+trigger_endpoint="/trigger"
+if [[ "${ABCNORIO_PREVIEW_STAGING:-}" == "1" ]]; then
+  trigger_endpoint="/preview-staging"
+fi
 response="$(docker exec "$ORCHESTRATOR_CONTAINER" curl -sf \
-  -X POST "http://localhost:${ORCHESTRATOR_PORT}/trigger" \
+  -X POST "http://localhost:${ORCHESTRATOR_PORT}${trigger_endpoint}" \
   -H "Authorization: Bearer ${ASTRO_BUILD_TRIGGER_SECRET}" \
   -H "Content-Type: application/json" \
   -d "{\"target\":\"${TARGET}\",\"scope\":\"${SCOPE}\",\"source\":\"manual\"}")"

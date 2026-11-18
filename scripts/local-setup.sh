@@ -124,6 +124,6 @@ docker run --rm -v "$META_DIR/wp/dev/bedrock/web/app/uploads":/u alpine sh -c "c
 
 echo ""
 echo "Local setup done. Next:"
-echo "  1. cd abcnorio-meta && just up dev"
-echo "  2. just local-db-import path/to/dump.sql.gz   (see the local dev doc)"
+echo "  1. cd abcnorio-meta && just stack up dev"
+echo "  2. just db import local path/to/dump.sql.gz   (see the local dev doc)"
 echo "  3. bash scripts/local-smoke.sh"

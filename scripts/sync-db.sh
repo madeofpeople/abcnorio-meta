@@ -24,10 +24,23 @@ case "$DIRECTION" in
   *) echo "Unknown direction: $DIRECTION (expected dev-to-staging or staging-to-dev)" >&2; exit 1 ;;
 esac
 
+case "${2:-}" in
+  "") ;;
+  --database-only)
+    ENDPOINT="$ENDPOINT-database-only"
+    ;;
+  *) echo "Usage: scripts/sync-db.sh <dev-to-staging|staging-to-dev> [--database-only]" >&2; exit 1 ;;
+esac
+
 orchestrator_init
 
-echo "Note: this command validates data/media sync only. It does not validate frontend deployment state."
-run_dev_tool "$ENDPOINT" "$STATUS_KEY" "Sync DB ($DIRECTION, also syncs media uploads)"
+if [[ "${2:-}" == "--database-only" ]]; then
+  echo "Database only: uploads are unchanged. Copy media separately if attachment files are missing."
+  run_dev_tool "$ENDPOINT" "$STATUS_KEY" "Copy DB ($DIRECTION)"
+else
+  echo "Note: this command validates data/media sync only. It does not validate frontend deployment state."
+  run_dev_tool "$ENDPOINT" "$STATUS_KEY" "Copy content ($DIRECTION, includes media uploads)"
+fi
 
 echo "Resetting WP runtime cache in ${WP_CONTAINER}..."
 docker exec "${WP_CONTAINER}" sh -lc '

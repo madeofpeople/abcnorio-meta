@@ -22,7 +22,7 @@ Umbrella root (`~/abcnorio.org`):
 Inside abcnorio-meta:
 - `wp/dev/` (Bedrock based wp dev environment)
 - `wp/staging/` (Bedrock based wp staging environment)
-- `wp/plugin-artifacts/` (gitignored `abcnorio-func` release tarballs, consumed by staging Bedrock's Composer `artifact` repository — built via `just plugin-artifact`, never committed to git)
+- `wp/plugin-artifacts/` (gitignored `abcnorio-func` release tarballs, consumed by staging Bedrock's Composer `artifact` repository — built via `just plugin artifact build`, never committed to git)
 - `wp/runtime.env`, `wp/dev.env`, `wp/staging.env`
 - `scripts/` (admin shell scripts)
 - `f2b/fail2ban/jail.local` (fail2ban config for host SSH + Caddy-backed WP login protection)
@@ -74,7 +74,7 @@ Networks:
 - Dev WordPress bind-mounts `${ABCNORIO_FUNC_HOST_DIR}` directly to `/app/web/app/plugins/abcnorio-func` for live iteration.
 - Astro dev bind-mounts webcomponents source for native frontend live updates, unchanged.
 - For WordPress, install host dependencies with `npm ci` in the sibling plugin and webcomponents repositories, plus Watchexec (`brew install watchexec` on macOS). Run `just dev-local` here: it starts the plugin's existing JS/CSS watcher and a queued component build/publication watcher. Wait for `[components] Ready`, then refresh WordPress. PHP changes need only refresh. No editor auto-reload, commit/pin/deploy loop or additional container build load.
-- Ctrl-C stops both host watchers. Errors appear in the terminal; failed component builds leave the previous successful generation active. Plugin-owned publication uses complete generations and a per-request pinned asset URL so copying cannot expose partial output. Old generations remain for open tabs; stop watchers and close editor tabs before `just plugin-dev-clean` to reclaim them. Staging/releases always use normal packaged `dist`, not development generations.
+- Ctrl-C stops both host watchers. Errors appear in the terminal; failed component builds leave the previous successful generation active. Plugin-owned publication uses complete generations and a per-request pinned asset URL so copying cannot expose partial output. Successful publications keep the active generation and two previous ones automatically. If an old dev tab looks broken, reload it. Staging/releases always use normal packaged `dist`, not development generations.
 - Dev and staging Composer operations run on the host from their Bedrock directories.
 - `abcnorio-webcomponents` is a package dependency for Astro and the plugin, and workshop pages in `abcnorio-astro/site-frontend` are the preview surface.
 - Staging stays Composer-managed (no plugin source bind mount); release flow is bump semver, push, then host-side Composer updates staging Bedrock.
@@ -96,25 +96,86 @@ Networks:
 
 ## Frontend Release Flow (webcomponents → production)
 
+### Everyday release workflow
+
+Run all commands from `abcnorio-meta`. Plugin packages are built on the VPS
+from Git source and installed by Composer; generated archives stay out of Git.
+
+```sh
+# Development machine: commit your work first.
+just release-check
+# Push the checked commits.
+
+# VPS: pull the intended branches, including Astro's local staging branch.
+just release staging minor   # new plugin version plus Astro staging deployment
+# Inspect staging WordPress/editor and frontend.
+just release preview         # optional full static rehearsal of staged source
+just release production      # promote the verified staged frontend
+```
+
+`release staging` without a bump reuses the installed plugin. An explicit
+`patch`, `minor`, or `major` builds a candidate before versioning/tagging/pushing
+the plugin and installing it. A failed subsequent Astro deploy does not roll
+back the plugin. Review and commit changed bootstrap Composer files afterward.
+Preview requires the updated orchestrator and verified staging; it builds the
+staged Astro commit, not newer working-tree source. Content is not frozen.
+`just release rollback production [release-id]` restores frontend output only.
+Content migrations remain separate, backed-up operations.
+
+`release-check` requires clean committed meta, component, plugin and Astro
+checkouts, verifies both component pins against component HEAD, and builds
+exported plugin/Astro HEAD in temporary directories. Use the same supported
+Node/npm versions as the VPS. It does not publish or install a release, and is
+not a substitute for staging content/editor acceptance.
+
+Public commands are grouped by concern (`just --list`); old flat names are
+private implementation helpers or removed. Examples:
+
+```sh
+just stack up dev
+just stack image pull                 # Compose pull AND up; not Git
+just frontend cache clear staging     # selected environment only
+just wc pin                           # review/commit both consumer lockfiles
+just wc create cover --scope wp-blocks --wp-block core/cover
+just plugin artifact build v0.62.0    # recreate a tagged installable package
+just wp cli staging plugin list       # raw WP-CLI, preserving argument boundaries
+just wp composer snapshot staging
+just content copy dev staging         # database + uploads
+just db copy staging dev              # database only; uploads unchanged
+just media copy staging dev           # uploads only
+just db dump staging
+just db import local path/to/dump.sql.gz
+just media thumbnails regenerate staging
+just content urls normalize staging dry
+just release docs
+```
+
+Transfers accept only opposite dev/staging directions (except the explicitly
+named derivative-to-production maintenance operation). DB-only copying preserves
+environment options and normalizes URLs, but can leave missing attachment files
+until media is copied. Existing combined orchestrator endpoints retain their
+behavior. Roll out the new orchestrator before using the DB-only commands.
+Provisioning remains available through the existing setup shell scripts.
+
 Astro deploys install the webcomponents SHA pinned in the committed `abcnorio-astro/site-frontend/package-lock.json`. Staging deploys use that pin even if webcomponents `main` is newer. Pushing webcomponents alone changes nothing on staging or production.
 
 To include new webcomponents:
 
 1. Commit and push `abcnorio-webcomponents` (`main`).
-2. Run `just wc-pin`, review both consumer lockfiles, and commit the Astro change on `main`.
+2. Run `just wc pin`, review both consumer lockfiles, and commit the Astro change on `main`.
 3. Merge `main` into `staging` in `abcnorio-astro`. Deploys use the local `staging` branch head.
-4. Run `just deploy staging`, verify staging, then run `just deploy production`.
+4. Run `just frontend deploy staging`, verify staging, then run `just frontend deploy production`.
 
 For Astro-only changes, merge to `staging` and deploy without updating the webcomponents pin. Production promotes the verified staging version.
 
-Plugin-side changes (editor blocks, REST) go through `just plugin-release staging` instead.
+Plugin-side changes (editor blocks, REST) go through `just release staging` instead.
 
 ## Plugin releases with webcomponent changes
 
 The plugin has its own webcomponents pin in `abcnorio-func/package-lock.json`.
-`just wc-pin` updates both Astro and plugin lockfiles to the pushed webcomponents
+`just wc pin` updates both Astro and plugin lockfiles to the pushed webcomponents
 commit. It requires both lockfiles and refuses to overwrite an uncommitted
-lockfile that needs updating. `just plugin-dev-assets` updates dev preview assets
+lockfile that needs updating. `just dev-local` updates dev preview assets
 without changing either pin. The plugin release build uses the committed plugin
 lockfile, not the local webcomponents dist. It builds that source in scratch;
 preexisting sibling dist is not a release prerequisite.
@@ -122,9 +183,9 @@ preexisting sibling dist is not a release prerequisite.
 When plugin PHP needs new or changed component fixtures:
 
 1. Build/test, then commit and push webcomponents source (never generated `dist`).
-2. Run `just wc-pin`, review both lockfiles, then commit and push the plugin
+2. Run `just wc pin`, review both lockfiles, then commit and push the plugin
    changes. Confirm both resolved commits are the intended revision.
-3. From `abcnorio-meta`, run `just plugin-release staging minor` (or choose
+3. From `abcnorio-meta`, run `just release staging minor` (or choose
    another bump). The recipe builds and installs the release; it does not
    update the webcomponents pin.
 4. Verify any newly required fixture exists in the installed staging plugin.
@@ -133,19 +194,19 @@ When plugin PHP needs new or changed component fixtures:
    ```sh
    docker exec abcwpstaging test -f /app/web/app/plugins/abcnorio-func/resources/vendor/components/dist/event-listing/slider.html
    ```
-5. Retry `just deploy preview` or continue with the frontend release flow.
+5. Retry `just frontend deploy preview` or continue with the frontend release flow.
 
 ## Which recipe do I run?
 
 | Change | Run |
 |---|---|
 | Plugin JS/CSS and webcomponent changes in WP (dev) | `just dev-local` (keep running, refresh editor after ready) |
-| Webcomponent change, ship to Staging Frontend| push webcomponents `main`, `just wc-pin`, commit, merge to `staging`, `just deploy staging`, verify, `just deploy production` |
-| Plugin change (editor blocks, REST, PHP) | `just plugin-release dev` or `just plugin-release staging [bump]` |
+| Webcomponent change, ship to Staging Frontend| push webcomponents `main`, `just wc pin`, commit, merge to `staging`, `just frontend deploy staging`, verify, `just frontend deploy production` |
+| Plugin change (editor blocks, REST, PHP) | `just dev-local` or `just release staging [bump]` |
 | Webcomponent change that also affects plugin blocks | plugin release first, then the Astro flow above |
-| Astro-only change (pages, layouts) | merge to `staging`, `just deploy staging`, verify, `just deploy production` |
-| Static preview of current source | `just deploy preview [scope]` |
-| Bad production release | `just rollback production` |
+| Astro-only change (pages, layouts) | merge to `staging`, `just frontend deploy staging`, verify, `just frontend deploy production` |
+| Static preview of current source | `just frontend deploy preview [scope]` |
+| Bad production release | `just release rollback production` |
 
 Recipes are grouped by prefix: `deploy`/`rollback` (Astro frontend), `wc-*` (webcomponents), `plugin-*` (abcnorio-func), `db-*`/`media-*` (data sync).
 
@@ -215,60 +276,55 @@ bash install.sh migrate-permissions-once
 
 After migration, runtime services only validate this contract and fail on mismatch; they do not auto-repair permissions.
 
-If WordPress is already installed when the stack comes up, `install.sh` activates `abcnorio-func` with WP-CLI for each selected environment. If not, install or restore WordPress first, then run `just wp dev plugin activate abcnorio-func` or `just wp staging plugin activate abcnorio-func` as needed.
+If WordPress is already installed when the stack comes up, `install.sh` activates `abcnorio-func` with WP-CLI for each selected environment. If not, install or restore WordPress first, then run `just wp cli dev plugin activate abcnorio-func` or `just wp cli staging plugin activate abcnorio-func` as needed.
 
 Dev Astro expects active `abcnorio-func` plus real REST content. A fresh empty WordPress tree will answer many frontend requests with `404` until content exists. `astro-prod` restarting before the first production deploy is expected, and staging or production frontend paths remain incomplete until the deploy flow runs.
 
 Run `just --list` for all recipes.
 
 ```sh
-just up                              # bring full stack up (detached)
-just down                            # bring stack down
-just up dev                          # start dev-only services (astro + abcwpdev)
-just down dev                        # stop dev-only services
-just rebuild [service …]             # rebuild + restart services
-just pull                            # pull latest images and restart
-just logs [service]                  # tail logs (default: all)
+just stack up                              # bring full stack up (detached)
+just stack down                            # bring stack down
+just stack up dev                          # start dev-only services (astro + abcwpdev)
+just stack down dev                        # stop dev-only services
+just stack rebuild [service …]             # rebuild + restart services
+just stack image pull                      # pull images and reconcile Compose services (not a Git pull)
+just stack logs [service]                  # tail logs (default: all)
+just frontend cache clear dev            # clear Vite cache and restart only dev (or staging)
 
-just wp dev cache flush              # WP-CLI in dev
-just wp staging plugin list          # WP-CLI in staging
-just composer dev update             # host Composer in dev bedrock
-just composer staging update         # host Composer in staging bedrock
+just wp cli dev cache flush              # WP-CLI in dev
+just wp cli staging plugin list          # WP-CLI in staging
+just wp composer cli dev update             # host Composer in dev bedrock
+just wp composer cli staging update         # host Composer in staging bedrock
 
-just deploy preview                  # static preview build from source (full)
-just deploy preview events           # scoped preview build (scope: full | events | <page-slug>)
-just deploy staging                  # deploy astro `staging` branch head and its locked webcomponents version
-just deploy production               # build and promote exact healthy staging SHA
-just deploy production <release_id>  # restore an archived production release
-just rollback production             # restore previous production archive
-just docs                            # build + deploy docs site
+just frontend deploy preview                  # static preview build from source (full)
+just frontend deploy preview events           # scoped preview build (scope: full | events | <page-slug>)
+just frontend deploy staging                  # deploy astro `staging` branch head and its locked webcomponents version
+just frontend deploy production               # build and promote exact healthy staging SHA
+just frontend deploy production <release_id>  # restore an archived production release
+just release rollback production             # restore previous production archive
+just release docs                            # build + deploy docs site
 
-just wc-pin                          # pin Astro and plugin lockfiles to webcomponents origin/main; then commit them
+just wc pin                          # pin Astro and plugin lockfiles to webcomponents origin/main; then commit them
 
-just db-dev-to-staging               # sync DB + media dev → staging
-just db-staging-to-dev               # sync DB + media staging → dev
-just media-dev-to-staging            # copy media uploads dev → staging
-just media-staging-to-dev            # copy media uploads staging → dev
-just dump-db staging                 # dump staging DB to backups/mariadb/
-just db-shell dev                    # open MariaDB shell
+just content copy dev staging               # sync DB + media dev → staging
+just content copy staging dev               # sync DB + media staging → dev
+just media copy dev staging            # copy media uploads dev → staging
+just media copy staging dev            # copy media uploads staging → dev
+just db dump staging                 # dump staging DB to backups/mariadb/
 
-just wc-build                        # build local webcomponents dist (does not affect deploys)
-just plugin-dev-assets               # rebuild local webcomponents + refresh WP dev preview assets; no release/deploy
+just wc build                        # build local webcomponents dist (does not affect deploys)
 just dev-local                       # host watchers for plugin + components; Ctrl-C to stop
-just plugin-dev-clean                # reclaim dev generations after closing editor tabs/stopping watchers
-just plugin-release dev              # version, commit, tag, push, and verify plugin release
-just plugin-release staging minor    # release plugin and update staging Composer dependency; stops astro-dev/staging during the build, logs to backups/
-just plugin-test                     # run PHP tests in the plugin
+just release staging minor    # release plugin and update staging Composer dependency; stops astro-dev/staging during the build, logs to backups/
+just plugin test                     # run PHP tests in the plugin
 
-just setup-swap                      # 4G host swapfile + vm.swappiness=10 (SWAP_SIZE overrides); idempotent
-just setup-fail2ban                  # install fail2ban on host + deploy SSH/Caddy jails
 ```
 
 Dev and staging auto-reload on CMS changes: the plugin exposes `/wp-json/abcnorio/v1/last-change`, `proxy/Caddyfile` serves it same-origin at `/_cms-last-change`, and `html.astro` polls it every 3 s in live modes. Edits made via WP-CLI don't bump it (it only changes on saves through the plugin's hooks).
 
 For user management: `bash scripts/wp-utils.sh <function> [args]`
 For standalone Bedrock bootstrap fallback: `bash scripts/bedrock-bootstrap.sh`
-To snapshot live Bedrock composer state back into the bootstrap seed files: `just bedrock-snapshot dev`
+To snapshot live Bedrock composer state back into the bootstrap seed files: `just wp composer snapshot dev`
 
 The proxy already writes JSON access logs into `PROXY_LOG_DIR`, and fail2ban reads those host-side files directly for the `caddy-wp` jail.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local stack smoke test: reports every failing check in one pass. Run after `just up dev`.
+# Local stack smoke test: reports every failing check in one pass. Run after `just stack up dev`.
 set -uo pipefail
 
 META_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
