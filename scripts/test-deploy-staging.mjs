@@ -6,6 +6,27 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
+test('release check routes through the public recipe and propagates failures', t => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'release-check-routing-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(path.join(root, 'scripts'));
+  copyFileSync(new URL('../justfile', import.meta.url), path.join(root, 'justfile'));
+  copyFileSync(new URL('./release.sh', import.meta.url), path.join(root, 'scripts/release.sh'));
+  writeFileSync(path.join(root, 'scripts/release-check.sh'),
+    '#!/usr/bin/env bash\nprintf "check invoked\\n"\nexit "${TEST_CHECK_EXIT:-0}"\n');
+  for (const code of [0, 7]) {
+    const result = spawnSync('just', ['release', 'check'], {
+      cwd: root, encoding: 'utf8', env: { ...process.env, TEST_CHECK_EXIT: String(code) },
+    });
+    assert.equal(result.status, code, result.stderr);
+    assert.match(result.stdout, /check invoked/);
+  }
+  const invalid = spawnSync('just', ['release', 'check', 'unexpected'], { cwd: root, encoding: 'utf8' });
+  assert.notEqual(invalid.status, 0);
+  assert.match(invalid.stderr, /Usage: just release check/);
+  assert.doesNotMatch(invalid.stdout, /check invoked/);
+});
+
 function setup(t, staging = true) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'staging-deploy-test-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
