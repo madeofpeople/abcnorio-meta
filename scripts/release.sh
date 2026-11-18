@@ -5,6 +5,10 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 target="${1:-}"
 shift || true
 case "$target" in
+  check)
+    [[ $# -eq 0 ]] || { echo "Usage: just release check" >&2; exit 1; }
+    bash scripts/release-check.sh
+    ;;
   staging)
     [[ $# -le 1 ]] || { echo "Usage: just release staging [patch|minor|major]" >&2; exit 1; }
     [[ -z "$(git -C ../abcnorio-astro status --porcelain)" ]] || {
@@ -36,5 +40,5 @@ case "$target" in
     [[ $# -eq 0 ]] || { echo "Usage: just release docs" >&2; exit 1; }
     bash scripts/deploy-docs.sh
     ;;
-  *) echo "Usage: just release staging [patch|minor|major] | preview | production | rollback <target> [release-id] | docs" >&2; exit 1 ;;
+  *) echo "Usage: just release check | staging [patch|minor|major] | preview | production | rollback <target> [release-id] | docs" >&2; exit 1 ;;
 esac
