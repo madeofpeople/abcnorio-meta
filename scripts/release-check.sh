@@ -18,6 +18,12 @@ for (const relative of ['../abcnorio-func/package-lock.json', '../abcnorio-astro
 }
 NODE
 
+echo "Running release tooling tests."
+(
+  cd "$META_DIR"
+  node --test scripts/test-deploy-staging.mjs scripts/test-webcomponents-pin.mjs scripts/test-plugin-dev.mjs
+)
+
 scratch="$(mktemp -d)"
 trap 'rm -rf "$scratch"' EXIT
 echo "Checking committed source with Node $(node -v), npm $(npm -v). Use the same supported toolchain as the VPS."

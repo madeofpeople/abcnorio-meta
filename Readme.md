@@ -123,7 +123,8 @@ staged Astro commit, not newer working-tree source. Content is not frozen.
 Content migrations remain separate, backed-up operations.
 
 `release-check` requires clean committed meta, component, plugin and Astro
-checkouts, verifies both component pins against component HEAD, and builds
+checkouts, verifies both component pins against component HEAD, runs the existing
+staging-deploy, component-pin and dev-watcher tooling tests, and builds
 exported plugin/Astro HEAD in temporary directories. Use the same supported
 Node/npm versions as the VPS. It does not publish or install a release, and is
 not a substitute for staging content/editor acceptance.
