@@ -270,11 +270,19 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
+<<<<<<< HEAD
             "version": "1.0.1",
             "dist": {
                 "type": "tar",
                 "url": "../../plugin-artifacts/abcnorio-func-1.0.1.tar.gz",
                 "shasum": "fc84f99aec0094ee78e5a274fb0c56608d7029bb"
+=======
+            "version": "1.0.0",
+            "dist": {
+                "type": "tar",
+                "url": "../../plugin-artifacts/abcnorio-func-1.0.0.tar.gz",
+                "shasum": "9571fc3421140090e0211d0303e58b0eff741051"
+>>>>>>> refs/remotes/origin/main
             },
             "require": {
                 "php": "^8.3"
