@@ -1,5 +1,10 @@
 :80 {
 	encode zstd br gzip
+	@local_login {
+		host localhost 127.0.0.1
+		path /abcnorio-login
+	}
+	rewrite @local_login /wp/wp-login.php
 	try_files {path} {path}/index.php index.php
 	root * {$CADDY_ROOT}
 	{$CADDY_SERVER_EXTRA_DIRECTIVES}

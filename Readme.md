@@ -96,6 +96,10 @@ Networks:
 
 ## Frontend Release Flow (webcomponents → production)
 
+Local WordPress supports `/abcnorio-login` on `localhost` and `127.0.0.1`,
+matching the hosted login alias. The dev web server preserves query parameters
+and forwards the request internally to WordPress login; admin protection is unchanged.
+
 ### Everyday release workflow
 
 Run all commands from `abcnorio-meta`. Plugin packages are built on the VPS
