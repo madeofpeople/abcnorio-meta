@@ -30,7 +30,7 @@ setup-fail2ban:
 up env="":
     #!/usr/bin/env bash
     if [[ "{{ env }}" == "dev" ]]; then
-        [[ -d ../abcnorio-func/build/calendar ]] || just plugin-dev-assets
+        [[ -d ../abcnorio-func/build/calendar && -f ../abcnorio-func/build/index.js && -f ../abcnorio-func/resources/vendor/components/dist/manifest.json ]] || just plugin-dev-assets
         docker compose --profile dev up -d astro-dev abcwpdev
     elif [[ "{{ env }}" == "staging" ]]; then
         docker compose up -d deploy-orchestrator abcwpstaging
@@ -248,14 +248,21 @@ wp-core-update env version:
 docs:
     bash scripts/deploy-docs.sh
 
-# Releases use plugin-release instead; this does not release, commit, push, or deploy.
-# Build local webcomponents and refresh the mounted dev plugin preview assets
+# Host watchers; keep this foreground command running while editing WordPress.
+dev-local:
+    node scripts/plugin-dev.mjs
+
+# Stop watchers and close editor tabs first; return to ordinary component dist.
+plugin-dev-clean:
+    node ../abcnorio-func/scripts/publish-components-dev.mjs --clean
+
+# Build local webcomponents and refresh the mounted dev plugin preview assets without releasing.
 plugin-dev-assets:
     #!/usr/bin/env bash
     set -euo pipefail
     WEBCOMPONENTS_DIST="$(cd ../abcnorio-webcomponents && pwd)/dist"
-    (cd ../abcnorio-webcomponents && npm run build)
     (cd ../abcnorio-func && ABCNORIO_COMPONENTS_DIST_SOURCE="$WEBCOMPONENTS_DIST" npm run build)
+    ABCNORIO_COMPONENTS_DIST_SOURCE="$WEBCOMPONENTS_DIST" node ../abcnorio-func/scripts/publish-components-dev.mjs
 
 # Build a clean-room release zip for an abcnorio-func tag (defaults to current composer.json version).
 # Writes to wp/plugin-artifacts/, consumed by Bedrock's Composer artifact repository.

@@ -22,7 +22,7 @@ done
 
 docker info >/dev/null 2>&1 || { echo "Docker daemon not reachable. Start Docker Desktop or OrbStack and rerun." >&2; exit 1; }
 
-# Optional 2nd arg: branch. Plugin work lives on abcnorio-func's dev branch; its default branch (main) lags behind.
+# Optional 2nd arg selects the branch for a new clone; existing checkouts are untouched.
 clone() {
     [ -d "$WORKSPACE_ROOT/$1" ] || git clone ${2:+-b "$2"} "$REPO_BASE/$1.git" "$WORKSPACE_ROOT/$1"
 }
@@ -52,18 +52,18 @@ set_env() {
 }
 
 echo "==> Cloning sibling repos..."
-clone abcnorio-func dev
+clone abcnorio-func main
 for repo in abcnorio-astro abcnorio-webcomponents abcnorio-orchestrator; do
     clone "$repo"
 done
 
-echo "==> Building abcnorio-webcomponents..."
-in_node "$WORKSPACE_ROOT/abcnorio-webcomponents" "npm install && npm run build && npm run check:manifest"
+echo "==> Installing abcnorio-webcomponents dependencies..."
+in_node "$WORKSPACE_ROOT/abcnorio-webcomponents" "npm ci"
 
 echo "==> Installing abcnorio-func autoloader and building its assets..."
 docker run --rm -v "$WORKSPACE_ROOT":"$WORKSPACE_ROOT" -w "$WORKSPACE_ROOT/abcnorio-func" "$COMPOSER_IMAGE" install --no-dev --optimize-autoloader
 in_node "$WORKSPACE_ROOT/abcnorio-func" "npm ci && ABCNORIO_COMPONENTS_DIST_SOURCE=$WORKSPACE_ROOT/abcnorio-webcomponents/dist npm run build"
-[ -d "$WORKSPACE_ROOT/abcnorio-func/build/calendar" ] || { echo "abcnorio-func/build/calendar missing: abcnorio-func must be on its dev branch (git -C ../abcnorio-func checkout dev) and rerun." >&2; exit 1; }
+[ -d "$WORKSPACE_ROOT/abcnorio-func/build/calendar" ] || { echo "abcnorio-func/build/calendar missing after plugin build; check the build output before rerunning." >&2; exit 1; }
 
 echo "==> Creating external Docker networks..."
 for net in abcnorio_net_proxy abcnorio_net_web; do
