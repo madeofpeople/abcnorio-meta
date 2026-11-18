@@ -73,7 +73,7 @@ Networks:
   baseline. Rerunning setup never switches an existing checkout's branch.
 - Dev WordPress bind-mounts `${ABCNORIO_FUNC_HOST_DIR}` directly to `/app/web/app/plugins/abcnorio-func` for live iteration.
 - Astro dev bind-mounts webcomponents source for native frontend live updates, unchanged.
-- For WordPress, install host dependencies with `npm ci` in the sibling plugin and webcomponents repositories, plus Watchexec (`brew install watchexec` on macOS). Run `just dev-local` here: it starts the plugin's existing JS/CSS watcher and a queued component build/publication watcher. Wait for `[components] Ready`, then refresh WordPress. PHP changes need only refresh. No editor auto-reload, commit/pin/deploy loop or additional container build load.
+- For WordPress, install host dependencies with `npm ci` in the sibling plugin and webcomponents repositories, plus Watchexec (`brew install watchexec` on macOS). Run `just stack watch dev` here: it starts the plugin's existing JS/CSS watcher and a queued component build/publication watcher. Wait for `[components] Ready`, then refresh WordPress. PHP changes need only refresh. No editor auto-reload, commit/pin/deploy loop or additional container build load.
 - Ctrl-C stops both host watchers. Errors appear in the terminal; failed component builds leave the previous successful generation active. Plugin-owned publication uses complete generations and a per-request pinned asset URL so copying cannot expose partial output. Successful publications keep the active generation and two previous ones automatically. If an old dev tab looks broken, reload it. Staging/releases always use normal packaged `dist`, not development generations.
 - Dev and staging Composer operations run on the host from their Bedrock directories.
 - `abcnorio-webcomponents` is a package dependency for Astro and the plugin, and workshop pages in `abcnorio-astro/site-frontend` are the preview surface.
@@ -149,7 +149,7 @@ just content copy dev staging         # database + uploads
 just db copy staging dev              # database only; uploads unchanged
 just media copy staging dev           # uploads only
 just db dump staging
-just db import local path/to/dump.sql.gz
+just db import dev path/to/dump.sql.gz
 just media thumbnails regenerate staging
 just content urls normalize staging dry
 just release docs
@@ -180,7 +180,7 @@ Plugin-side changes (editor blocks, REST) go through `just release staging` inst
 The plugin has its own webcomponents pin in `abcnorio-func/package-lock.json`.
 `just wc pin` updates both Astro and plugin lockfiles to the pushed webcomponents
 commit. It requires both lockfiles and refuses to overwrite an uncommitted
-lockfile that needs updating. `just dev-local` updates dev preview assets
+lockfile that needs updating. `just stack watch dev` updates dev preview assets
 without changing either pin. The plugin release build uses the committed plugin
 lockfile, not the local webcomponents dist. It builds that source in scratch;
 preexisting sibling dist is not a release prerequisite.
@@ -205,9 +205,9 @@ When plugin PHP needs new or changed component fixtures:
 
 | Change | Run |
 |---|---|
-| Plugin JS/CSS and webcomponent changes in WP (dev) | `just dev-local` (keep running, refresh editor after ready) |
+| Plugin JS/CSS and webcomponent changes in WP (dev) | `just stack watch dev` (keep running, refresh editor after ready) |
 | Webcomponent change, ship to Staging Frontend| push webcomponents `main`, `just wc pin`, commit, merge to `staging`, `just frontend deploy staging`, verify, `just frontend deploy production` |
-| Plugin change (editor blocks, REST, PHP) | `just dev-local` or `just release staging [bump]` |
+| Plugin change (editor blocks, REST, PHP) | `just stack watch dev` or `just release staging [bump]` |
 | Webcomponent change that also affects plugin blocks | plugin release first, then the Astro flow above |
 | Astro-only change (pages, layouts) | merge to `staging`, `just frontend deploy staging`, verify, `just frontend deploy production` |
 | Static preview of current source | `just frontend deploy preview [scope]` |
@@ -292,9 +292,12 @@ just stack up                              # bring full stack up (detached)
 just stack down                            # bring stack down
 just stack up dev                          # start dev-only services (astro + abcwpdev)
 just stack down dev                        # stop dev-only services
-just stack rebuild [service …]             # rebuild + restart services
+just stack rebuild staging cms             # rebuild + restart selected environment/role
 just stack image pull                      # pull images and reconcile Compose services (not a Git pull)
-just stack logs [service]                  # tail logs (default: all)
+just stack logs staging                    # tail staging frontend + CMS logs
+just stack logs staging cms                # tail only staging CMS logs
+just stack restart dev frontend            # restart only the dev frontend
+just stack logs shared orchestrator        # shared infrastructure logs
 just frontend cache clear dev            # clear Vite cache and restart only dev (or staging)
 
 just wp cli dev cache flush              # WP-CLI in dev
@@ -319,11 +322,28 @@ just media copy staging dev            # copy media uploads staging → dev
 just db dump staging                 # dump staging DB to backups/mariadb/
 
 just wc build                        # build local webcomponents dist (does not affect deploys)
-just dev-local                       # host watchers for plugin + components; Ctrl-C to stop
+just stack watch dev                 # host watchers for plugin + components; Ctrl-C to stop
 just release staging minor    # release plugin and update staging Composer dependency; stops astro-dev/staging during the build, logs to backups/
 just plugin test                     # run PHP tests in the plugin
 
 ```
+
+Stack lifecycle and log commands use `[environment [role]]`, never container names.
+Environments are `dev`, `staging`, `production`, and `shared`. Dev/staging roles
+are `frontend` and `cms`; production has `frontend` only. Shared roles are
+`proxy`, `web` (static file server), `database`, and `orchestrator`.
+Omitting the role selects all services in that environment; omitting both selects
+the default Compose stack. Environment-specific `down` stops those services;
+unqualified `down` tears down the Compose stack. Staging up/down now select the
+same frontend and CMS services; start the shared orchestrator separately with
+`just stack up shared orchestrator` when needed for releases. Staging frontend
+startup still requires its deployed runtime files.
+
+Use explicit environments for DB dumps, plugin updates, and Composer snapshots.
+URL integration tests use `just content urls test dev` (or `staging`).
+`just dev-local` remains a compatibility alias for `just stack watch dev`.
+Prefer `just release ...` for normal releases; `just frontend deploy ...` is the
+low-level frontend-only interface. Production build/promotion behavior is unchanged.
 
 Dev and staging auto-reload on CMS changes: the plugin exposes `/wp-json/abcnorio/v1/last-change`, `proxy/Caddyfile` serves it same-origin at `/_cms-last-change`, and `html.astro` polls it every 3 s in live modes. Edits made via WP-CLI don't bump it (it only changes on saves through the plugin's hooks).
 

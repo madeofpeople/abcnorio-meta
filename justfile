@@ -20,9 +20,14 @@ stack action *args:
     set -euo pipefail
     action="$1"; shift
     case "$action" in
-      up|down|restart|rebuild|logs) just "$action" "$@" ;;
+      up|down|restart|rebuild|logs)
+        if [[ ( "$action" == up || "$action" == rebuild ) && $# -ge 1 && $# -le 2 && "$1" == dev && ( "${2:-}" == "" || "${2:-}" == cms || "${2:-}" == frontend ) ]]; then
+          [[ -d ../abcnorio-func/build/calendar && -f ../abcnorio-func/build/index.js && -f ../abcnorio-func/resources/vendor/components/dist/manifest.json ]] || just _plugin-dev-assets
+        fi
+        bash scripts/stack.sh "$action" "$@" ;;
+      watch) [[ $# -eq 1 && "$1" == dev ]] || { echo "Usage: just stack watch dev" >&2; exit 1; }; node scripts/plugin-dev.mjs ;;
       image) [[ $# -eq 1 && "$1" == pull ]] || { echo "Usage: just stack image pull" >&2; exit 1; }; just image-pull ;;
-      *) echo "Usage: just stack up|down|restart|rebuild|logs|image ..." >&2; exit 1 ;;
+      *) echo "Usage: just stack up|down|restart|rebuild|logs [environment [role]] | watch dev | image pull" >&2; exit 1 ;;
     esac
 
 # Component build, pin, scaffold, or manifest check.
@@ -42,7 +47,7 @@ plugin action *args:
     set -euo pipefail
     action="$1"; shift
     case "$action" in
-      artifact) [[ $# -ge 1 && "$1" == build ]] || { echo "Usage: just plugin artifact build [tag]" >&2; exit 1; }; shift; just plugin artifact build "$@" ;;
+      artifact) [[ $# -ge 1 && "$1" == build ]] || { echo "Usage: just plugin artifact build [tag]" >&2; exit 1; }; shift; just plugin-artifact "$@" ;;
       test) just plugin-test "$@" ;;
       *) echo "Usage: just plugin artifact build [tag] | test" >&2; exit 1 ;;
     esac
@@ -54,7 +59,7 @@ frontend action *args:
     action="$1"; shift
     case "$action" in
       deploy) just deploy "$@" ;;
-      cache) [[ $# -eq 2 && "$1" == clear ]] || { echo "Usage: just frontend cache clear <dev|staging>" >&2; exit 1; }; shift; just frontend cache clear "$@" ;;
+      cache) [[ $# -eq 2 && "$1" == clear ]] || { echo "Usage: just frontend cache clear <dev|staging>" >&2; exit 1; }; shift; just clear-vite-cache "$@" ;;
       *) echo "Usage: just frontend deploy <target> [argument] | cache clear <env>" >&2; exit 1 ;;
     esac
 
@@ -65,14 +70,14 @@ wp action *args:
     action="$1"; shift
     case "$action" in
       cli) bash scripts/wp.sh "$@" ;;
-      core) [[ $# -eq 3 && "$1" == update ]] || { echo "Usage: just wp core update <env> <version>" >&2; exit 1; }; shift; just wp core update "$@" ;;
-      plugins) [[ $# -ge 1 && "$1" == update ]] || { echo "Usage: just wp plugins update [env]" >&2; exit 1; }; shift; just wp plugins update "$@" ;;
+      core) [[ $# -eq 3 && "$1" == update ]] || { echo "Usage: just wp core update <env> <version>" >&2; exit 1; }; shift; just wp-core-update "$@" ;;
+      plugins) [[ $# -eq 2 && "$1" == update ]] || { echo "Usage: just wp plugins update <env>" >&2; exit 1; }; shift; just plugins-update "$@" ;;
       composer)
         sub="${1:-}"; shift || true
         case "$sub" in
           cli) just composer "$@" ;;
-          snapshot) just bedrock-snapshot "$@" ;;
-          *) echo "Usage: just wp composer cli <env> <args...> | snapshot [env]" >&2; exit 1 ;;
+          snapshot) [[ $# -eq 1 ]] || { echo "Usage: just wp composer snapshot <env>" >&2; exit 1; }; just bedrock-snapshot "$@" ;;
+          *) echo "Usage: just wp composer cli <env> <args...> | snapshot <env>" >&2; exit 1 ;;
         esac ;;
       *) echo "Usage: just wp cli|core update|plugins update|composer ..." >&2; exit 1 ;;
     esac
@@ -83,12 +88,12 @@ db action *args:
     set -euo pipefail
     action="$1"; shift
     case "$action" in
-      dump) just dump-db "$@" ;;
-      import) [[ $# -eq 2 && "$1" == local ]] || { echo "Usage: just db import local <file>" >&2; exit 1; }; shift; just db import local "$@" ;;
+      dump) [[ $# -eq 1 ]] || { echo "Usage: just db dump <env>" >&2; exit 1; }; just dump-db "$@" ;;
+      import) [[ $# -eq 2 && "$1" == dev ]] || { echo "Usage: just db import dev <file>" >&2; exit 1; }; shift; just local-db-import "$@" ;;
       copy)
         [[ $# -eq 2 ]] || { echo "Usage: just db copy <source> <destination>" >&2; exit 1; }
         bash scripts/sync-db.sh "$1-to-$2" --database-only ;;
-      *) echo "Usage: just db dump [env] | import local <file> | copy <source> <destination>" >&2; exit 1 ;;
+      *) echo "Usage: just db dump <env> | import dev <file> | copy <source> <destination>" >&2; exit 1 ;;
     esac
 
 # Combined DB/uploads copy, URL normalization, or URL tests.
@@ -102,8 +107,8 @@ content action *args:
         sub="${1:-}"; shift || true
         case "$sub" in
           normalize) just rewrite-hosts "$@" ;;
-          test) just test-url-rewrite "$@" ;;
-          *) echo "Usage: just content urls normalize <env> <dry|apply> | test" >&2; exit 1 ;;
+          test) [[ $# -eq 1 && ( "$1" == dev || "$1" == staging ) ]] || { echo "Usage: just content urls test <dev|staging>" >&2; exit 1; }; TARGET="$1" just test-url-rewrite ;;
+          *) echo "Usage: just content urls normalize <env> <dry|apply> | test <env>" >&2; exit 1 ;;
         esac ;;
       *) echo "Usage: just content copy <source> <destination> | urls ..." >&2; exit 1 ;;
     esac
@@ -115,68 +120,22 @@ media action *args:
     action="$1"; shift
     case "$action" in
       copy) [[ $# -eq 2 ]] || { echo "Usage: just media copy <source> <destination>" >&2; exit 1; }; bash scripts/copy-media.sh "$1-to-$2" ;;
-      thumbnails) [[ $# -eq 2 && "$1" == regenerate ]] || { echo "Usage: just media thumbnails regenerate <env>" >&2; exit 1; }; shift; just media thumbnails regenerate "$@" ;;
-      originals) [[ $# -eq 2 && "$1" == downscale ]] || { echo "Usage: just media originals downscale <env>" >&2; exit 1; }; shift; just stack downscale-originals "$@" ;;
-      derivatives) [[ $# -eq 3 && "$1" == copy && "$2" == staging && "$3" == production ]] || { echo "Usage: just media derivatives copy staging production" >&2; exit 1; }; just media derivatives copy staging production ;;
+      thumbnails) [[ $# -eq 2 && "$1" == regenerate ]] || { echo "Usage: just media thumbnails regenerate <env>" >&2; exit 1; }; shift; just regen-thumbs "$@" ;;
+      originals) [[ $# -eq 2 && "$1" == downscale ]] || { echo "Usage: just media originals downscale <env>" >&2; exit 1; }; shift; just downscale-originals "$@" ;;
+      derivatives) [[ $# -eq 3 && "$1" == copy && "$2" == staging && "$3" == production ]] || { echo "Usage: just media derivatives copy staging production" >&2; exit 1; }; just sync-regenerated-thumbnails-to-production ;;
       *) echo "Usage: just media copy|thumbnails regenerate|originals downscale|derivatives copy ..." >&2; exit 1 ;;
     esac
 
-# Host watchers; keep this foreground command running while editing WordPress.
+# Compatibility alias; prefer just stack watch dev.
 dev-local:
     node scripts/plugin-dev.mjs
 
 # ── Internal stack operations ──────────────────────────────────────────────────
 
-# Bring services up: full stack, or env-specific   e.g. just stack up | just stack up dev
-[private]
-up env="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    case "$1" in ""|dev|staging) ;; *) echo "Usage: just stack up [dev|staging]" >&2; exit 1 ;; esac
-    if [[ "{{ env }}" == "dev" ]]; then
-        [[ -d ../abcnorio-func/build/calendar && -f ../abcnorio-func/build/index.js && -f ../abcnorio-func/resources/vendor/components/dist/manifest.json ]] || just _plugin-dev-assets
-        docker compose --profile dev up -d astro-dev abcwpdev
-    elif [[ "{{ env }}" == "staging" ]]; then
-        docker compose up -d deploy-orchestrator abcwpstaging
-    else
-        docker compose up -d
-    fi
-
-# Bring services down: full stack, or stop env-specific   e.g. just stack down | just stack down dev
-[private]
-down env="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    case "$1" in ""|dev|staging) ;; *) echo "Usage: just stack down [dev|staging]" >&2; exit 1 ;; esac
-    if [[ "{{ env }}" == "dev" ]]; then
-        docker compose stop astro-dev abcwpdev
-    elif [[ "{{ env }}" == "staging" ]]; then
-        docker compose stop astro-staging abcwpstaging
-    else
-        docker compose down
-    fi
-
-# restart services
-[private]
-restart env="":
-    docker compose restart {{env}}
-
-# Rebuild from Dockerfiles with fresh base images (PHP, node), then recreate. See Deployment docs for when to use it.   e.g. just stack rebuild abcwpstaging
-[private]
-rebuild *services:
-    docker compose build --pull {{ services }} && docker compose up -d {{ services }}
-
 # Pull the pinned image: services only (mariadb, caddy) and restart; does not touch built services
 [private]
 image-pull:
     docker compose pull && docker compose up -d
-
-# ── Logs ───────────────────────────────────────────────────────────────────────
-
-# Tail logs for a service (default: all)
-[private]
-logs service="":
-    docker compose logs -f --tail=100 {{ service }}
 
 # ── Builds ─────────────────────────────────────────────────────────────────────
 
@@ -244,7 +203,7 @@ regen-thumbs env:
 sync-regenerated-thumbnails-to-production:
     bash scripts/sync-regenerated-thumbnails-to-production.sh
 
-# One-off: downscale all upload originals to max 1600px   e.g. just stack downscale-originals staging
+# One-off: downscale all upload originals to max 1600px   e.g. just media originals downscale staging
 [private]
 downscale-originals env:
     bash scripts/downscale-originals.sh {{ env }}
@@ -253,10 +212,10 @@ downscale-originals env:
 
 # Dump a database to backups/mariadb/   e.g. just db dump staging
 [private]
-dump-db env="staging":
+dump-db env:
     bash scripts/dump-db.sh {{ env }}
 
-# e.g. just db import local ~/Downloads/staging-20261102.sql.gz
+# e.g. just db import dev ~/Downloads/staging-20261102.sql.gz
 # Import a SQL dump (.sql or .sql.gz) into the local dev DB.
 [private]
 local-db-import file:
@@ -286,7 +245,7 @@ composer env *args:
 
 # Copy live Bedrock composer files back to the bootstrap seed files (env: dev or staging)
 [private]
-bedrock-snapshot env="dev":
+bedrock-snapshot env:
         #!/usr/bin/env bash
         case "{{ env }}" in
             dev|staging) ;;
@@ -297,9 +256,9 @@ bedrock-snapshot env="dev":
         echo "synced {{ env }} bedrock composer files back to seed"
 
 # Update wpackagist plugins (wp-plugin/*) and reseed the bootstrap composer files.
-# Excludes abcnorio-func (use plugin-release) and vip-block-data-api (dev-trunk VCS repo; update by hand).   e.g. just wp plugins update dev
+# Excludes abcnorio-func (use just release staging) and vip-block-data-api (dev-trunk VCS repo; update by hand).   e.g. just wp plugins update dev
 [private]
-plugins-update env="dev":
+plugins-update env:
     #!/usr/bin/env bash
     set -euo pipefail
     case "{{ env }}" in

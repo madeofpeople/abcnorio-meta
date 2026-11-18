@@ -21,7 +21,7 @@ NODE
 echo "Running release tooling tests."
 (
   cd "$META_DIR"
-  node --test scripts/test-deploy-staging.mjs scripts/test-webcomponents-pin.mjs scripts/test-plugin-dev.mjs
+  node --test scripts/test-deploy-staging.mjs scripts/test-webcomponents-pin.mjs scripts/test-plugin-dev.mjs scripts/test-recipe-routing.mjs
 )
 
 scratch="$(mktemp -d)"

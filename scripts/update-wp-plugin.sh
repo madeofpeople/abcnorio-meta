@@ -18,7 +18,7 @@ require_clean_repo() {
 
 case "$ENV" in
   staging) ;;
-  *) echo "Plugin releases target staging only; use just dev-local for development." >&2; exit 1 ;;
+  *) echo "Plugin releases target staging only; use just stack watch dev for development." >&2; exit 1 ;;
 esac
 
 case "$BUMP" in
