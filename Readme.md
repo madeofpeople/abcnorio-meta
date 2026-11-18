@@ -111,14 +111,14 @@ just release check
 # Push the checked commits.
 
 # VPS: pull the intended branches, including Astro's local staging branch.
-just release staging minor   # new plugin version plus Astro staging deployment
+just release staging plugin minor   # new plugin version plus Astro staging deployment
 # Inspect staging WordPress/editor and frontend.
 just release preview         # optional full static rehearsal of staged source
 just release production      # promote the verified staged frontend
 ```
 
 `release staging` without a bump reuses the installed plugin. An explicit
-`patch`, `minor`, or `major` builds a candidate before versioning/tagging/pushing
+`plugin patch`, `plugin minor`, or `plugin major` builds a candidate before versioning/tagging/pushing
 the plugin and installing it. A failed subsequent Astro deploy does not roll
 back the plugin. Review and commit changed bootstrap Composer files afterward.
 Preview requires the updated orchestrator and verified staging; it builds the
@@ -190,7 +190,7 @@ When plugin PHP needs new or changed component fixtures:
 1. Build/test, then commit and push webcomponents source (never generated `dist`).
 2. Run `just wc pin`, review both lockfiles, then commit and push the plugin
    changes. Confirm both resolved commits are the intended revision.
-3. From `abcnorio-meta`, run `just release staging minor` (or choose
+3. From `abcnorio-meta`, run `just release staging plugin minor` (or choose
    another bump). The recipe builds and installs the release; it does not
    update the webcomponents pin.
 4. Verify any newly required fixture exists in the installed staging plugin.
@@ -207,7 +207,7 @@ When plugin PHP needs new or changed component fixtures:
 |---|---|
 | Plugin JS/CSS and webcomponent changes in WP (dev) | `just stack watch dev` (keep running, refresh editor after ready) |
 | Webcomponent change, ship to Staging Frontend| push webcomponents `main`, `just wc pin`, commit, merge to `staging`, `just frontend deploy staging`, verify, `just frontend deploy production` |
-| Plugin change (editor blocks, REST, PHP) | `just stack watch dev` or `just release staging [bump]` |
+| Plugin change (editor blocks, REST, PHP) | `just stack watch dev` or `just release staging plugin <patch|minor|major>` |
 | Webcomponent change that also affects plugin blocks | plugin release first, then the Astro flow above |
 | Astro-only change (pages, layouts) | merge to `staging`, `just frontend deploy staging`, verify, `just frontend deploy production` |
 | Static preview of current source | `just frontend deploy preview [scope]` |
@@ -323,7 +323,7 @@ just db dump staging                 # dump staging DB to backups/mariadb/
 
 just wc build                        # build local webcomponents dist (does not affect deploys)
 just stack watch dev                 # host watchers for plugin + components; Ctrl-C to stop
-just release staging minor    # release plugin and update staging Composer dependency; stops astro-dev/staging during the build, logs to backups/
+just release staging plugin minor    # release plugin and update staging Composer dependency; stops astro-dev/staging during the build, logs to backups/
 just plugin test                     # run PHP tests in the plugin
 
 ```

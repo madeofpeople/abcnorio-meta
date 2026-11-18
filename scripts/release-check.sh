@@ -47,4 +47,4 @@ done
     ASTRO_WEBCOMPONENTS_SOURCE_DIR="$PWD/node_modules/abcnorio-webcomponents" \
     npm run build
 )
-echo "Release check passed for the commits above. Push them, update the VPS branches, then run just release staging [bump]."
+echo "Release check passed for the commits above. Push them, update the VPS branches, then run just release staging [plugin <patch|minor|major>]."

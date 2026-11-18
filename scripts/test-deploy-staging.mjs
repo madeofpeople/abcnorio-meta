@@ -27,6 +27,38 @@ test('release check routes through the public recipe and propagates failures', t
   assert.doesNotMatch(invalid.stdout, /check invoked/);
 });
 
+test('staging release requires an explicit plugin bump and deploys only after success', t => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'release-staging-routing-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(path.join(root, 'scripts'));
+  mkdirSync(path.join(root, 'bin'));
+  copyFileSync(new URL('./release.sh', import.meta.url), path.join(root, 'scripts/release.sh'));
+  writeFileSync(path.join(root, 'bin/git'), '#!/bin/sh\nexit 0\n');
+  chmodSync(path.join(root, 'bin/git'), 0o755);
+  writeFileSync(path.join(root, 'scripts/update-wp-plugin.sh'),
+    'printf "plugin %s %s\\n" "$1" "$2"\nexit "${TEST_PLUGIN_EXIT:-0}"\n');
+  writeFileSync(path.join(root, 'scripts/deploy-staging.sh'), 'echo frontend\n');
+  const run = (args, code = 0) => spawnSync('bash', ['scripts/release.sh', 'staging', ...args], {
+    cwd: root, encoding: 'utf8',
+    env: { ...process.env, PATH: `${root}/bin:${process.env.PATH}`, TEST_PLUGIN_EXIT: String(code) },
+  });
+  assert.equal(run([]).stdout, 'frontend\n');
+  for (const bump of ['patch', 'minor', 'major']) {
+    const result = run(['plugin', bump]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(result.stdout.startsWith(`plugin staging ${bump}\n`));
+    assert.ok(result.stdout.endsWith('frontend\n'));
+  }
+  for (const args of [['minor'], ['plugin'], ['plugin', 'invalid'], ['plugin', 'minor', 'extra']]) {
+    const result = run(args);
+    assert.notEqual(result.status, 0);
+    assert.equal(result.stdout, '');
+  }
+  const failed = run(['plugin', 'minor'], 7);
+  assert.equal(failed.status, 7);
+  assert.doesNotMatch(failed.stdout, /frontend/);
+});
+
 function setup(t, staging = true) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'staging-deploy-test-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
