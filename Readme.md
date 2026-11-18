@@ -103,7 +103,7 @@ from Git source and installed by Composer; generated archives stay out of Git.
 
 ```sh
 # Development machine: commit your work first.
-just release-check
+just release check
 # Push the checked commits.
 
 # VPS: pull the intended branches, including Astro's local staging branch.
@@ -122,7 +122,7 @@ staged Astro commit, not newer working-tree source. Content is not frozen.
 `just release rollback production [release-id]` restores frontend output only.
 Content migrations remain separate, backed-up operations.
 
-`release-check` requires clean committed meta, component, plugin and Astro
+`release check` requires clean committed meta, component, plugin, Astro and orchestrator
 checkouts, verifies both component pins against component HEAD, runs the existing
 staging-deploy, component-pin and dev-watcher tooling tests, and builds
 exported plugin/Astro HEAD in temporary directories. Use the same supported

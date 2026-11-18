@@ -8,13 +8,9 @@ set positional-arguments := true
 
 # ── Daily development and releases ────────────────────────────────────────────
 
-# Stage a release, preview staged source, publish production/docs, or roll back.
+# Check, stage, preview, publish production/docs, or roll back a release.
 release target *args:
     bash scripts/release.sh "$@"
-
-# Check clean committed pins and isolated plugin/Astro builds before pushing.
-release-check:
-    bash scripts/release-check.sh
 
 # ── Concern-based entry points ────────────────────────────────────────────────
 
@@ -46,7 +42,7 @@ plugin action *args:
     set -euo pipefail
     action="$1"; shift
     case "$action" in
-      artifact) [[ $# -ge 1 && "$1" == build ]] || { echo "Usage: just plugin artifact build [tag]" >&2; exit 1; }; shift; just plugin-artifact "$@" ;;
+      artifact) [[ $# -ge 1 && "$1" == build ]] || { echo "Usage: just plugin artifact build [tag]" >&2; exit 1; }; shift; just plugin artifact build "$@" ;;
       test) just plugin-test "$@" ;;
       *) echo "Usage: just plugin artifact build [tag] | test" >&2; exit 1 ;;
     esac
@@ -58,7 +54,7 @@ frontend action *args:
     action="$1"; shift
     case "$action" in
       deploy) just deploy "$@" ;;
-      cache) [[ $# -eq 2 && "$1" == clear ]] || { echo "Usage: just frontend cache clear <dev|staging>" >&2; exit 1; }; shift; just clear-vite-cache "$@" ;;
+      cache) [[ $# -eq 2 && "$1" == clear ]] || { echo "Usage: just frontend cache clear <dev|staging>" >&2; exit 1; }; shift; just frontend cache clear "$@" ;;
       *) echo "Usage: just frontend deploy <target> [argument] | cache clear <env>" >&2; exit 1 ;;
     esac
 
@@ -69,8 +65,8 @@ wp action *args:
     action="$1"; shift
     case "$action" in
       cli) bash scripts/wp.sh "$@" ;;
-      core) [[ $# -eq 3 && "$1" == update ]] || { echo "Usage: just wp core update <env> <version>" >&2; exit 1; }; shift; just wp-core-update "$@" ;;
-      plugins) [[ $# -ge 1 && "$1" == update ]] || { echo "Usage: just wp plugins update [env]" >&2; exit 1; }; shift; just plugins-update "$@" ;;
+      core) [[ $# -eq 3 && "$1" == update ]] || { echo "Usage: just wp core update <env> <version>" >&2; exit 1; }; shift; just wp core update "$@" ;;
+      plugins) [[ $# -ge 1 && "$1" == update ]] || { echo "Usage: just wp plugins update [env]" >&2; exit 1; }; shift; just wp plugins update "$@" ;;
       composer)
         sub="${1:-}"; shift || true
         case "$sub" in
@@ -88,7 +84,7 @@ db action *args:
     action="$1"; shift
     case "$action" in
       dump) just dump-db "$@" ;;
-      import) [[ $# -eq 2 && "$1" == local ]] || { echo "Usage: just db import local <file>" >&2; exit 1; }; shift; just local-db-import "$@" ;;
+      import) [[ $# -eq 2 && "$1" == local ]] || { echo "Usage: just db import local <file>" >&2; exit 1; }; shift; just db import local "$@" ;;
       copy)
         [[ $# -eq 2 ]] || { echo "Usage: just db copy <source> <destination>" >&2; exit 1; }
         bash scripts/sync-db.sh "$1-to-$2" --database-only ;;
@@ -119,9 +115,9 @@ media action *args:
     action="$1"; shift
     case "$action" in
       copy) [[ $# -eq 2 ]] || { echo "Usage: just media copy <source> <destination>" >&2; exit 1; }; bash scripts/copy-media.sh "$1-to-$2" ;;
-      thumbnails) [[ $# -eq 2 && "$1" == regenerate ]] || { echo "Usage: just media thumbnails regenerate <env>" >&2; exit 1; }; shift; just regen-thumbs "$@" ;;
-      originals) [[ $# -eq 2 && "$1" == downscale ]] || { echo "Usage: just media originals downscale <env>" >&2; exit 1; }; shift; just downscale-originals "$@" ;;
-      derivatives) [[ $# -eq 3 && "$1" == copy && "$2" == staging && "$3" == production ]] || { echo "Usage: just media derivatives copy staging production" >&2; exit 1; }; just sync-regenerated-thumbnails-to-production ;;
+      thumbnails) [[ $# -eq 2 && "$1" == regenerate ]] || { echo "Usage: just media thumbnails regenerate <env>" >&2; exit 1; }; shift; just media thumbnails regenerate "$@" ;;
+      originals) [[ $# -eq 2 && "$1" == downscale ]] || { echo "Usage: just media originals downscale <env>" >&2; exit 1; }; shift; just stack downscale-originals "$@" ;;
+      derivatives) [[ $# -eq 3 && "$1" == copy && "$2" == staging && "$3" == production ]] || { echo "Usage: just media derivatives copy staging production" >&2; exit 1; }; just media derivatives copy staging production ;;
       *) echo "Usage: just media copy|thumbnails regenerate|originals downscale|derivatives copy ..." >&2; exit 1 ;;
     esac
 
@@ -131,7 +127,7 @@ dev-local:
 
 # ── Internal stack operations ──────────────────────────────────────────────────
 
-# Bring services up: full stack, or env-specific   e.g. just up | just up dev
+# Bring services up: full stack, or env-specific   e.g. just stack up | just stack up dev
 [private]
 up env="":
     #!/usr/bin/env bash
@@ -146,7 +142,7 @@ up env="":
         docker compose up -d
     fi
 
-# Bring services down: full stack, or stop env-specific   e.g. just down | just down dev
+# Bring services down: full stack, or stop env-specific   e.g. just stack down | just stack down dev
 [private]
 down env="":
     #!/usr/bin/env bash
@@ -165,7 +161,7 @@ down env="":
 restart env="":
     docker compose restart {{env}}
 
-# Rebuild from Dockerfiles with fresh base images (PHP, node), then recreate. See Deployment docs for when to use it.   e.g. just rebuild abcwpstaging
+# Rebuild from Dockerfiles with fresh base images (PHP, node), then recreate. See Deployment docs for when to use it.   e.g. just stack rebuild abcwpstaging
 [private]
 rebuild *services:
     docker compose build --pull {{ services }} && docker compose up -d {{ services }}
@@ -187,7 +183,7 @@ logs service="":
 # deploy preview [scope]: static build from source (scope: full | events | <page-slug>)
 # deploy staging: activate astro `staging` branch head with its locked webcomponents version
 # deploy production [release_id]: promote healthy staging commit, or restore an archived release_id
-# Deploy the Astro frontend: just deploy preview|staging|production
+# Deploy the Astro frontend: just frontend deploy preview|staging|production
 [private]
 deploy target="" arg="":
     #!/usr/bin/env bash
@@ -196,7 +192,7 @@ deploy target="" arg="":
       preview)    bash scripts/trigger-build.sh preview "{{ arg }}" ;;
       staging)    bash scripts/deploy-staging.sh ;;
       production) bash scripts/deploy-release.sh production "{{ arg }}" ;;
-      *) echo "Usage: just deploy preview [scope] | staging | production [release_id]" >&2; exit 1 ;;
+      *) echo "Usage: just frontend deploy preview [scope] | staging | production [release_id]" >&2; exit 1 ;;
     esac
 
 # Pin Astro and plugin lockfiles to webcomponents origin/main (review and commit both).
@@ -211,7 +207,7 @@ clear-vite-cache env:
     set -euo pipefail
     case "$1" in
       dev|staging) ;;
-      *) echo "Usage: just clear-vite-cache <dev|staging>" >&2; exit 1 ;;
+      *) echo "Usage: just frontend cache clear <dev|staging>" >&2; exit 1 ;;
     esac
     docker compose exec "astro-$1" rm -rf /app/node_modules/.vite
     docker compose restart "astro-$1"
@@ -219,7 +215,7 @@ clear-vite-cache env:
 # ── Data sync ──────────────────────────────────────────────────────────────────
 
 # Rewrite other environments' hosts in <env> content. Mode is required: dry | apply
-# Examples: just rewrite-hosts staging dry   |   just rewrite-hosts staging apply
+# Examples: just content urls normalize staging dry   |   just content urls normalize staging apply
 [private]
 rewrite-hosts env mode="":
     #!/usr/bin/env bash
@@ -237,30 +233,30 @@ test-url-rewrite:
 
 # ── Media ──────────────────────────────────────────────────────────────────────
 
-# Regenerate thumbnails   e.g. just regen-thumbs dev
+# Regenerate thumbnails   e.g. just media thumbnails regenerate dev
 [private]
 regen-thumbs env:
     bash scripts/regen-thumbs.sh {{ env }}
 
 # Back up production uploads, then replace generated image derivatives from staging.
-# Run after staging thumbnail regeneration: just sync-regenerated-thumbnails-to-production
+# Run after staging thumbnail regeneration: just media derivatives copy staging production
 [private]
 sync-regenerated-thumbnails-to-production:
     bash scripts/sync-regenerated-thumbnails-to-production.sh
 
-# One-off: downscale all upload originals to max 1600px   e.g. just downscale-originals staging
+# One-off: downscale all upload originals to max 1600px   e.g. just stack downscale-originals staging
 [private]
 downscale-originals env:
     bash scripts/downscale-originals.sh {{ env }}
 
 # ── DB admin ───────────────────────────────────────────────────────────────────
 
-# Dump a database to backups/mariadb/   e.g. just dump-db staging
+# Dump a database to backups/mariadb/   e.g. just db dump staging
 [private]
 dump-db env="staging":
     bash scripts/dump-db.sh {{ env }}
 
-# e.g. just local-db-import ~/Downloads/staging-20261102.sql.gz
+# e.g. just db import local ~/Downloads/staging-20261102.sql.gz
 # Import a SQL dump (.sql or .sql.gz) into the local dev DB.
 [private]
 local-db-import file:
@@ -301,7 +297,7 @@ bedrock-snapshot env="dev":
         echo "synced {{ env }} bedrock composer files back to seed"
 
 # Update wpackagist plugins (wp-plugin/*) and reseed the bootstrap composer files.
-# Excludes abcnorio-func (use plugin-release) and vip-block-data-api (dev-trunk VCS repo; update by hand).   e.g. just plugins-update dev
+# Excludes abcnorio-func (use plugin-release) and vip-block-data-api (dev-trunk VCS repo; update by hand).   e.g. just wp plugins update dev
 [private]
 plugins-update env="dev":
     #!/usr/bin/env bash
@@ -316,7 +312,7 @@ plugins-update env="dev":
     docker restart abcwp{{ env }}
     echo "Review wp/bootstrap/{{ env }}/bedrock.composer.lock, then commit."
 
-# Update WordPress core to a version and reseed the bootstrap composer files.   e.g. just wp-core-update dev 6.9.5
+# Update WordPress core to a version and reseed the bootstrap composer files.   e.g. just wp core update dev 6.9.5
 [private]
 wp-core-update env version:
     #!/usr/bin/env bash
@@ -345,7 +341,7 @@ _plugin-dev-assets:
 
 # Build a clean-room release zip for an abcnorio-func tag (defaults to current composer.json version).
 # Writes to wp/plugin-artifacts/, consumed by Bedrock's Composer artifact repository.
-# e.g. just plugin-artifact | just plugin-artifact v0.23.0
+# e.g. just plugin artifact build | just plugin artifact build v0.23.0
 [private]
 plugin-artifact tag="":
     bash scripts/build-plugin-release.sh {{tag}}
@@ -362,8 +358,8 @@ wc-verify:
 
 # Scaffold a new webcomponent directory with starter Astro debug file.
 # Usage:
-#   just wc-create event-card
-#   just wc-create cover --scope wp-blocks --wp-block core/cover
+#   just wc create event-card
+#   just wc create cover --scope wp-blocks --wp-block core/cover
 [private]
 wc-create *args:
     bash ../abcnorio-webcomponents/scripts/create-webcomponent.sh "$@"
