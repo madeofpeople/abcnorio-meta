@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c36422c24ada6b03fcf0e7000ad9acb0",
+    "content-hash": "036a527bb1851dd4ae3d7623498fbc2b",
     "packages": [
         {
             "name": "automattic/vip-block-data-api",
@@ -270,11 +270,11 @@
         },
         {
             "name": "madeofpeople/abcnorio-func",
-            "version": "1.5.0",
+            "version": "1.6.0",
             "dist": {
                 "type": "tar",
-                "url": "../../plugin-artifacts/abcnorio-func-1.5.0.tar.gz",
-                "shasum": "6e47ca07ef74ae602b9b9337937f34af72708f01"
+                "url": "../../plugin-artifacts/abcnorio-func-1.6.0.tar.gz",
+                "shasum": "a02320604224b2db70d1c3a12a3031c54e604939"
             },
             "require": {
                 "php": "^8.3"
@@ -1494,6 +1494,37 @@
                 "source": "https://plugins.svn.wordpress.org/quiet-link-checker"
             },
             "time": "2026-10-27T17:05:11+00:00"
+        },
+        {
+            "name": "wp-plugin/wordpress-importer",
+            "version": "0.9.7",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/wordpress-importer/",
+                "reference": "tags/0.9.7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/wordpress-importer.0.9.7.zip"
+            },
+            "require": {
+                "composer/installers": "~1.0|~2.0"
+            },
+            "type": "wordpress-plugin",
+            "notification-url": "https://wp-packages.org/downloads",
+            "authors": [
+                {
+                    "name": "WordPress.org"
+                }
+            ],
+            "description": "Import posts, pages, comments, custom fields, categories, tags and more from a WordPress export file.",
+            "homepage": "https://wordpress.org/plugins/wordpress-importer/",
+            "support": {
+                "changelog": "https://wordpress.org/plugins/wordpress-importer/#developers",
+                "issues": "https://wordpress.org/support/plugin/wordpress-importer",
+                "source": "https://plugins.svn.wordpress.org/wordpress-importer"
+            },
+            "time": "2026-10-20T08:24:11+00:00"
         }
     ],
     "packages-dev": [
