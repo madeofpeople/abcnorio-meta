@@ -45,6 +45,7 @@ done
     STAGING_CMS="${STAGING_CMS:-http://127.0.0.1:8201}" \
     STAGING_FRONTEND_URL="${STAGING_FRONTEND_URL:-http://127.0.0.1:3133}" \
     ASTRO_WEBCOMPONENTS_SOURCE_DIR="$PWD/node_modules/abcnorio-webcomponents" \
+    ASTRO_DESIGN_TOKENS_DIR="$PWD/node_modules/abcnorio-webcomponents/src/design-tokens" \
     npm run build
 )
 echo "Release check passed for the commits above. Push them, update the VPS branches, then run just release staging [plugin <patch|minor|major>]."
