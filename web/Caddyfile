@@ -88,13 +88,4 @@
                 import cache_headers
 	}
 
-        # for serving uploads from static server on WP domains
-        @wp_uploads host {$DOMAIN_WP_STAGING} path /app/uploads/*
-        handle @wp_uploads {
-                uri strip_prefix /app/uploads
-                root * /srv/uploads/
-                import uploads_cache
-                file_server
-        }
-
 }

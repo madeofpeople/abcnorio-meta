@@ -65,10 +65,6 @@ localhost {
     @wp_login_get_stg_no_query `path('/wp/wp-login.php') && method('GET') && {query} == ''`
     redir @wp_login_get_stg_no_query /abcnorio-login 302
 
-    # serve uploads from web (static copy) instead of abcwpstaging — production independence
-    @wp_uploads path /app/uploads/*
-    reverse_proxy @wp_uploads web:80
-
     reverse_proxy abcwpstaging:80
 
     log {
